@@ -24,7 +24,6 @@ import org.apache.axis2.client.Options;
 import org.apache.axis2.client.ServiceClient;
 import org.apache.axis2.transport.http.HTTPConstants;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 import org.wso2.carbon.tenant.mgt.stub.TenantMgtAdminServiceExceptionException;
 import org.wso2.carbon.tenant.mgt.stub.TenantMgtAdminServiceStub;
 import org.wso2.carbon.tenant.mgt.stub.beans.xsd.TenantInfoBean;
@@ -34,7 +33,6 @@ import org.wso2.carbon.utils.CarbonUtils;
  * @author raman
  *
  */
-@Service
 public class TenantManagementService {
 
 	@Value("${api.multitenancy.endpoint}")

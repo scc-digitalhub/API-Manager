@@ -113,7 +113,7 @@ public class UserManagementService {
 	 * @throws RemoteUserStoreManagerServiceUserStoreExceptionException
 	 * @throws TenantMgtAdminServiceExceptionException 
 	 */
-	public void createPublsher(String domain, String userName, String password, String firstName, String lastName) throws AxisFault, RemoteException, RemoteUserStoreManagerServiceUserStoreExceptionException, TenantMgtAdminServiceExceptionException {
+	public void createPublisher(String domain, String userName, String password, String firstName, String lastName) throws AxisFault, RemoteException, RemoteUserStoreManagerServiceUserStoreExceptionException, TenantMgtAdminServiceExceptionException {
 		tenantService.createTenant(domain, userName, password, firstName, lastName);
 	}
 	

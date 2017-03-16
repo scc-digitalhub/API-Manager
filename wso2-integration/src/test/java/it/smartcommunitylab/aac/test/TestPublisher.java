@@ -69,7 +69,7 @@ public class TestPublisher {
 
 	@Test
 	public void testCreatePublisher() throws AxisFault, RemoteException, RemoteUserStoreManagerServiceUserStoreExceptionException, TenantMgtAdminServiceExceptionException {
-		umService.createPublsher(TEST_DOMAIN, TEST_USER, "123456", "First", "Last");
+		umService.createPublisher(TEST_DOMAIN, TEST_USER, "123456", "First", "Last");
 		Assert.assertNotNull(tenantService.getTenant(TEST_DOMAIN));
 	}
 }

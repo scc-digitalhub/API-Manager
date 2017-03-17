@@ -57,7 +57,7 @@ public class TestUM {
 		try {
 			umService.deleteNormalUser(TEST_USER);
 		} catch (Exception e) {
-			//e.printStackTrace();
+			e.printStackTrace();
 		}
 	}
 
@@ -73,6 +73,8 @@ public class TestUM {
 		};
 		umService.createNormalUser(TEST_USER, "123456", new String[]{"internal/everyone"}, claims);
 		Assert.assertTrue(umService.checkNormalUserExists(TEST_USER));
+		
+		Assert.assertTrue(umService.authenticate(TEST_USER,"123456"));
 	}
 
 	@Test
@@ -83,7 +85,7 @@ public class TestUM {
 		umService.createNormalUser(TEST_USER, "123456", new String[]{"internal/everyone"}, claims);
 		Assert.assertTrue(umService.checkNormalUserExists(TEST_USER));
 
-		umService.updatePassword(TEST_USER, "654321");
+		umService.updateNormalUserPassword(TEST_USER, "654321");
 		Assert.assertTrue(umService.checkNormalUserExists(TEST_USER));
 	}
 

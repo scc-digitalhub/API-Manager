@@ -25,13 +25,13 @@ public class WSO2Constans {
 	public static final String ROLE_CREATOR = "Internal/creator";
 	public static final String ROLE_PUBLISHER = "Internal/publisher";
 	public static final String ROLE_SUBSCRIBER = "Internal/subscriber";
-	
+	public static final String ROLE_IDENTITY = "Internal/identity";
 	public static final String WSO2_CLAIM_EMAIL = "http://wso2.org/claims/emailaddress";
 	public static final String WSO2_CLAIM_FIRST_NAME = "http://wso2.org/claims/givenname";
 	public static final String WSO2_CLAIM_LAST_NAME = "http://wso2.org/claims/lastname";
 	
 	private static final String[] PUBLISHER = {ROLE_PUBLISHER, ROLE_CREATOR, ROLE_SUBSCRIBER};
-	private static final String[] SUBSCRIBER = {ROLE_SUBSCRIBER};
+	private static final String[] SUBSCRIBER = {ROLE_SUBSCRIBER,ROLE_IDENTITY};
 	
 	public static String[] publisherRoles() {
 		return PUBLISHER;

@@ -100,7 +100,7 @@ public class UserManagementService {
 	 * @throws RemoteUserStoreManagerServiceUserStoreExceptionException
 	 */
 	public void createNormalUser(String userName, String password, String[] roles, ClaimValue[] claims) throws AxisFault, RemoteException, RemoteUserStoreManagerServiceUserStoreExceptionException {
-		getUMStub().addUser(Utils.getUserNameAtSuperTenant(userName), password, roles, claims, null, false);
+		getUMStub().addUser(userName, password, roles, claims, null, false);
 	}
 
 	/**
@@ -111,8 +111,21 @@ public class UserManagementService {
 	 * @throws RemoteException
 	 * @throws RemoteUserStoreManagerServiceUserStoreExceptionException
 	 */
-	public void updatePassword(String userName, String password) throws AxisFault, RemoteException, RemoteUserStoreManagerServiceUserStoreExceptionException {
-		getUMStub().updateCredentialByAdmin(Utils.getUserNameAtSuperTenant(userName), password);
+	public void updateNormalUserPassword(String userName, String password) throws AxisFault, RemoteException, RemoteUserStoreManagerServiceUserStoreExceptionException {
+		getUMStub().updateCredentialByAdmin(userName, password);
+	}
+
+	/**
+	 * Update publisher password
+	 * @param userName
+	 * @param domain
+	 * @param password
+	 * @throws AxisFault
+	 * @throws RemoteException
+	 * @throws RemoteUserStoreManagerServiceUserStoreExceptionException
+	 */
+	public void updatePublisherPassword(String userName, String domain, String password) throws AxisFault, RemoteException, RemoteUserStoreManagerServiceUserStoreExceptionException {
+		getUMStub().updateCredentialByAdmin(Utils.getUserNameAtTenant(userName, domain), password);
 	}
 
 	/**
@@ -139,7 +152,7 @@ public class UserManagementService {
 	 * @throws RemoteUserStoreManagerServiceUserStoreExceptionException
 	 */
 	public void createSubscriber(String userName, String password, ClaimValue[] claims) throws AxisFault, RemoteException, RemoteUserStoreManagerServiceUserStoreExceptionException {
-		getUMStub().addUser(Utils.getUserNameAtSuperTenant(userName), password, WSO2Constans.subscriberRoles(), claims, null, false);
+		getUMStub().addUser(userName, password, WSO2Constans.subscriberRoles(), claims, null, false);
 	}	
 	
 	/**
@@ -150,7 +163,7 @@ public class UserManagementService {
 	 * @throws RemoteUserStoreManagerServiceUserStoreExceptionException
 	 */
 	public void deleteNormalUser(String userName) throws AxisFault, RemoteException, RemoteUserStoreManagerServiceUserStoreExceptionException {
-		getUMStub().deleteUser(Utils.getUserNameAtSuperTenant(userName));
+		getUMStub().deleteUser(userName);
 	}
 	
 	/**
@@ -162,7 +175,7 @@ public class UserManagementService {
 	 * @throws RemoteUserStoreManagerServiceUserStoreExceptionException
 	 */
 	public boolean checkNormalUserExists(String userName) throws AxisFault, RemoteException, RemoteUserStoreManagerServiceUserStoreExceptionException {
-		return getUMStub().isExistingUser(Utils.getUserNameAtSuperTenant(userName));
+		return getUMStub().isExistingUser(userName);
 	}
 	
 	/**
@@ -185,7 +198,7 @@ public class UserManagementService {
 	 * @throws AxisFault 
 	 */
 	public List<String> getNormalUserRoles(String userName) throws AxisFault, RemoteException, RemoteUserStoreManagerServiceUserStoreExceptionException {
-		return Arrays.asList(getUMStub().getRoleListOfUser(Utils.getUserNameAtSuperTenant(userName)));
+		return Arrays.asList(getUMStub().getRoleListOfUser(userName));
 	}
 	/**
 	 * Update user roles from the specified role model
@@ -214,7 +227,19 @@ public class UserManagementService {
 		} 
 	}
 
-/**
+	/**
+	 * @param username
+	 * @param password
+	 * @throws RemoteUserStoreManagerServiceUserStoreExceptionException 
+	 * @throws RemoteException 
+	 * @throws AxisFault 
+	 */
+	public boolean authenticate(String username, String password) throws AxisFault, RemoteException, RemoteUserStoreManagerServiceUserStoreExceptionException {
+		boolean authenticate = getUMStub().authenticate(username, password);
+		return authenticate;
+	}
+
+	/**
 	 * @param string
 	 * @param tenantId
 	 * @return

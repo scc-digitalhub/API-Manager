@@ -76,6 +76,18 @@ public class TestUM {
 	}
 
 	@Test
+	public void testUpdatePassword() throws AxisFault, RemoteException, RemoteUserStoreManagerServiceUserStoreExceptionException {
+		ClaimValue[] claims = new ClaimValue[]{
+				Utils.createClaimValue("http://wso2.org/claims/emailaddress", TEST_USER)
+		};
+		umService.createNormalUser(TEST_USER, "123456", new String[]{"internal/everyone"}, claims);
+		Assert.assertTrue(umService.checkNormalUserExists(TEST_USER));
+
+		umService.updatePassword(TEST_USER, "654321");
+		Assert.assertTrue(umService.checkNormalUserExists(TEST_USER));
+	}
+
+	@Test
 	public void testCreateSubscriber() throws AxisFault, RemoteException, RemoteUserStoreManagerServiceUserStoreExceptionException {
 		ClaimValue[] claims = new ClaimValue[]{
 				Utils.createClaimValue("http://wso2.org/claims/emailaddress", TEST_USER)

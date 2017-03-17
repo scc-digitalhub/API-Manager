@@ -104,6 +104,18 @@ public class UserManagementService {
 	}
 
 	/**
+	 * Update user password
+	 * @param userName
+	 * @param password
+	 * @throws AxisFault
+	 * @throws RemoteException
+	 * @throws RemoteUserStoreManagerServiceUserStoreExceptionException
+	 */
+	public void updatePassword(String userName, String password) throws AxisFault, RemoteException, RemoteUserStoreManagerServiceUserStoreExceptionException {
+		getUMStub().updateCredentialByAdmin(Utils.getUserNameAtSuperTenant(userName), password);
+	}
+
+	/**
 	 * Create WSO2 API Publisher/creator
 	 * @param userName
 	 * @param password
@@ -150,7 +162,7 @@ public class UserManagementService {
 	 * @throws RemoteUserStoreManagerServiceUserStoreExceptionException
 	 */
 	public boolean checkNormalUserExists(String userName) throws AxisFault, RemoteException, RemoteUserStoreManagerServiceUserStoreExceptionException {
-		return getUMStub().getUserId(Utils.getUserNameAtSuperTenant(userName)) >= 0;
+		return getUMStub().isExistingUser(Utils.getUserNameAtSuperTenant(userName));
 	}
 	
 	/**

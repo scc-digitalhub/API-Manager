@@ -22,6 +22,7 @@ package it.smartcommunitylab.wso2aac.keymanager;
 
 import it.smartcommunitylab.wso2aac.keymanager.model.AACResource;
 import it.smartcommunitylab.wso2aac.keymanager.model.AACService;
+import it.smartcommunitylab.wso2aac.keymanager.model.AACTokenValidation;
 import it.smartcommunitylab.wso2aac.keymanager.model.ClientAppBasic;
 
 import java.io.BufferedReader;
@@ -32,7 +33,6 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -72,18 +72,13 @@ import org.wso2.carbon.apimgt.impl.factory.KeyManagerHolder;
 import org.wso2.carbon.apimgt.impl.utils.APIMgtDBUtil;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.apimgt.keymgt.client.SubscriberKeyMgtClientPool;
-import org.wso2.carbon.apimgt.keymgt.internal.ServiceReferenceHolder;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.oauth.common.OAuthConstants;
 import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
 import org.wso2.carbon.identity.oauth.dao.OAuthAppDAO;
 import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
-import org.wso2.carbon.identity.oauth2.OAuth2TokenValidationService;
 import org.wso2.carbon.identity.oauth2.dao.TokenMgtDAO;
-import org.wso2.carbon.identity.oauth2.dto.OAuth2ClientApplicationDTO;
-import org.wso2.carbon.identity.oauth2.dto.OAuth2TokenValidationRequestDTO;
-import org.wso2.carbon.identity.oauth2.dto.OAuth2TokenValidationResponseDTO;
 import org.wso2.carbon.identity.oauth2.model.AccessTokenDO;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 
@@ -677,71 +672,57 @@ public class AACOAuthClient extends AbstractKeyManager {
     }
     
     @Override
-    public AccessTokenInfo getTokenMetaData(String accessToken) throws APIManagementException {
-        AccessTokenInfo tokenInfo = new AccessTokenInfo();
-        OAuth2TokenValidationService oAuth2TokenValidationService = new OAuth2TokenValidationService();
-        OAuth2TokenValidationRequestDTO requestDTO = new OAuth2TokenValidationRequestDTO();
-        OAuth2TokenValidationRequestDTO.OAuth2AccessToken token = requestDTO.new OAuth2AccessToken();
+    public AccessTokenInfo getTokenMetaData(String token) throws APIManagementException {
+    	AccessTokenInfo tokenInfo = new AccessTokenInfo();
+    	tokenInfo.setAccessToken(token);
+    	
+    	HttpClient client = getHttpClient();
+        ObjectMapper mapper = new ObjectMapper();
 
-        token.setIdentifier(accessToken);
-        token.setTokenType("bearer");
-        requestDTO.setAccessToken(token);
+        String registrationURL = configuration.getParameter(ClientConstants.CLIENT_REG_ENDPOINT);
+//        String accessToken = getOauthToken();
+        BufferedReader reader = null;
 
-        //TODO: If these values are not set, validation will fail giving an NPE. Need to see why that happens
-        OAuth2TokenValidationRequestDTO.TokenValidationContextParam contextParam = requestDTO.new
-                TokenValidationContextParam();
-        contextParam.setKey("dummy");
-        contextParam.setValue("dummy");
+        try {
+            HttpGet request = new HttpGet(registrationURL.trim() + "/resources/token");
+            //set authorization header.
+            request.addHeader(ClientConstants.AUTHORIZATION, ClientConstants.BEARER + token);
+            HttpResponse response = client.execute(request);
 
-        OAuth2TokenValidationRequestDTO.TokenValidationContextParam[] contextParams =
-                new OAuth2TokenValidationRequestDTO.TokenValidationContextParam[1];
-        contextParams[0] = contextParam;
-        requestDTO.setContext(contextParams);
+            int responseCode = response.getStatusLine().getStatusCode();
 
-        OAuth2ClientApplicationDTO clientApplicationDTO = oAuth2TokenValidationService.findOAuthConsumerIfTokenIsValid
-                (requestDTO);
-        OAuth2TokenValidationResponseDTO responseDTO = clientApplicationDTO.getAccessTokenValidationResponse();
+            HttpEntity entity = response.getEntity();
 
-        if (!responseDTO.isValid()) {
-            tokenInfo.setTokenValid(responseDTO.isValid());
-            log.error("Invalid OAuth Token : " + responseDTO.getErrorMsg());
-            tokenInfo.setErrorcode(APIConstants.KeyValidationStatus.API_AUTH_INVALID_CREDENTIALS);
-            return tokenInfo;
-        }
+            reader = new BufferedReader(new InputStreamReader(entity.getContent(), "UTF-8"));
 
-        tokenInfo.setTokenValid(responseDTO.isValid());
-        tokenInfo.setEndUserName(responseDTO.getAuthorizedUser());
-        tokenInfo.setConsumerKey(clientApplicationDTO.getConsumerKey());
+            if (responseCode == HttpStatus.SC_OK) {
 
-        // Convert Expiry Time to milliseconds.
-        if (responseDTO.getExpiryTime() == Long.MAX_VALUE) {
-            tokenInfo.setValidityPeriod(Long.MAX_VALUE);
-        } else {
-            tokenInfo.setValidityPeriod(responseDTO.getExpiryTime() * 1000);
-        }
-
-        tokenInfo.setIssuedTime(System.currentTimeMillis());
-        tokenInfo.setScope(responseDTO.getScope());
-
-        // If token has am_application_scope, consider the token as an Application token.
-        String[] scopes = responseDTO.getScope();
-        String applicationTokenScope = ServiceReferenceHolder.getInstance().getAPIManagerConfigurationService().
-                                                getAPIManagerConfiguration().getFirstProperty(APIConstants.
-                APPLICATION_TOKEN_SCOPE);
-
-        if (scopes != null && applicationTokenScope != null && !applicationTokenScope.isEmpty()) {
-            if (Arrays.asList(scopes).contains(applicationTokenScope)) {
-                tokenInfo.setApplicationToken(true);
+            	AACTokenValidation validation = mapper.readValue(reader, AACTokenValidation.class);
+            	
+            	tokenInfo.setApplicationToken(validation.isApplicationToken());
+            	tokenInfo.setConsumerKey(validation.getClientId());
+            	tokenInfo.setScope(validation.getScope());
+            	tokenInfo.setTokenValid(validation.isValid());
+            	tokenInfo.setIssuedTime(validation.getIssuedTime());
+            	tokenInfo.setValidityPeriod(validation.getValidityPeriod());
+            	tokenInfo.setEndUserName(validation.getUser());
+            } else {
+                handleException("Something went wrong while checking authorization for token " + token);
             }
-        }
 
-        if (APIUtil.checkAccessTokenPartitioningEnabled() &&
-                APIUtil.checkUserNameAssertionEnabled()) {
-            tokenInfo.setConsumerKey(ApiMgtDAO.getInstance().getConsumerKeyForTokenWhenTokenPartitioningEnabled(accessToken));
-        }
-
-        return tokenInfo;
+        } catch (Exception e) {
+			handleException("Error checking authorization for token.", e);
+		} finally {
+			if (reader != null) {
+				IOUtils.closeQuietly(reader);
+			}
+			client.getConnectionManager().shutdown();
+		}    	
+    	
+    	
+    	return tokenInfo;
     }
+    
 
     @Override
     public KeyManagerConfiguration getKeyManagerConfiguration() throws APIManagementException {

@@ -115,5 +115,16 @@ public class TenantManagementService {
 			options.setManageSession(true);
 		}
 		return mtStub;
+	}
+
+	/**
+	 * Update tenant data
+	 * @param bean
+	 * @throws TenantMgtAdminServiceExceptionException 
+	 * @throws RemoteException 
+	 * @throws AxisFault 
+	 */
+	public void updateTenant(TenantInfoBean bean) throws AxisFault, RemoteException, TenantMgtAdminServiceExceptionException {
+		getMTStub().updateTenant(bean);
 	}	
 }

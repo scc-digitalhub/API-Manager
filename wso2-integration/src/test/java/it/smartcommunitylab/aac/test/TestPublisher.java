@@ -27,11 +27,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.wso2.carbon.tenant.mgt.stub.TenantMgtAdminServiceExceptionException;
+import org.wso2.carbon.um.ws.api.stub.ClaimValue;
 import org.wso2.carbon.um.ws.api.stub.RemoteUserStoreManagerServiceUserStoreExceptionException;
 
 import it.smartcommunitylab.aac.wso2.IntegrationConfig;
 import it.smartcommunitylab.aac.wso2.services.TenantManagementService;
 import it.smartcommunitylab.aac.wso2.services.UserManagementService;
+import it.smartcommunitylab.aac.wso2.services.Utils;
 
 /**
  * @author raman
@@ -71,5 +73,9 @@ public class TestPublisher {
 	public void testCreatePublisher() throws AxisFault, RemoteException, RemoteUserStoreManagerServiceUserStoreExceptionException, TenantMgtAdminServiceExceptionException {
 		umService.createPublisher(TEST_DOMAIN, TEST_USER, "123456", "First", "Last");
 		Assert.assertNotNull(tenantService.getTenant(TEST_DOMAIN));
+		
+		umService.updatePublisherPassword(TEST_USER, TEST_DOMAIN, "654321");
+
 	}
+	
 }

@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.wso2.carbon.identity.application.mgt.stub.IdentityApplicationManagementServiceStub;
 import org.wso2.carbon.tenant.mgt.stub.TenantMgtAdminServiceExceptionException;
+import org.wso2.carbon.tenant.mgt.stub.beans.xsd.TenantInfoBean;
 import org.wso2.carbon.um.ws.api.stub.ClaimValue;
 import org.wso2.carbon.um.ws.api.stub.RemoteUserStoreManagerServiceStub;
 import org.wso2.carbon.um.ws.api.stub.RemoteUserStoreManagerServiceUserStoreExceptionException;
@@ -123,9 +124,12 @@ public class UserManagementService {
 	 * @throws AxisFault
 	 * @throws RemoteException
 	 * @throws RemoteUserStoreManagerServiceUserStoreExceptionException
+	 * @throws TenantMgtAdminServiceExceptionException 
 	 */
-	public void updatePublisherPassword(String userName, String domain, String password) throws AxisFault, RemoteException, RemoteUserStoreManagerServiceUserStoreExceptionException {
-		getUMStub().updateCredentialByAdmin(Utils.getUserNameAtTenant(userName, domain), password);
+	public void updatePublisherPassword(String userName, String domain, String password) throws AxisFault, RemoteException, RemoteUserStoreManagerServiceUserStoreExceptionException, TenantMgtAdminServiceExceptionException {
+		TenantInfoBean bean = tenantService.getTenant(domain);
+		bean.setAdminPassword(password);
+		tenantService.updateTenant(bean);
 	}
 
 	/**

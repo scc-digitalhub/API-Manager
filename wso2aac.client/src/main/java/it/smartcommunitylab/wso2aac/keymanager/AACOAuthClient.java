@@ -705,7 +705,7 @@ public class AACOAuthClient extends AbstractKeyManager {
             	tokenInfo.setTokenValid(validation.isValid());
             	tokenInfo.setIssuedTime(validation.getIssuedTime());
             	tokenInfo.setValidityPeriod(validation.getValidityPeriod());
-            	tokenInfo.setEndUserName(validation.getUser());
+            	tokenInfo.setEndUserName(validation.getUsername());
             } else {
                 handleException("Something went wrong while checking authorization for token " + token);
             }

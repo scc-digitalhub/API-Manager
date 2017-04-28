@@ -653,6 +653,7 @@ public class AACOAuthClient extends AbstractKeyManager {
     	token.setIssuedTime(new Timestamp(tokenInfo.getIssuedTime()));
     	token.setValidityPeriod(tokenInfo.getValidityPeriod());
     	token.setValidityPeriodInMillis(tokenInfo.getValidityPeriod() * 1000L);
+    	token.setRefreshTokenIssuedTime(new Timestamp(tokenInfo.getIssuedTime()));
     	token.setTokenId(UUID.randomUUID().toString());
     	token.setTokenType("APPLICATION");
 

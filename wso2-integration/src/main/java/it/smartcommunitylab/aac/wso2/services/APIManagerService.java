@@ -82,14 +82,14 @@ public abstract class APIManagerService {
 	
 	protected HttpEntity<String> secureEntity(String token) {
 		HttpHeaders headers = new HttpHeaders();
-    	headers.set("Authorization", token);
+    	headers.set("Authorization", "Bearer "  + token);
     	HttpEntity<String> entity = new HttpEntity<>(headers);
 		return entity;
 	}
 	
 	protected <T> HttpEntity<T> secureEntity(T value, String token) {
 		HttpHeaders headers = new HttpHeaders();
-    	headers.set("Authorization", token);
+    	headers.set("Authorization", "Bearer "  + token);
     	HttpEntity<T> entity = new HttpEntity<>(value, headers);
 		return entity;
 	}

@@ -68,7 +68,7 @@ public class APIPublisherService extends APIManagerService {
 	 * @param limit
 	 * @return List of all {@link Subscription}s to the specified API of the developer associated to the token, paginated.
 	 */
-	public DataList<Subscription> getSubscriptions(String apiId, Integer offset, Integer limit, String token) {
+	public DataList<Subscription> getSubscriptions(String apiId, String apiDomain, Integer offset, Integer limit, String token) {
 		API api = get(token, "/apis/{apiId}", API.class, apiId);
 		Set<String> roles = getAPIRoles(api);
 		
@@ -81,8 +81,12 @@ public class APIPublisherService extends APIManagerService {
 			s.setAppName(app.getName());
 			
 			try {
-				List<String>  allRoles = new ArrayList<>(umService.getUserRoles(Utils.getUserNormalizedName(s.getSubscriber()),Utils.getUserTenantName(s.getSubscriber())));
-				allRoles.retainAll(roles);
+				List<String>  allRoles = new ArrayList<>();
+				for (String role : roles) {
+					if (umService.isUserInRole(s.getSubscriber(), role, apiDomain)) {
+						allRoles.add(role);
+					}
+				}
 				s.setRoles(allRoles);
 			} catch (Exception e) {
 				logger.error("Error retrieving roles of the user "+ s.getSubscriber(), e);

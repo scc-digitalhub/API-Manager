@@ -204,6 +204,18 @@ public class UserManagementService {
 	public List<String> getNormalUserRoles(String userName) throws AxisFault, RemoteException, RemoteUserStoreManagerServiceUserStoreExceptionException {
 		return Arrays.asList(getUMStub().getRoleListOfUser(userName));
 	}
+	
+	public boolean isUserInRole(String username, String role, String roleDomain) throws AxisFault, RemoteException, TenantMgtAdminServiceExceptionException, RemoteUserStoreManagerServiceUserStoreExceptionException {
+		int tenantId = tenantService.getTenant(roleDomain).getTenantId();
+		String[] users = getUMStub().getUserListOfRole(role+"@"+tenantId);
+		if (users != null) {
+			for (String user : users) {
+				if (user.equals(username)) return true;
+			}
+		}
+		return false;
+	}
+	
 	/**
 	 * Update user roles from the specified role model
 	 * 
@@ -231,6 +243,35 @@ public class UserManagementService {
 		} 
 	}
 
+
+//	/**
+//	 * Create a new role in a specified domain
+//	 * @param roleName
+//	 * @param domain
+//	 * @throws AxisFault
+//	 * @throws RemoteException
+//	 * @throws TenantMgtAdminServiceExceptionException
+//	 * @throws RemoteUserStoreManagerServiceUserStoreExceptionException
+//	 */
+//	public void createRole(String roleName, String domain) throws AxisFault, RemoteException, TenantMgtAdminServiceExceptionException, RemoteUserStoreManagerServiceUserStoreExceptionException {
+//		int tenantId = tenantService.getTenant(domain).getTenantId();
+//		getUMStub().addRole(roleName+"@"+tenantId, null, null);
+//	}
+//	
+//	/**
+//	 * Delete a specified role in a domain
+//	 * @param testRole
+//	 * @param testDomain
+//	 * @throws RemoteUserStoreManagerServiceUserStoreExceptionException 
+//	 * @throws RemoteException 
+//	 * @throws AxisFault 
+//	 * @throws TenantMgtAdminServiceExceptionException 
+//	 */
+//	public void deleteRole(String roleName, String domain) throws AxisFault, RemoteException, RemoteUserStoreManagerServiceUserStoreExceptionException, TenantMgtAdminServiceExceptionException {
+//		int tenantId = tenantService.getTenant(domain).getTenantId();
+//		getUMStub().deleteRole(roleName+"@"+tenantId);
+//	}
+
 	/**
 	 * @param username
 	 * @param password
@@ -256,5 +297,4 @@ public class UserManagementService {
 		if (string.endsWith(suffix)) return string;
 		return string + suffix;
 	}
-
 }

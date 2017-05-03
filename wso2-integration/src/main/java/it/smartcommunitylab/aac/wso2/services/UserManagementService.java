@@ -16,6 +16,9 @@
 
 package it.smartcommunitylab.aac.wso2.services;
 
+import it.smartcommunitylab.aac.wso2.WSO2Constans;
+import it.smartcommunitylab.aac.wso2.model.RoleModel;
+
 import java.rmi.RemoteException;
 import java.util.Arrays;
 import java.util.List;
@@ -33,9 +36,6 @@ import org.wso2.carbon.um.ws.api.stub.ClaimValue;
 import org.wso2.carbon.um.ws.api.stub.RemoteUserStoreManagerServiceStub;
 import org.wso2.carbon.um.ws.api.stub.RemoteUserStoreManagerServiceUserStoreExceptionException;
 import org.wso2.carbon.utils.CarbonUtils;
-
-import it.smartcommunitylab.aac.wso2.WSO2Constans;
-import it.smartcommunitylab.aac.wso2.model.RoleModel;
 
 /**
  * @author raman
@@ -217,7 +217,7 @@ public class UserManagementService {
 	 */
 	public void updateRoles(RoleModel roleModel, String username, String domain) throws AxisFault, RemoteException, TenantMgtAdminServiceExceptionException, RemoteUserStoreManagerServiceUserStoreExceptionException {
 		int tenantId = tenantService.getTenant(domain).getTenantId();
-		String[] toDel = null, toAdd = null;
+		String[] toDel = {}, toAdd = {};
 		if (roleModel.getAddRoles() != null && roleModel.getAddRoles().size() > 0) {
 			toAdd = new String[roleModel.getAddRoles().size()];
 			for (int i = 0; i < toAdd.length; i++) toAdd[i] = fullName(roleModel.getAddRoles().get(i), tenantId);

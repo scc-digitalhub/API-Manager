@@ -101,7 +101,6 @@ public class APIPublisherService extends APIManagerService {
 	 * 
 	 * @param apiId
 	 * @param user the user to check the roles
-	 * @param domain the domain of the user
 	 * @param token the token of the API developer
 	 * @return List of roles the specified user has with respect to the specified API.
 	 * @throws AxisFault
@@ -109,7 +108,7 @@ public class APIPublisherService extends APIManagerService {
 	 * @throws RemoteUserStoreManagerServiceUserStoreExceptionException
 	 * @throws TenantMgtAdminServiceExceptionException 
 	 */
-	public List<String> getUserAPIRoles(String apiId, String apiDomain, String user, String domain, String token) throws AxisFault, RemoteException, RemoteUserStoreManagerServiceUserStoreExceptionException, TenantMgtAdminServiceExceptionException {
+	public List<String> getUserAPIRoles(String apiId, String apiDomain, String user,String token) throws AxisFault, RemoteException, RemoteUserStoreManagerServiceUserStoreExceptionException, TenantMgtAdminServiceExceptionException {
 		API api = get(token, "/apis/{apiId}", API.class, apiId);
 		Set<String> roles = getAPIRoles(api);
 		List<String>  allRoles = new ArrayList<>();
@@ -204,6 +203,6 @@ public class APIPublisherService extends APIManagerService {
 	public @ResponseBody List<String> updateRoles(String apiId, RoleModel roleModel, String username, String domain, String token) throws AxisFault, RemoteException, TenantMgtAdminServiceExceptionException, RemoteUserStoreManagerServiceUserStoreExceptionException 
 	{
 		umService.updateRoles(roleModel, username, domain);
-		return getUserAPIRoles(apiId, username, domain, token);
+		return getUserAPIRoles(apiId, domain, username, token);
 	}
 }

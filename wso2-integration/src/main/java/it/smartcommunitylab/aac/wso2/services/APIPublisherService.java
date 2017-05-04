@@ -70,7 +70,7 @@ public class APIPublisherService extends APIManagerService {
 	 */
 	public DataList<Subscription> getSubscriptions(String apiId, String apiDomain, Integer offset, Integer limit, String token) {
 		API api = get(token, "/apis/{apiId}", API.class, apiId);
-		Set<String> roles = getAPIRoles(api);
+//		Set<String> roles = getAPIRoles(api);
 		
 		ParameterizedTypeReference<DataList<Subscription>> type = new ParameterizedTypeReference<DataList<Subscription>>() {};
 		DataList<Subscription> result = get(token, "/subscriptions?apiId={apiId}&limit={limit}&offset={offset}", type, apiId, limit, offset);
@@ -80,17 +80,17 @@ public class APIPublisherService extends APIManagerService {
 			s.setSubscriber(Utils.getUserNormalizedName(app.getSubscriber()));
 			s.setAppName(app.getName());
 			
-			try {
-				List<String>  allRoles = new ArrayList<>();
-				for (String role : roles) {
-					if (umService.isUserInRole(s.getSubscriber(), role, apiDomain)) {
-						allRoles.add(role);
-					}
-				}
-				s.setRoles(allRoles);
-			} catch (Exception e) {
-				logger.error("Error retrieving roles of the user "+ s.getSubscriber(), e);
-			}
+//			try {
+//				List<String>  allRoles = new ArrayList<>();
+//				for (String role : roles) {
+//					if (umService.isUserInRole(s.getSubscriber(), role, apiDomain)) {
+//						allRoles.add(role);
+//					}
+//				}
+//				s.setRoles(allRoles);
+//			} catch (Exception e) {
+//				logger.error("Error retrieving roles of the user "+ s.getSubscriber(), e);
+//			}
 			
 		});
 		

@@ -17,6 +17,8 @@
 package it.smartcommunitylab.aac.test;
 
 import java.rmi.RemoteException;
+import java.util.Collections;
+import java.util.List;
 
 import org.apache.axis2.AxisFault;
 import org.junit.Assert;
@@ -31,6 +33,7 @@ import org.wso2.carbon.um.ws.api.stub.ClaimValue;
 import org.wso2.carbon.um.ws.api.stub.RemoteUserStoreManagerServiceUserStoreExceptionException;
 
 import it.smartcommunitylab.aac.wso2.IntegrationConfig;
+import it.smartcommunitylab.aac.wso2.model.RoleModel;
 import it.smartcommunitylab.aac.wso2.services.TenantManagementService;
 import it.smartcommunitylab.aac.wso2.services.UserManagementService;
 import it.smartcommunitylab.aac.wso2.services.Utils;
@@ -47,7 +50,9 @@ public class TestPublisher {
 	 * 
 	 */
 	private static final String TEST_USER = "test1@test-1.com";
+	private static final String TEST_USER_NORMAL = "test-normal@test-1.com";
 	private static final String TEST_DOMAIN = "test.com";
+	private static final String TEST_ROLE = "TEST_ROLE";
 	@Autowired
 	private UserManagementService umService;
 	@Autowired
@@ -62,6 +67,12 @@ public class TestPublisher {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+		try {
+			umService.deleteNormalUser(TEST_USER_NORMAL);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
 	}
 
 	@Test
@@ -77,5 +88,24 @@ public class TestPublisher {
 		umService.updatePublisherPassword(TEST_USER, TEST_DOMAIN, "654321");
 
 	}
-	
+
+	//@Test
+	public void testManageDomainRole() throws AxisFault, RemoteException, RemoteUserStoreManagerServiceUserStoreExceptionException, TenantMgtAdminServiceExceptionException {
+		umService.createPublisher(TEST_DOMAIN, TEST_USER, "123456", "First", "Last");
+		Assert.assertNotNull(tenantService.getTenant(TEST_DOMAIN));
+		
+		ClaimValue[] claims = new ClaimValue[]{
+				Utils.createClaimValue("http://wso2.org/claims/emailaddress", TEST_USER_NORMAL)
+		};
+		umService.createNormalUser(TEST_USER_NORMAL, "123456", new String[]{"internal/everyone"}, claims);
+		Assert.assertTrue(umService.checkNormalUserExists(TEST_USER_NORMAL));
+
+		RoleModel roleModel = new RoleModel();
+		roleModel.setAddRoles(Collections.singletonList(TEST_ROLE));
+		umService.updateRoles(roleModel, TEST_USER_NORMAL, TEST_DOMAIN);
+		
+		Assert.assertTrue(umService.isUserInRole(TEST_USER_NORMAL, TEST_ROLE, TEST_DOMAIN));
+		
+	}
+
 }

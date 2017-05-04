@@ -16,6 +16,13 @@
 
 package it.smartcommunitylab.aac.wso2.services;
 
+import it.smartcommunitylab.aac.wso2.model.API;
+import it.smartcommunitylab.aac.wso2.model.APIInfo;
+import it.smartcommunitylab.aac.wso2.model.App;
+import it.smartcommunitylab.aac.wso2.model.DataList;
+import it.smartcommunitylab.aac.wso2.model.RoleModel;
+import it.smartcommunitylab.aac.wso2.model.Subscription;
+
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -34,13 +41,6 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.wso2.carbon.tenant.mgt.stub.TenantMgtAdminServiceExceptionException;
 import org.wso2.carbon.um.ws.api.stub.RemoteUserStoreManagerServiceUserStoreExceptionException;
-
-import it.smartcommunitylab.aac.wso2.model.API;
-import it.smartcommunitylab.aac.wso2.model.APIInfo;
-import it.smartcommunitylab.aac.wso2.model.App;
-import it.smartcommunitylab.aac.wso2.model.DataList;
-import it.smartcommunitylab.aac.wso2.model.RoleModel;
-import it.smartcommunitylab.aac.wso2.model.Subscription;
 
 /**
  * @author raman
@@ -68,7 +68,7 @@ public class APIPublisherService extends APIManagerService {
 	 * @param limit
 	 * @return List of all {@link Subscription}s to the specified API of the developer associated to the token, paginated.
 	 */
-	public DataList<Subscription> getSubscriptions(String apiId, Integer offset, Integer limit, String token) {
+	public DataList<Subscription> getSubscriptions(String apiId, String apiDomain, Integer offset, Integer limit, String token) {
 		API api = get(token, "/apis/{apiId}", API.class, apiId);
 		Set<String> roles = getAPIRoles(api);
 		
@@ -81,8 +81,12 @@ public class APIPublisherService extends APIManagerService {
 			s.setAppName(app.getName());
 			
 			try {
-				List<String>  allRoles = new ArrayList<>(umService.getUserRoles(Utils.getUserNormalizedName(s.getSubscriber()),Utils.getUserTenantName(s.getSubscriber())));
-				allRoles.retainAll(roles);
+				List<String>  allRoles = new ArrayList<>();
+				for (String role : roles) {
+					if (umService.isUserInRole(s.getSubscriber(), role, apiDomain)) {
+						allRoles.add(role);
+					}
+				}
 				s.setRoles(allRoles);
 			} catch (Exception e) {
 				logger.error("Error retrieving roles of the user "+ s.getSubscriber(), e);
@@ -97,18 +101,22 @@ public class APIPublisherService extends APIManagerService {
 	 * 
 	 * @param apiId
 	 * @param user the user to check the roles
-	 * @param domain the domain of the user
 	 * @param token the token of the API developer
 	 * @return List of roles the specified user has with respect to the specified API.
 	 * @throws AxisFault
 	 * @throws RemoteException
 	 * @throws RemoteUserStoreManagerServiceUserStoreExceptionException
+	 * @throws TenantMgtAdminServiceExceptionException 
 	 */
-	public List<String> getUserAPIRoles(String apiId, String user, String domain, String token) throws AxisFault, RemoteException, RemoteUserStoreManagerServiceUserStoreExceptionException {
+	public List<String> getUserAPIRoles(String apiId, String apiDomain, String user,String token) throws AxisFault, RemoteException, RemoteUserStoreManagerServiceUserStoreExceptionException, TenantMgtAdminServiceExceptionException {
 		API api = get(token, "/apis/{apiId}", API.class, apiId);
 		Set<String> roles = getAPIRoles(api);
-		List<String>  allRoles = new ArrayList<>(umService.getUserRoles(user, domain));
-		allRoles.retainAll(roles);
+		List<String>  allRoles = new ArrayList<>();
+		for (String role : roles) {
+			if (umService.isUserInRole(user, role, apiDomain)) {
+				allRoles.add(role);
+			}
+		}
 		return allRoles;
 	}
 	
@@ -195,6 +203,6 @@ public class APIPublisherService extends APIManagerService {
 	public @ResponseBody List<String> updateRoles(String apiId, RoleModel roleModel, String username, String domain, String token) throws AxisFault, RemoteException, TenantMgtAdminServiceExceptionException, RemoteUserStoreManagerServiceUserStoreExceptionException 
 	{
 		umService.updateRoles(roleModel, username, domain);
-		return getUserAPIRoles(apiId, username, domain, token);
+		return getUserAPIRoles(apiId, domain, username, token);
 	}
 }

@@ -46,7 +46,6 @@ public class TenantManagementService {
 
 	public TenantInfoBean getTenant(String domain) throws AxisFault, RemoteException, TenantMgtAdminServiceExceptionException {
 		TenantInfoBean tenant = getMTStub().getTenant(domain);
-		if (tenant.getTenantId() <= 0) return null;
 		return tenant;
 	}
 

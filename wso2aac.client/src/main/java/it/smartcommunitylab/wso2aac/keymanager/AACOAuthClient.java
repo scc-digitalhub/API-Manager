@@ -20,11 +20,6 @@
 
 package it.smartcommunitylab.wso2aac.keymanager;
 
-import it.smartcommunitylab.wso2aac.keymanager.model.AACResource;
-import it.smartcommunitylab.wso2aac.keymanager.model.AACService;
-import it.smartcommunitylab.wso2aac.keymanager.model.AACTokenValidation;
-import it.smartcommunitylab.wso2aac.keymanager.model.ClientAppBasic;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -87,6 +82,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+
+import it.smartcommunitylab.wso2aac.keymanager.model.AACResource;
+import it.smartcommunitylab.wso2aac.keymanager.model.AACService;
+import it.smartcommunitylab.wso2aac.keymanager.model.AACTokenValidation;
+import it.smartcommunitylab.wso2aac.keymanager.model.ClientAppBasic;
 
 public class AACOAuthClient extends AbstractKeyManager {
 
@@ -338,7 +338,7 @@ public class AACOAuthClient extends AbstractKeyManager {
 			}
 
 		} catch (Exception e) {
-//			cleanupRegistrationByAppName(oauthAppRequest.getOAuthApplicationInfo().getClientName(), (String)oauthAppRequest.getOAuthApplicationInfo().getParameter("username"), (String)oauthAppRequest.getOAuthApplicationInfo().getParameter("key_type"));
+			cleanupRegistrationByAppName(oauthAppRequest.getOAuthApplicationInfo().getClientName(), (String)oauthAppRequest.getOAuthApplicationInfo().getParameter("username"), (String)oauthAppRequest.getOAuthApplicationInfo().getParameter("key_type"));
 			handleException("Error updating client app.", e);
 		} finally {
 			if (reader != null) {
@@ -909,6 +909,7 @@ public class AACOAuthClient extends AbstractKeyManager {
 	
     public static final String DELETE_MAPPING = "DELETE FROM AM_APPLICATION_KEY_MAPPING WHERE APPLICATION_ID=? AND KEY_TYPE=?";
     public static final String DELETE_REGISTRATION = "DELETE FROM AM_APPLICATION_REGISTRATION WHERE APP_ID=? AND TOKEN_TYPE=?";
+    public static final String DELETE_OAUTH = "DELETE FROM IDN_OAUTH_CONSUMER_APPS WHERE APP_NAME=?";
     
     private void cleanupRegistrationByClientId(String clientId) throws APIManagementException {
     	ApiMgtDAO dao = ApiMgtDAO.getInstance();
@@ -920,6 +921,7 @@ public class AACOAuthClient extends AbstractKeyManager {
     	ApiMgtDAO dao = ApiMgtDAO.getInstance();
     	int id = dao.getApplicationId(appName, userName);
     	cleanupRegistration(id, tokenType);
+    	cleanupOauthApp(appName);
     }    
     
 	private void cleanupRegistration(int id, String tokenType) throws APIManagementException {
@@ -957,6 +959,34 @@ public class AACOAuthClient extends AbstractKeyManager {
 			APIMgtDBUtil.closeAllConnections(ps1, conn, null);
 		}
 	}
+	
+	private void cleanupOauthApp(String appName) throws APIManagementException {
+		Connection conn = null;
+		PreparedStatement ps1 = null;
+
+		try {
+			conn = APIMgtDBUtil.getConnection();
+			conn.setAutoCommit(false);			
+			
+			ps1 = conn.prepareStatement(DELETE_OAUTH);
+			ps1.setString(1, appName);
+			ps1.execute();
+			
+			conn.commit();
+		} catch (SQLException e) {
+			try {
+				if (conn != null) {
+					conn.rollback();
+				}
+			} catch (SQLException e1) {
+				handleException("Error occurred while Rolling back changes done on Application Registration", e1);
+			}
+			handleException("Error occurred while cleaning up : " + appName, e);
+		} finally {
+			APIMgtDBUtil.closeStatement(ps1);
+			APIMgtDBUtil.closeAllConnections(ps1, conn, null);
+		}
+	}	
     
 
     /**

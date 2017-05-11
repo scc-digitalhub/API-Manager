@@ -126,6 +126,6 @@ Import and add WSO2 certificate to the default keystore.
    <parameter name="hostname" locked="false">api-dev.smartcommunitylab.it</parameter>
    ```
   - Configure Apache Virtual Host:
-    - port 80: ProxtPath and ProxyPathReverse / to ip:8282/
+    - port 80: ProxtPath and ProxyPathReverse / to ip:8280/
     - port 443: ProxtPath and ProxyPathReverse / to ip:8243/
      

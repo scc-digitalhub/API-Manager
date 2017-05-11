@@ -95,6 +95,37 @@ Import and add WSO2 certificate to the default keystore.
 ``sudo keytool -import -trustcacerts -file cert.pem -alias root -keystore JAVA_HOME/jre/lib/security/cacerts``
 	
 
-		
-	     
- 
+### 4. Proxy server configuration (Apache)
+
+**4.1. Configure proxy for apps **
+
+- Configure proxy publisher and subscriber apps: repository/deployment/server/jaggeryapps/publisher/site/conf/site.json (same for store):
+  - context: /publisher
+  - host: < mydomain.com >, e.g., am-dev.smartcommunitylab.it
+- Configure management console: repository/conf/carbon.xml
+  - ``<HostName>am-dev.smartcommunitylab.it</HostName>``
+  - ``<MgtHostName>am-dev.smartcommunitylab.it</MgtHostName>``
+- Configure WSO2 Tomcat reverse proxy: repository/conf/tomcat/catalina-server.xml
+  - Add parameters to 9443 connector:
+    ```
+    proxyPort="443"
+    proxyName="am-dev.smartcommunitylab.it"
+    ```
+  - Configure Apache Virtual Host:
+    - port 80: redirect port 80 to 443
+    - port 443: ProxtPath and ProxyPathReverse / to ip:9443/
+    
+**4.2. API Gateway** 
+ - Configure Gateway endpoint: repository/conf/api-manager.xml
+   ```
+   <GatewayEndpoint>http://api-dev.smartcommunitylab.it,https://api-dev.smartcommunitylab.it</GatewayEndpoint>
+   ```
+ - Configure axis2 transport Ins (http and https): add the following parameters
+   ```
+   <parameter name="proxyPort" locked="false">80</parameter>
+   <parameter name="hostname" locked="false">api-dev.smartcommunitylab.it</parameter>
+   ```
+  - Configure Apache Virtual Host:
+    - port 80: ProxtPath and ProxyPathReverse / to ip:8282/
+    - port 443: ProxtPath and ProxyPathReverse / to ip:8243/
+     

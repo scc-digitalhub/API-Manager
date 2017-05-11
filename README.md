@@ -86,6 +86,13 @@ to
 
 - copy the contents of project *API-Manager/wso2.custom* into the WSO2 directory
 
+### 3. Keystore configuration
+
+Import and add WSO2 certificate to the default keystore.
+
+``sudo rm -f cert.pem && sudo echo -n | openssl s_client -connect localhost:9443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' > ./cert.pem``
+
+``sudo keytool -import -trustcacerts -file cert.pem -alias root -keystore JAVA_HOME/jre/lib/security/cacerts``
 	
 
 		

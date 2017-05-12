@@ -497,11 +497,19 @@ APIDesigner.prototype.init_controllers = function(){
                 "x-wso2-scopes":[]
             }
         };
-        var API_DESIGNER = APIDesigner();        
+        var API_DESIGNER = APIDesigner();   
+	
+		var index =  $("input[name=provider]").val().lastIndexOf("@");
+		var key = "";
+		if (index != -1) {
+			key = $("input[name=provider]").val().substr(index + 1);
+		} else {
+			key = $("input[name=provider]").val();
+		}
 		var scope = {
 			name : $("#scopeName").val(),
 			description : $("#scopeDescription").val(),
-			key : API_DESIGNER.api_doc.info.title + "_" + $("#scopeKey").val(),
+			key : key + "_" + $("#scopeKey").val(),
 			roles : $("#scopeRoles").val()
 		};
 

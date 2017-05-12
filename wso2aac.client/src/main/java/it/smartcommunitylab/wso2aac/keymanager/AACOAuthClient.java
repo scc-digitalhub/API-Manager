@@ -813,9 +813,14 @@ public class AACOAuthClient extends AbstractKeyManager {
 	
 	private String extractDomainFromTenant(String tenant) {
 		String un = tenant.replace("-AT-", "@");
-		int index = un.lastIndexOf('@');
-		if (index != -1) {
-			un = un.substring(index + 1);
+
+		int index = un.indexOf('@');
+		int lastIndex = un.lastIndexOf('@');
+		
+		if (index != lastIndex) {
+			un = un.substring(lastIndex + 1);
+		} else {
+			un = "carbon.super";
 		}
 		return un;
 	}	

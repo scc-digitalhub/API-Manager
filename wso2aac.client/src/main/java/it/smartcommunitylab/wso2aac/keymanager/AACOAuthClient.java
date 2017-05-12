@@ -762,7 +762,7 @@ public class AACOAuthClient extends AbstractKeyManager {
 
 			service.setDescription(api.getDescription());
 			
-			String name = api.getId().getProviderName() + "-" + api.getId().getApiName() + "-" + api.getId().getVersion(); 
+			String name = extractDomainFromTenant(api.getId().getProviderName()) + "-" + api.getId().getApiName() + "-" + api.getId().getVersion(); 
 			service.setServiceName(name);
 
 			for (Scope scope : api.getScopes()) {
@@ -810,6 +810,15 @@ public class AACOAuthClient extends AbstractKeyManager {
 		// TODO false if fail?
 		return true;
 	}
+	
+	private String extractDomainFromTenant(String tenant) {
+		String un = tenant.replace("-AT-", "@");
+		int index = un.lastIndexOf('@');
+		if (index != -1) {
+			un = un.substring(index + 1);
+		}
+		return un;
+	}	
 
     @Override
     public Map getResourceByApiId(String apiId) throws APIManagementException {

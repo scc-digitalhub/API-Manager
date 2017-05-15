@@ -73,7 +73,7 @@ Clone API Manager project
     	</APIKeyManager>
 
 
-- in *repository\conf\identity\identity.xml* change
+- in *repository/conf/identity/identity.xml* change
 
 
    `<OAuthScopeValidator class="org.wso2.carbon.identity.oauth2.validators.JDBCScopeValidator"/>`
@@ -81,6 +81,14 @@ Clone API Manager project
 to
 
    `<OAuthScopeValidator class="it.smartcommunitylab.wso2aac.keymanager.CustomJDBCScopeValidator"/>`
+
+- in *repository/conf/carbon.xml*, enable email username
+
+	`<EnableEmailUserName>true</EnableEmailUserName>`
+
+- in *repository/conf/user-mgt.xml*, add the following property to `<UserStoreManager>`
+
+	`<Property name="UsernameWithEmailJavaScriptRegEx">^[\S]{3,30}$</Property>`
 
 **2.3. WSO2 Theming**
 

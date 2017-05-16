@@ -499,12 +499,14 @@ APIDesigner.prototype.init_controllers = function(){
         };
         var API_DESIGNER = APIDesigner();   
 	
-		var index =  $("input[name=provider]").val().lastIndexOf("@");
+		var index =  $("input[name=provider]").val().indexOf("@");
+		var lastIndex =  $("input[name=provider]").val().lastIndexOf("@");
+		
 		var key = "";
-		if (index != -1) {
-			key = $("input[name=provider]").val().substr(index + 1);
+		if (index != lastIndex) {
+			key = $("input[name=provider]").val().substr(lastIndex + 1);
 		} else {
-			key = $("input[name=provider]").val();
+			key = "carbon.super";
 		}
 		var scope = {
 			name : $("#scopeName").val(),

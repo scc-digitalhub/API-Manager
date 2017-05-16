@@ -44,6 +44,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
@@ -539,6 +540,24 @@ public class AACOAuthClient extends AbstractKeyManager {
 					EntityUtils.consume(entity);
 				}
 			}
+			{
+				String url = registrationEndpoint.trim() + "/wso2/client/validity/" + tokenRequest.getClientId() + "/" + tokenRequest.getValidityPeriod();
+				
+				HttpPatch httpPatch = new HttpPatch(url);
+				
+				httpPatch.setHeader(ClientConstants.AUTHORIZATION, ClientConstants.BEARER + registrationToken);
+				
+				
+				HttpResponse response = httpClient.execute(httpPatch);
+				int responseCode = response.getStatusLine().getStatusCode();
+				
+				HttpEntity entity = response.getEntity();
+				EntityUtils.consume(entity);
+
+				if (HttpStatus.SC_OK != responseCode) {
+					handleException("Some thing wrong here while updating token validity time " + "HTTP Error response code is " + responseCode);
+				}				
+			}
 			
 			{
 				// validity_period doesn't work in oauth
@@ -564,7 +583,10 @@ public class AACOAuthClient extends AbstractKeyManager {
 
 					AccessTokenInfo tokenInfo = new AccessTokenInfo();
 					tokenInfo.setAccessToken((String) token.get("access_token"));
-					tokenInfo.setValidityPeriod((long) (Integer) token.get("expires_in"));
+					
+					if (token.containsKey("expires_in")) {
+						tokenInfo.setValidityPeriod((long) (Integer) token.get("expires_in"));
+					}
 					tokenInfo.setIssuedTime(System.currentTimeMillis());
 
 					String[] scopes = new String[1];

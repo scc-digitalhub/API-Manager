@@ -16,17 +16,11 @@
 
 package it.smartcommunitylab.aac.wso2.services;
 
-import it.smartcommunitylab.aac.wso2.model.API;
-import it.smartcommunitylab.aac.wso2.model.APIInfo;
-import it.smartcommunitylab.aac.wso2.model.App;
-import it.smartcommunitylab.aac.wso2.model.DataList;
-import it.smartcommunitylab.aac.wso2.model.RoleModel;
-import it.smartcommunitylab.aac.wso2.model.Subscription;
-
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.axis2.AxisFault;
@@ -41,6 +35,13 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.wso2.carbon.tenant.mgt.stub.TenantMgtAdminServiceExceptionException;
 import org.wso2.carbon.um.ws.api.stub.RemoteUserStoreManagerServiceUserStoreExceptionException;
+
+import it.smartcommunitylab.aac.wso2.model.API;
+import it.smartcommunitylab.aac.wso2.model.APIInfo;
+import it.smartcommunitylab.aac.wso2.model.App;
+import it.smartcommunitylab.aac.wso2.model.DataList;
+import it.smartcommunitylab.aac.wso2.model.RoleModel;
+import it.smartcommunitylab.aac.wso2.model.Subscription;
 
 /**
  * @author raman
@@ -174,6 +175,20 @@ public class APIPublisherService extends APIManagerService {
 		}
 		return api;
 	}
+	
+	public Map findAPI(String name, String token) {
+		Map apis = get(token, "/apis?query=" + name, Map.class, "");
+		
+		return apis;
+	}	
+	
+	public API publishAPI(API api, String token) {
+		return post(token, "/apis/", API.class, api, "");
+	}
+	
+	public void changeAPIStatus(String apiId, String status, String token) {
+		post(token, "/apis/change-lifecycle?apiId=" + apiId + "&action=" + status, String.class, new ArrayList<String>(), "");
+	}	
 	
 	/**
 	 * 

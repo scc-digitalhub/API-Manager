@@ -24,6 +24,11 @@ public class API extends APIInfo{
 
 	private String apiDefinition, wsdlUri, thumbnailUri, visibility;
 	private String[] visibleRoles, visibleTenants;
+	
+	private Boolean isDefaultVersion;
+	private String responseCaching = "Disabled";
+	private String[] transport = new String[]{ "http", "https"}, tiers = new String[] {"Unlimited"};
+	private String endpointConfig;
 
 	public String getApiDefinition() {
 		return apiDefinition;
@@ -71,6 +76,46 @@ public class API extends APIInfo{
 
 	public void setVisibleTenants(String[] visibleTenants) {
 		this.visibleTenants = visibleTenants;
+	}
+
+	public String getResponseCaching() {
+		return responseCaching;
+	}
+
+	public void setResponseCaching(String responseCaching) {
+		this.responseCaching = responseCaching;
+	}
+
+	public String[] getTransport() {
+		return transport;
+	}
+
+	public void setTransport(String[] transport) {
+		this.transport = transport;
+	}
+
+	public String[] getTiers() {
+		return tiers;
+	}
+
+	public void setTiers(String[] tiers) {
+		this.tiers = tiers;
+	}
+
+	public String getEndpointConfig() {
+		return endpointConfig;
+	}
+
+	public void setEndpointConfig(String endpointConfig) {
+		this.endpointConfig = endpointConfig;
+	}
+
+	public Boolean getIsDefaultVersion() {
+		return isDefaultVersion;
+	}
+
+	public void setIsDefaultVersion(Boolean isDefaultVersion) {
+		this.isDefaultVersion = isDefaultVersion;
 	}
 
 }

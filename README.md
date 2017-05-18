@@ -72,6 +72,10 @@ Clone API Manager project
     		</Configuration>
     	</APIKeyManager>
 
+- in *repository/conf/api-manager.xml*, uncomment **RemoveOAuthHeadersFromOutMessage** and set it to false
+
+	`<RemoveOAuthHeadersFromOutMessage>false</RemoveOAuthHeadersFromOutMessage>`
+
 
 - in *repository/conf/identity/identity.xml* change
 

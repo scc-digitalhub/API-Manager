@@ -589,13 +589,16 @@ public class AACOAuthClient extends AbstractKeyManager {
 					}
 					tokenInfo.setIssuedTime(System.currentTimeMillis());
 
-					String[] scopes = new String[1];
-					scopes[0] = (String) token.get("scope");
+//					String[] scopes = new String[1];
+//					scopes[0] = (String) token.get("scope");
 
+					String[] scopes = ((String) token.get("scope")).split(" ");
+					
 					tokenInfo.setScope(scopes);
 
 					tokenInfo.setConsumerKey(tokenRequest.getClientId());
 					tokenInfo.setConsumerSecret(tokenRequest.getClientSecret());
+					tokenInfo.setApplicationToken(true);
 
 					storeTokenLocally(tokenInfo);
 
@@ -722,7 +725,8 @@ public class AACOAuthClient extends AbstractKeyManager {
 
             	AACTokenValidation validation = mapper.readValue(reader, AACTokenValidation.class);
             	
-            	tokenInfo.setApplicationToken(validation.isApplicationToken());
+//            	tokenInfo.setApplicationToken(validation.isApplicationToken());
+            	tokenInfo.setApplicationToken(true);
             	tokenInfo.setConsumerKey(validation.getClientId());
             	tokenInfo.setScope(validation.getScope());
             	tokenInfo.setTokenValid(validation.isValid());
@@ -785,7 +789,10 @@ public class AACOAuthClient extends AbstractKeyManager {
 			service.setDescription(api.getDescription());
 			
 			String name = extractDomainFromTenant(api.getId().getProviderName()) + "-" + api.getId().getApiName() + "-" + api.getId().getVersion(); 
+			String apiKey = api.getId().getProviderName() + "-" + api.getId().getApiName() + "-" + api.getId().getVersion();
+			
 			service.setServiceName(name);
+			service.setApiKey(apiKey);
 
 			for (Scope scope : api.getScopes()) {
 				AACResource resource = new AACResource();

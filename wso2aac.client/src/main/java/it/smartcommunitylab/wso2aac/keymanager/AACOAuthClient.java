@@ -23,6 +23,7 @@ package it.smartcommunitylab.wso2aac.keymanager;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -874,7 +875,7 @@ public class AACOAuthClient extends AbstractKeyManager {
 			String registrationEndpoint = config.getParameter(ClientConstants.CLIENT_REG_ENDPOINT);
 			String registrationToken = getOauthToken();
 
-			HttpDelete httpDelete = new HttpDelete(registrationEndpoint.trim() + "/wso2/resources/" + apiID);
+			HttpDelete httpDelete = new HttpDelete(registrationEndpoint.trim() + "/wso2/resources/" + URLEncoder.encode(apiID, "UTF-8"));
 
 			httpDelete.setHeader(ClientConstants.AUTHORIZATION, ClientConstants.BEARER + registrationToken);
 

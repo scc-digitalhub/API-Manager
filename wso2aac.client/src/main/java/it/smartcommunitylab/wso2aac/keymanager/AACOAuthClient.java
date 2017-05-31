@@ -726,8 +726,7 @@ public class AACOAuthClient extends AbstractKeyManager {
 
             	AACTokenValidation validation = mapper.readValue(reader, AACTokenValidation.class);
             	
-//            	tokenInfo.setApplicationToken(validation.isApplicationToken());
-            	tokenInfo.setApplicationToken(true);
+            	tokenInfo.setApplicationToken(validation.isApplicationToken());
             	tokenInfo.setConsumerKey(validation.getClientId());
             	tokenInfo.setScope(validation.getScope());
             	tokenInfo.setTokenValid(validation.isValid());

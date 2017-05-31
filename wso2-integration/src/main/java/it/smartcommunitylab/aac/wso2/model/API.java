@@ -29,6 +29,7 @@ public class API extends APIInfo{
 	private String responseCaching = "Disabled";
 	private String[] transport = new String[]{ "http", "https"}, tiers = new String[] {"Unlimited"};
 	private String endpointConfig;
+	private String subscriptionAvailability;
 
 	public String getApiDefinition() {
 		return apiDefinition;
@@ -116,6 +117,14 @@ public class API extends APIInfo{
 
 	public void setIsDefaultVersion(Boolean isDefaultVersion) {
 		this.isDefaultVersion = isDefaultVersion;
+	}
+
+	public String getSubscriptionAvailability() {
+		return subscriptionAvailability;
+	}
+
+	public void setSubscriptionAvailability(String subscriptionAvailability) {
+		this.subscriptionAvailability = subscriptionAvailability;
 	}
 
 }

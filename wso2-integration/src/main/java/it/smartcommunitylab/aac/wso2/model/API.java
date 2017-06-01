@@ -30,6 +30,8 @@ public class API extends APIInfo{
 	private String[] transport = new String[]{ "http", "https"}, tiers = new String[] {"Unlimited"};
 	private String endpointConfig;
 	private String subscriptionAvailability;
+	
+	private CorsConfiguration corsConfiguration;
 
 	public String getApiDefinition() {
 		return apiDefinition;
@@ -125,6 +127,14 @@ public class API extends APIInfo{
 
 	public void setSubscriptionAvailability(String subscriptionAvailability) {
 		this.subscriptionAvailability = subscriptionAvailability;
+	}
+
+	public CorsConfiguration getCorsConfiguration() {
+		return corsConfiguration;
+	}
+
+	public void setCorsConfiguration(CorsConfiguration corsConfiguration) {
+		this.corsConfiguration = corsConfiguration;
 	}
 
 }

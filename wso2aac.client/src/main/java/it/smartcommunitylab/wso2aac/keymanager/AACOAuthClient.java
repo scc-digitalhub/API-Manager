@@ -601,7 +601,7 @@ public class AACOAuthClient extends AbstractKeyManager {
 					tokenInfo.setConsumerSecret(tokenRequest.getClientSecret());
 					tokenInfo.setApplicationToken(true);
 
-					storeTokenLocally(tokenInfo);
+					storeTokenLocally(tokenInfo, tokenRequest.getGrantType() != null ? tokenRequest.getGrantType() : "client_credentials");
 
 					return tokenInfo;
 				} else {
@@ -659,8 +659,13 @@ public class AACOAuthClient extends AbstractKeyManager {
 		}
 	}
     
-    private void storeTokenLocally(AccessTokenInfo tokenInfo) throws Exception {
+    private void storeTokenLocally(AccessTokenInfo tokenInfo, String grantType) throws Exception {
     	Connection connection = IdentityDatabaseUtil.getDBConnection();
+    	
+    	TokenMgtDAO tokenDAO = new TokenMgtDAO();
+    	if (tokenDAO.getTokenIdByToken(tokenInfo.getAccessToken()) != null) {
+    		return;
+    	}    	
     	
     	try {
     	AccessTokenDO token = new AccessTokenDO();
@@ -673,7 +678,7 @@ public class AACOAuthClient extends AbstractKeyManager {
     	token.setAccessToken(tokenInfo.getAccessToken());
     	token.setTokenState(OAuthConstants.TokenStates.TOKEN_STATE_ACTIVE);
     	token.setConsumerKey(tokenInfo.getConsumerKey());
-    	token.setGrantType("client_credentials");
+    	token.setGrantType(grantType);
     	token.setScope(tokenInfo.getScopes());
     	token.setValidityPeriod(tokenInfo.getValidityPeriod());
     	token.setIssuedTime(new Timestamp(tokenInfo.getIssuedTime()));
@@ -681,15 +686,13 @@ public class AACOAuthClient extends AbstractKeyManager {
     	token.setValidityPeriodInMillis(tokenInfo.getValidityPeriod() * 1000L);
     	token.setRefreshTokenIssuedTime(new Timestamp(tokenInfo.getIssuedTime()));
     	token.setTokenId(UUID.randomUUID().toString());
-    	token.setTokenType("APPLICATION");
+    	token.setTokenType(tokenInfo.isApplicationToken() ? "APPLICATION" : "APPLICATION USER");
 
     	OAuthIssuer oAuthIssuerImpl = OAuthServerConfiguration.getInstance().getOAuthTokenGenerator();
     	token.setRefreshToken(oAuthIssuerImpl.refreshToken());
         
     	AuthenticatedUser user = oAuthAppDO.getUser();
     	token.setAuthzUser(user);
-    	
-    	TokenMgtDAO tokenDAO = new TokenMgtDAO();
     	
     	tokenDAO.storeAccessToken(tokenInfo.getAccessToken(), tokenInfo.getConsumerKey(), token, connection, user.getUserStoreDomain());
     	connection.commit();
@@ -733,6 +736,8 @@ public class AACOAuthClient extends AbstractKeyManager {
             	tokenInfo.setIssuedTime(validation.getIssuedTime());
             	tokenInfo.setValidityPeriod(validation.getValidityPeriod());
             	tokenInfo.setEndUserName(validation.getUsername());
+            	
+            	storeTokenLocally(tokenInfo, validation.getGrantType());
             } else {
                 handleException("Something went wrong while checking authorization for token " + token);
             }

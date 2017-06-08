@@ -72,6 +72,7 @@ import org.wso2.carbon.apimgt.keymgt.client.SubscriberKeyMgtClientPool;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.oauth.common.OAuthConstants;
+import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
 import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
 import org.wso2.carbon.identity.oauth.dao.OAuthAppDAO;
 import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
@@ -101,7 +102,7 @@ public class AACOAuthClient extends AbstractKeyManager {
         this.configuration = configuration;
         SubscriberKeyMgtClientPool.getInstance().setConfiguration(this.configuration);
     }
-
+    
     /**
      * This method will Register the client in Authorization Server.
      *
@@ -660,6 +661,8 @@ public class AACOAuthClient extends AbstractKeyManager {
 	}
     
     private void storeTokenLocally(AccessTokenInfo tokenInfo, String grantType) throws Exception {
+    	registerAdminClient();
+    	
     	Connection connection = IdentityDatabaseUtil.getDBConnection();
     	
     	TokenMgtDAO tokenDAO = new TokenMgtDAO();
@@ -700,6 +703,35 @@ public class AACOAuthClient extends AbstractKeyManager {
             IdentityDatabaseUtil.closeConnection(connection);
         }
     }
+    
+    private void registerAdminClient() throws APIManagementException {
+		try {
+			KeyManagerConfiguration config = KeyManagerHolder.getKeyManagerInstance().getKeyManagerConfiguration();
+			OAuthAppDAO dao = new OAuthAppDAO();
+
+			try {
+				OAuthAppDO old = dao.getAppInformation(config.getParameter(ClientConstants.INTROSPECTION_CK));
+			} catch (InvalidOAuthClientException e0) {
+				OAuthAppDO app = new OAuthAppDO();
+
+				app.setApplicationName(config.getParameter(ClientConstants.INTROSPECTION_CK));
+				app.setCallbackUrl(config.getParameter(ClientConstants.CLIENT_REG_ENDPOINT));
+				app.setGrantTypes("password client_credentials implicit");
+				app.setOauthConsumerKey(config.getParameter(ClientConstants.INTROSPECTION_CK));
+				app.setOauthConsumerSecret(config.getParameter(ClientConstants.INTROSPECTION_CS));
+				app.setPkceMandatory(false);
+				app.setPkceSupportPlain(false);
+				app.setOauthVersion("OAuth-2.0");
+
+				AuthenticatedUser user = AuthenticatedUser.createLocalAuthenticatedUserFromSubjectIdentifier("admin");
+				app.setUser(user);
+
+				dao.addOAuthApplication(app);
+			}
+		} catch (Exception e) {
+			throw new APIManagementException(e);
+		}
+	}    
     
     @Override
     public AccessTokenInfo getTokenMetaData(String token) throws APIManagementException {

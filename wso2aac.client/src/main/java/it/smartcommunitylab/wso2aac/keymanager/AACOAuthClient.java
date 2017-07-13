@@ -587,7 +587,7 @@ public class AACOAuthClient extends AbstractKeyManager {
 					tokenInfo.setAccessToken((String) token.get("access_token"));
 					
 					if (token.containsKey("expires_in")) {
-						tokenInfo.setValidityPeriod((long) (Integer) token.get("expires_in"));
+						tokenInfo.setValidityPeriod((long) (Integer) token.get("expires_in") * 1000L);
 					}
 					tokenInfo.setIssuedTime(System.currentTimeMillis());
 
@@ -604,6 +604,9 @@ public class AACOAuthClient extends AbstractKeyManager {
 
 					storeTokenLocally(tokenInfo, tokenRequest.getGrantType() != null ? tokenRequest.getGrantType() : "client_credentials");
 
+					// for console
+					tokenInfo.setValidityPeriod(tokenInfo.getValidityPeriod() / 1000L);
+					
 					return tokenInfo;
 				} else {
 					handleException("Some thing wrong here while retrieving the token " + "HTTP Error response code is " + responseCode);
@@ -685,8 +688,8 @@ public class AACOAuthClient extends AbstractKeyManager {
     	token.setScope(tokenInfo.getScopes());
     	token.setValidityPeriod(tokenInfo.getValidityPeriod());
     	token.setIssuedTime(new Timestamp(tokenInfo.getIssuedTime()));
-    	token.setValidityPeriod(tokenInfo.getValidityPeriod());
-    	token.setValidityPeriodInMillis(tokenInfo.getValidityPeriod() * 1000L);
+    	token.setValidityPeriod(tokenInfo.getValidityPeriod() / 1000L);
+    	token.setValidityPeriodInMillis(tokenInfo.getValidityPeriod());
     	token.setRefreshTokenIssuedTime(new Timestamp(tokenInfo.getIssuedTime()));
     	token.setTokenId(UUID.randomUUID().toString());
     	token.setTokenType(tokenInfo.isApplicationToken() ? "APPLICATION" : "APPLICATION USER");
@@ -766,7 +769,7 @@ public class AACOAuthClient extends AbstractKeyManager {
             	tokenInfo.setScope(validation.getScope());
             	tokenInfo.setTokenValid(validation.isValid());
             	tokenInfo.setIssuedTime(validation.getIssuedTime());
-            	tokenInfo.setValidityPeriod(validation.getValidityPeriod());
+            	tokenInfo.setValidityPeriod(validation.getValidityPeriod() * 1000L);
             	tokenInfo.setEndUserName(validation.getUsername());
             	
             	storeTokenLocally(tokenInfo, validation.getGrantType());

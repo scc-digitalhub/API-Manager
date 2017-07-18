@@ -666,12 +666,16 @@ public class AACOAuthClient extends AbstractKeyManager {
     private void storeTokenLocally(AccessTokenInfo tokenInfo, String grantType) throws Exception {
     	registerAdminClient();
     	
+    	    	
     	Connection connection = IdentityDatabaseUtil.getDBConnection();
     	
     	TokenMgtDAO tokenDAO = new TokenMgtDAO();
     	if (tokenDAO.getTokenIdByToken(tokenInfo.getAccessToken()) != null) {
+    		log.info("Not storing already existing token: " + tokenInfo.getAccessToken());
     		return;
-    	}    	
+    	}  
+    	
+    	log.info("Storing token: " + tokenInfo.getAccessToken());
     	
     	try {
     	AccessTokenDO token = new AccessTokenDO();
@@ -697,11 +701,20 @@ public class AACOAuthClient extends AbstractKeyManager {
     	OAuthIssuer oAuthIssuerImpl = OAuthServerConfiguration.getInstance().getOAuthTokenGenerator();
     	token.setRefreshToken(oAuthIssuerImpl.refreshToken());
         
+//    	AuthenticatedUser user = AuthenticatedUser.createLocalAuthenticatedUserFromSubjectIdentifier(tokenInfo.getEndUserName());
     	AuthenticatedUser user = oAuthAppDO.getUser();
     	token.setAuthzUser(user);
     	
+    	try {
+    	log.info("Begin store token: " + tokenInfo.getAccessToken());
     	tokenDAO.storeAccessToken(tokenInfo.getAccessToken(), tokenInfo.getConsumerKey(), token, connection, user.getUserStoreDomain());
+    	log.info("End store token: " + tokenInfo.getAccessToken());
     	connection.commit();
+    	log.info("Commit store token: " + tokenInfo.getAccessToken());
+    	} catch (Exception e) {
+    		log.error("Error storing token: " + tokenInfo.getAccessToken());
+    		e.printStackTrace();
+    	}
         } finally {
             IdentityDatabaseUtil.closeConnection(connection);
         }
@@ -772,7 +785,7 @@ public class AACOAuthClient extends AbstractKeyManager {
             	tokenInfo.setValidityPeriod(validation.getValidityPeriod() * 1000L);
             	tokenInfo.setEndUserName(validation.getUsername());
             	
-            	storeTokenLocally(tokenInfo, validation.getGrantType());
+//            	storeTokenLocally(tokenInfo, validation.getGrantType());
             } else {
                 handleException("Something went wrong while checking authorization for token " + token);
             }

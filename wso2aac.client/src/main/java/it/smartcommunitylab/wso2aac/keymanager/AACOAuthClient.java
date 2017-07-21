@@ -587,7 +587,7 @@ public class AACOAuthClient extends AbstractKeyManager {
 					tokenInfo.setAccessToken((String) token.get("access_token"));
 					
 					if (token.containsKey("expires_in")) {
-						tokenInfo.setValidityPeriod((long) (Integer) token.get("expires_in") * 1000L);
+						tokenInfo.setValidityPeriod(((Number) token.get("expires_in")).longValue() * 1000L);
 					}
 					tokenInfo.setIssuedTime(System.currentTimeMillis());
 
@@ -787,7 +787,7 @@ public class AACOAuthClient extends AbstractKeyManager {
             	
 //            	storeTokenLocally(tokenInfo, validation.getGrantType());
             } else {
-                handleException("Something went wrong while checking authorization for token " + token);
+                handleException("Could not get token metadata for token " + token);
             }
 
         } catch (Exception e) {

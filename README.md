@@ -85,7 +85,15 @@ Clone API Manager project
 to
 
    `<OAuthScopeValidator class="it.smartcommunitylab.wso2aac.keymanager.CustomJDBCScopeValidator"/>`
-
+   
+   and in *SupportedGrantTypes* section disable saml2-bearer and ntlm and add
+   
+        <SupportedGrantType>
+            <GrantTypeName>native</GrantTypeName>
+            <GrantTypeHandlerImplClass>it.smartcommunitylab.wso2aac.grants.NativeGrantType</GrantTypeHandlerImplClass>
+            <GrantTypeValidatorImplClass>it.smartcommunitylab.wso2aac.grants.NativeGrantValidator</GrantTypeValidatorImplClass>
+        </SupportedGrantType>
+            
 - in *repository/conf/carbon.xml*, enable email username
 
 	`<EnableEmailUserName>true</EnableEmailUserName>`

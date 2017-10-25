@@ -34,25 +34,25 @@ public abstract class APIManagerService {
 		return rest.exchange(completeURL(url), HttpMethod.GET, secureEntity(token), resCls, params).getBody();
 	}
 	protected <T> T delete(String token, String url, Class<T> resCls, Object ... params) {
-		return rest.exchange(completeURL(url), HttpMethod.GET, secureEntity(token), resCls, params).getBody();
+		return rest.exchange(completeURL(url), HttpMethod.DELETE, secureEntity(token), resCls, params).getBody();
 	}
 	protected <T, R> T post(String token, String url, Class<T> resCls, R in, Object ... params) {
 		return rest.exchange(completeURL(url), HttpMethod.POST, secureEntity(in, token), resCls, params).getBody();
 	}
 	protected <T, R> T put(String token, String url, Class<T> resCls, R in, Object ... params) {
-		return rest.exchange(completeURL(url), HttpMethod.POST, secureEntity(in, token), resCls, params).getBody();
+		return rest.exchange(completeURL(url), HttpMethod.PUT, secureEntity(in, token), resCls, params).getBody();
 	}
 	protected <T> T get(String token, String url, ParameterizedTypeReference<T> resCls, Object ... params) {
 		return rest.exchange(completeURL(url), HttpMethod.GET, secureEntity(token), resCls, params).getBody();
 	}
 	protected <T> T delete(String token, String url, ParameterizedTypeReference<T> resCls, Object ... params) {
-		return rest.exchange(completeURL(url), HttpMethod.GET, secureEntity(token), resCls, params).getBody();
+		return rest.exchange(completeURL(url), HttpMethod.DELETE, secureEntity(token), resCls, params).getBody();
 	}
 	protected <T, R> T post(String token, String url, ParameterizedTypeReference<T> resCls, R in, Object ... params) {
 		return rest.exchange(completeURL(url), HttpMethod.POST, secureEntity(in, token), resCls, params).getBody();
 	}
 	protected <T, R> T put(String token, String url, ParameterizedTypeReference<T> resCls, R in, Object ... params) {
-		return rest.exchange(completeURL(url), HttpMethod.POST, secureEntity(in, token), resCls, params).getBody();
+		return rest.exchange(completeURL(url), HttpMethod.PUT, secureEntity(in, token), resCls, params).getBody();
 	}
 	protected String completeURL(String url) {
 		return endpoint() + url;

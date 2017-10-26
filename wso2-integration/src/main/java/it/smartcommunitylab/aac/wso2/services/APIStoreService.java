@@ -16,17 +16,24 @@
 
 package it.smartcommunitylab.aac.wso2.services;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 
 import it.smartcommunitylab.aac.wso2.model.App;
 import it.smartcommunitylab.aac.wso2.model.DataList;
+import it.smartcommunitylab.aac.wso2.model.Subscription;
 
 /**
  * @author raman
  *
  */
 public class APIStoreService extends APIManagerService {
+	private static final int PAGE_SIZE = 25;
 	@Value("${api.store.endpoint}")
 	private String storeEndpoint;
 
@@ -57,4 +64,69 @@ public class APIStoreService extends APIManagerService {
 	public String getApp(String appId, String token) {
 		return get(token, "/applications/{appId}", String.class, appId);
 	}
+	
+	public  DataList<Subscription> getSubscriptions(Integer offset, Integer limit, String appId, String token) {
+		ParameterizedTypeReference<DataList<Subscription>> type = new ParameterizedTypeReference<DataList<Subscription>>() {};
+		return get(token, "/subscriptions?offset={offset}&limit={limit}&applicationId={appId}", type, offset,limit,appId);
+	}
+	
+	public void deleteSubscription(String subscriptionId, String token) {
+		delete(token, "/subscriptions/{subscriptionId}", String.class, subscriptionId);
+	}
+	
+	public App getApplication(String applicationName, String token) {
+		int offset = 0;
+		DataList<App> result = null;
+		App app = null;
+		
+		do {
+			result = getApps(offset, PAGE_SIZE, "", token);
+			app = filterApplications(applicationName, result);
+			offset += PAGE_SIZE;
+		} while (result.getCount() == PAGE_SIZE && app == null);
+
+		return app;
+	}
+	
+	private App filterApplications(String applicationName, DataList<App> apps) {
+		String parts[] = applicationName.split("_");
+		
+		return apps.getList().stream().filter(x -> x.getName().equals(parts[1]) && x.getSubscriber().equals(parts[0])).findFirst().orElse(null);
+	}
+	
+	public List<Subscription> getSubscriptions(String applicationName, String token) {
+		App app = getApplication(applicationName, token);
+		if (app != null) {
+			return getSubscriptionsByApplicationId(app.getApplicationId(), token);
+		}
+		return null;
+	}
+	
+	private List<Subscription> getSubscriptionsByApplicationId(String appId, String token) {
+		int offset = 0;
+		List<Subscription> subscriptions = new ArrayList<Subscription>();
+		DataList<Subscription> result = null;
+
+		do {
+			result = getSubscriptions(offset, PAGE_SIZE, appId, token);
+			subscriptions.addAll(result.getList());
+			offset += PAGE_SIZE;
+		} while (result.getCount() == PAGE_SIZE);		
+		
+		
+		return subscriptions;
+	}	
+	
+	public void unsubscribe(String subscriptionId, String token) {
+		delete(token, "/subscriptions/{subscriptionId}", String.class, subscriptionId);
+	}		
+	
+	public void subscribe(String apiIdentifier, String applicationId, String token) {
+		Map<String, String> map = new HashMap<String, String>();
+		map.put("apiIdentifier", apiIdentifier);
+		map.put("applicationId", applicationId);
+		map.put("tier", "Unlimited");
+		post(token, "/subscriptions/{subscriptionId}", Map.class, map, "");
+	}		
+	
 }

@@ -255,6 +255,9 @@ GrantTypes.prototype.getMap = function(selected){
 
         generateKeys: function(){            
             var validity_time = this.element.find(".validity_time").val();
+			if (validity_time >= 2147483647) {
+				validity_time = -1;
+			}				
             var selected = this.element.find(".grants:checked")
                            .map(function(){ return $( this ).val();}).get().join(",");
             
@@ -287,6 +290,9 @@ GrantTypes.prototype.getMap = function(selected){
 
         regenerateToken: function(){            
             var validity_time = this.element.find(".validity_time").val();
+			if (validity_time >= 2147483647) {
+				validity_time = -1;
+			}				
             var scopes = "";
             if(this.element.find("select.scope_select").val() != null) {
                 scopes = this.element.find("select.scope_select").val().join(" ");

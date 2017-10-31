@@ -119,6 +119,7 @@ Import and add WSO2 certificate to the default keystore.
 ***Windows***
 
 ``keytool -importkeystore -srckeystore C:/bin/wso2am-2.1.0/repository/resources/security/wso2carbon.jks -destkeystore wso2.p12 -srcstoretype jks  -deststoretype pkcs12 -alias wso2carbon  -destkeypass 123456``
+
 ``openssl pkcs12 -in wso2.p12 -out wso2.pem``
 
 Edit wso2.pem and keep only the part between -----BEGIN CERTIFICATE----- and -----END CERTIFICATE-----

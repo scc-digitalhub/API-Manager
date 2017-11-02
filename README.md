@@ -119,7 +119,7 @@ Import and add WSO2 certificate to the default keystore.
 ***Windows***
 
 ``keytool -importkeystore -srckeystore <<wso2_root>>/repository/resources/security/wso2carbon.jks -destkeystore wso2.p12 -srcstoretype jks  -deststoretype pkcs12 -alias wso2carbon  -destkeypass 123456``
-(use 123456 for destination keystore and PEM passphrase, empty password for origin and "wso2carbon" for wso2carbon password.)
+(use a temporary password (such '123456') for destination keystore and PEM passphrase, empty password for origin and "wso2carbon" for wso2carbon password.)
 
 ``openssl pkcs12 -in wso2.p12 -out wso2.pem``
 
@@ -129,7 +129,7 @@ Edit wso2.pem and keep only the part between -----BEGIN CERTIFICATE----- and ---
 
 (java cacerts default password is "changeit")
 
-BEWARE: keytool is bugged in most java 8 versions, returning a
+**BEWARE**: keytool is bugged in most java 8 versions, returning a
  java.util.IllegalFormatConversionException: d != java.lang.String
 
 ### 4. Proxy server configuration (Apache)

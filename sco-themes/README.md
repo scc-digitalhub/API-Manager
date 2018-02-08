@@ -25,18 +25,18 @@ API Manager tools and themes
 - 1.2 Make any changes you want to the theme. For example, make the following changes in the CSS styles in the <THEME_HOME>/css/custom.css file using a text editor and save:
 
 		- Add the following code to change the color of the header to red.
-			- header.header-default{
-				background:red !important;
-			  }
+			- 	header.header-default{
+					background:red !important;
+				}
 		
 		- Update the color given for the search box to #0be2e2.
-			- .search-wrap>.form-control, .search-wrap .btn.wrap-input-right  {
-				background-color: #0be2e2;
-				border: 0px;
-				color: #FFF;
-				height: 40px;
-				margin-top:-3px;
-			  }
+			- 	.search-wrap>.form-control, .search-wrap .btn.wrap-input-right  {
+					background-color: #0be2e2;
+					border: 0px;
+					color: #FFF;
+					height: 40px;
+					margin-top:-3px;
+				}
 		 
 		- As you plan to upload the theme as a sub-theme of the default main theme, delete all the files in your <THEME_HOME> folder except the ones that you edited. The rest of the files are automatically applied from the main theme.
 

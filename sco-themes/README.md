@@ -23,6 +23,7 @@
 - jaggeryapps/store/site/themes/wso2/templates/menu/primary/template.jag
 - jaggeryapps/store/site/themes/wso2/templates/page/base/template.jag
 - jaggeryapps/store/site/themes/wso2/templates/search/api-search/template.jag
+- jaggeryapps/store/site/themes/wso2/templates/user/login/template.jag
 
 
 # Setup Publisher Theme
@@ -46,3 +47,4 @@
 - jaggeryapps/publisher/site/themes/wso2/templates/menu/left/template.jag
 - jaggeryapps/publisher/site/themes/wso2/templates/page/base/template.jag
 - jaggeryapps/publisher/site/themes/wso2/templates/search/api-search/template.jag
+- jaggeryapps/publisher/site/themes/wso2/templates/user/login/template.jag

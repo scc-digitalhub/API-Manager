@@ -34,7 +34,7 @@ public class ClientAppBasic {
 	private String clientId;
 	private String clientSecret;
 	private String clientSecretMobile;
-	private String name;
+	private String name, displayName;
 	private String redirectUris;
 	private Set<String> grantedTypes;
 
@@ -195,5 +195,11 @@ public class ClientAppBasic {
 	}
 	public void setParameters(String parameters) {
 		this.parameters = parameters;
+	}
+	public String getDisplayName() {
+		return displayName;
+	}
+	public void setDisplayName(String displayName) {
+		this.displayName = displayName;
 	}
 }

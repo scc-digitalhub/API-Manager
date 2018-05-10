@@ -205,4 +205,14 @@
 		</pluginRepository>
 	</pluginRepositories>
 
+  <distributionManagement>
+    <repository>
+      <id>SmartCommunityLab-releases</id>
+      <url>http://repository.smartcommunitylab.it/content/repositories/releases</url>
+    </repository>
+    <snapshotRepository>
+      <id>SmartCommunityLab-snapshots</id>
+      <url>http://repository.smartcommunitylab.it/content/repositories/snapshots</url>
+    </snapshotRepository>
+  </distributionManagement>
 </project>

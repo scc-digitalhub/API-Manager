@@ -16,10 +16,19 @@
 
 package it.smartcommunitylab.aac.wso2.services;
 
+import java.security.cert.X509Certificate;
+
+import javax.net.ssl.SSLContext;
+
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.TrustStrategy;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
 /**
@@ -28,8 +37,33 @@ import org.springframework.web.client.RestTemplate;
  */
 public abstract class APIManagerService {
 
-	protected RestTemplate rest = new RestTemplate();
+	protected RestTemplate rest;
 
+	public APIManagerService() {
+		super();
+		TrustStrategy acceptingTrustStrategy = (X509Certificate[] chain, String authType) -> true;
+
+		try {
+			SSLContext sslContext = org.apache.http.ssl.SSLContexts.custom()
+			        .loadTrustMaterial(null, acceptingTrustStrategy)
+			        .build();
+
+			SSLConnectionSocketFactory csf = new SSLConnectionSocketFactory(sslContext);
+
+			CloseableHttpClient httpClient = HttpClients.custom()
+			        .setSSLSocketFactory(csf)
+			        .build();
+
+			HttpComponentsClientHttpRequestFactory requestFactory =
+			        new HttpComponentsClientHttpRequestFactory();
+
+			requestFactory.setHttpClient(httpClient);
+
+			rest = new RestTemplate(requestFactory);
+		} catch (Exception e) {
+			rest = new RestTemplate();
+		}
+	}
 	protected <T> T get(String token, String url, Class<T> resCls, Object ... params) {
 		return rest.exchange(completeURL(url), HttpMethod.GET, secureEntity(token), resCls, params).getBody();
 	}

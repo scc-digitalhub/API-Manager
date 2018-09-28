@@ -18,7 +18,9 @@ package it.smartcommunitylab.aac.wso2.services;
 
 import java.security.cert.X509Certificate;
 
+import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
 
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -42,13 +44,18 @@ public abstract class APIManagerService {
 	public APIManagerService() {
 		super();
 		TrustStrategy acceptingTrustStrategy = (X509Certificate[] chain, String authType) -> true;
+		HostnameVerifier nullHostnameVerifier = new HostnameVerifier() {
+	        public boolean verify(String hostname, SSLSession session) {
+	            return true;
+	        }
+	    };
 
 		try {
 			SSLContext sslContext = org.apache.http.ssl.SSLContexts.custom()
 			        .loadTrustMaterial(null, acceptingTrustStrategy)
 			        .build();
 
-			SSLConnectionSocketFactory csf = new SSLConnectionSocketFactory(sslContext);
+			SSLConnectionSocketFactory csf = new SSLConnectionSocketFactory(sslContext, nullHostnameVerifier);
 
 			CloseableHttpClient httpClient = HttpClients.custom()
 			        .setSSLSocketFactory(csf)

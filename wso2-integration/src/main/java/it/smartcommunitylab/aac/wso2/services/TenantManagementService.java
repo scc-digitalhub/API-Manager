@@ -115,10 +115,12 @@ public class TenantManagementService {
 			options.setProperty(HTTPConstants.CONNECTION_TIMEOUT, TIMEOUT_IN_MILLIS);
 			options.setCallTransportCleanup(true);
 			options.setManageSession(true);
+			Utils.disableSSLValidator(client);
+		    
 		}
 		return mtStub;
 	}
-
+	
 	/**
 	 * Update tenant data
 	 * @param bean

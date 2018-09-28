@@ -72,6 +72,7 @@ public class UserManagementService {
 			options.setProperty(HTTPConstants.CONNECTION_TIMEOUT, TIMEOUT_IN_MILLIS);
 			options.setCallTransportCleanup(true);
 			options.setManageSession(true);
+			Utils.disableSSLValidator(client);
 		}
 		return umStub;
 	}
@@ -86,6 +87,7 @@ public class UserManagementService {
 			options.setProperty(HTTPConstants.CONNECTION_TIMEOUT, TIMEOUT_IN_MILLIS);
 			options.setCallTransportCleanup(true);
 			options.setManageSession(true);
+			Utils.disableSSLValidator(client);
 		}
 		return iamStub;
 	}

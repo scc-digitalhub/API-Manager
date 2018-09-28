@@ -16,6 +16,18 @@
 
 package it.smartcommunitylab.aac.wso2.services;
 
+import java.security.cert.X509Certificate;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+
+import org.apache.axis2.client.ServiceClient;
+import org.apache.axis2.java.security.SSLProtocolSocketFactory;
+import org.apache.axis2.transport.http.HTTPConstants;
+import org.apache.commons.httpclient.protocol.Protocol;
+import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
+import org.apache.http.ssl.TrustStrategy;
 import org.wso2.carbon.um.ws.api.stub.ClaimValue;
 
 /**
@@ -86,4 +98,38 @@ public class Utils {
 		return cv;
 	}
 	
+	public static void disableSSLValidator(ServiceClient client) {
+		
+		// Create a trust manager that does not validate certificate chains
+	    final TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
+	            @Override
+	            public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+	                return null;
+	            }
+
+	            @Override
+	            public void checkClientTrusted(X509Certificate[] certs, String authType) {
+	            }
+
+	            @Override
+	            public void checkServerTrusted(X509Certificate[] certs, String authType) {
+	            }
+	        }
+	    };
+		TrustStrategy acceptingTrustStrategy = (X509Certificate[] chain, String authType) -> true;
+
+	    // Install the all-trusting trust manager
+	    try {
+			SSLContext sc = org.apache.http.ssl.SSLContexts.custom()
+			        .loadTrustMaterial(null, acceptingTrustStrategy)
+			        .build();
+
+	        sc.init(null, trustAllCerts, null);
+	        SSLProtocolSocketFactory sslFactory = new SSLProtocolSocketFactory(sc);
+	        Protocol prot = new Protocol("https", (ProtocolSocketFactory) sslFactory, 443);
+	        client.getOptions().setProperty(HTTPConstants.CUSTOM_PROTOCOL_HANDLER, prot);
+	    } catch (Exception ex) {
+	        // take action
+	    }
+	}
 }

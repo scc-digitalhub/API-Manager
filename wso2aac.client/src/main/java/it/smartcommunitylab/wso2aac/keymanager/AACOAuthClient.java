@@ -58,6 +58,7 @@ import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.model.API;
 import org.wso2.carbon.apimgt.api.model.AccessTokenInfo;
 import org.wso2.carbon.apimgt.api.model.AccessTokenRequest;
+import org.wso2.carbon.apimgt.api.model.KeyManager;
 import org.wso2.carbon.apimgt.api.model.KeyManagerConfiguration;
 import org.wso2.carbon.apimgt.api.model.OAuthAppRequest;
 import org.wso2.carbon.apimgt.api.model.OAuthApplicationInfo;
@@ -71,11 +72,14 @@ import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.apimgt.keymgt.client.SubscriberKeyMgtClientPool;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
+import org.wso2.carbon.identity.oauth.IdentityOAuthAdminException;
+import org.wso2.carbon.identity.oauth.OAuthAdminService;
 import org.wso2.carbon.identity.oauth.common.OAuthConstants;
 import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
 import org.wso2.carbon.identity.oauth.config.OAuthServerConfiguration;
 import org.wso2.carbon.identity.oauth.dao.OAuthAppDAO;
 import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
+import org.wso2.carbon.identity.oauth.dto.OAuthConsumerAppDTO;
 import org.wso2.carbon.identity.oauth2.dao.TokenMgtDAO;
 import org.wso2.carbon.identity.oauth2.model.AccessTokenDO;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
@@ -1092,10 +1096,10 @@ public class AACOAuthClient extends AbstractKeyManager {
      * @param e   Exception object.
      * @throws APIManagementException
      */
-    private void handleException(String msg, Exception e) throws APIManagementException {
+    /*private void handleException(String msg, Exception e) throws APIManagementException {
         log.error(msg, e);
         throw new APIManagementException(msg, e);
-    }
+    }*/
 
     /**
      * common method to throw exceptions. This will only expect one parameter.
@@ -1117,5 +1121,36 @@ public class AACOAuthClient extends AbstractKeyManager {
         HttpClient httpClient = new DefaultHttpClient();
         return httpClient;
     }
+
+	@Override
+	public String getNewApplicationConsumerSecret(AccessTokenRequest tokenRequest) throws APIManagementException {
+		// TODO Auto-generated method stub
+		 OAuthAdminService oauthAdminService = new OAuthAdminService();
+	        OAuthConsumerAppDTO appDTO;
+	        try {
+	            if (oauthAdminService != null) {
+	                appDTO = oauthAdminService.updateAndRetrieveOauthSecretKey(tokenRequest.getClientId());
+	                return appDTO.getOauthConsumerSecret();
+	            }
+	        } catch (IdentityOAuthAdminException e) {
+	            handleException("Error while generating new consumer secret", e);
+	        }
+	        return null;
+	}
+
+	@Override
+	public Map<String, Set<Scope>> getScopesForAPIS(String apiIdsString) throws APIManagementException {
+       
+		try {
+			ApiMgtDAO apiMgtDAO = ApiMgtDAO.getInstance();
+			return apiMgtDAO.getScopesForAPIS(apiIdsString);
+		}
+		catch(APIManagementException e) {
+			handleException("Error while getting scopes", e);
+		}
+		 return null;
+	}
+	
+	
     
 }

@@ -24,6 +24,8 @@
 - jaggeryapps/store/site/themes/wso2/templates/page/base/template.jag
 - jaggeryapps/store/site/themes/wso2/templates/search/api-search/template.jag
 - jaggeryapps/store/site/themes/wso2/templates/user/login/template.jag
+### specific list of changes for wso2.6 API Manager
+- jaggeryapps/store/site/themes/wso2/templates/search/api-search/template.jag
 
 
 # Setup Publisher Theme
@@ -48,3 +50,6 @@
 - jaggeryapps/publisher/site/themes/wso2/templates/page/base/template.jag
 - jaggeryapps/publisher/site/themes/wso2/templates/search/api-search/template.jag
 - jaggeryapps/publisher/site/themes/wso2/templates/user/login/template.jag
+### specific list of changes for wso2.6 API Manager
+- jaggeryapps/publisher/site/themes/wso2/templates/page/base/template.jag
+- jaggeryapps/publisher/site/themes/wso2/templates/user/login/js/login.js

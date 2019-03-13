@@ -56,6 +56,7 @@ import org.apache.oltu.oauth2.as.issuer.OAuthIssuer;
 import org.apache.oltu.oauth2.common.OAuth;
 import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.model.API;
+import org.wso2.carbon.apimgt.api.model.APIKey;
 import org.wso2.carbon.apimgt.api.model.AccessTokenInfo;
 import org.wso2.carbon.apimgt.api.model.AccessTokenRequest;
 import org.wso2.carbon.apimgt.api.model.KeyManager;
@@ -70,6 +71,7 @@ import org.wso2.carbon.apimgt.impl.factory.KeyManagerHolder;
 import org.wso2.carbon.apimgt.impl.utils.APIMgtDBUtil;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import org.wso2.carbon.apimgt.keymgt.client.SubscriberKeyMgtClientPool;
+import org.wso2.carbon.core.util.CryptoException;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.oauth.IdentityOAuthAdminException;
@@ -958,8 +960,34 @@ public class AACOAuthClient extends AbstractKeyManager {
     }
 
     @Override
-    public AccessTokenInfo getAccessTokenByConsumerKey(String s) throws APIManagementException {
-        return null;
+    public AccessTokenInfo getAccessTokenByConsumerKey(String consumerKey) throws APIManagementException {
+    	 AccessTokenInfo tokenInfo = new AccessTokenInfo();
+         ApiMgtDAO apiMgtDAO = ApiMgtDAO.getInstance();
+
+         APIKey apiKey;
+         try {
+             apiKey = apiMgtDAO.getAccessTokenInfoByConsumerKey(consumerKey);
+             if (apiKey != null) {
+                 tokenInfo.setAccessToken(apiKey.getAccessToken());                
+                 tokenInfo.setConsumerSecret(apiKey.getConsumerSecret());
+                 tokenInfo.setValidityPeriod(apiKey.getValidityPeriod());
+                 tokenInfo.setScope(apiKey.getTokenScope().split("\\s"));
+             } else {
+                 tokenInfo.setAccessToken("");
+                 //set default validity period
+                 tokenInfo.setValidityPeriod(3600);
+             }
+             tokenInfo.setConsumerKey(consumerKey);
+
+         } catch (SQLException e) {
+             handleException("Cannot retrieve information for the given consumer key : "
+                     + consumerKey, e);
+         } catch (CryptoException e) {
+             handleException("Token decryption failed of an access token for the given consumer key : "
+                     + consumerKey, e);
+         }
+         return tokenInfo;
+        
     }
     
 	private String getOauthToken() throws APIManagementException {

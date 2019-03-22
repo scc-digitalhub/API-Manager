@@ -4,7 +4,7 @@
 	<groupId>it.smartcommunitylab</groupId>
 	<artifactId>wso2aac.client</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0</version>
+	<version>0.0.2.SNAPSHOT</version>
 
 	<dependencies>
 		<dependency>
@@ -83,4 +83,15 @@
 			</plugin>
 		</plugins>
 	</build>
+	
+  <distributionManagement>
+    <repository>
+      <id>SmartCommunityLab-releases</id>
+      <url>http://repository.smartcommunitylab.it/content/repositories/releases</url>
+    </repository>
+    <snapshotRepository>
+      <id>SmartCommunityLab-snapshots</id>
+      <url>http://repository.smartcommunitylab.it/content/repositories/snapshots</url>
+    </snapshotRepository>
+  </distributionManagement>	
 </project>  

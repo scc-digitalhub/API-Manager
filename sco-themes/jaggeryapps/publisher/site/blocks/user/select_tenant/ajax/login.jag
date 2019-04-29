@@ -1,0 +1,67 @@
+<%
+include("/jagg/jagg.jag");
+
+(function () {
+    response.contentType = "application/json; charset=UTF-8";
+    var log = new Log();
+    var api = jagg.module("api");
+    var manager = jagg.module("manager");
+    var mod = jagg.module("user");
+    var carbon = require('carbon');
+    var MultitenantUtils = Packages.org.wso2.carbon.utils.multitenancy.MultitenantUtils;
+    var requestedURI = session.get("PUBLISHER_REDIRECT_URI");
+    if (requestedURI == null) {
+        log.error("requestedURI value is invalid.");
+        requestedURI = "/store";
+    }
+    var username, oidc_username,tenantDomain = request.getParameter("tenant"),
+            action = request.getParameter("action"),
+            site = require("/site/conf/site.json"),
+            msg = require("/site/conf/ui-messages.jag"),
+            obj = {}, failed= false;
+    if (action === "login" && request.getMethod() == 'POST') {
+        oidc_username = session.get("LOGGED_IN_USER");
+        if (oidc_username) {
+            username = oidc_username.trim();
+        }
+        log.info("loggedin user: " + username);		
+        var user= MultitenantUtils.getTenantAwareUsername(username);
+		username = user + "@" + tenantDomain;
+		log.info("final username: " + username);     
+        try{
+        	var tenantid = carbon.server.osgiService('org.wso2.carbon.user.core.service.RealmService').getTenantManager().getTenantId(tenantDomain);
+        	log.info("tenantId: " + tenantid);
+        	if(tenantid == -1){
+        		obj = {
+        		     error:true,
+        		     message:"Tenant "+ tenantDomain +" does not exist"
+        		};
+        		print(obj);
+        	} else{
+        		jagg.setUser({username: username, cookie: null});
+        		session.put("LOGGED_IN_USER", username);
+		        var isCreatePermitted = api.hasCreatePermission();
+		        var isPublishPermitted = api.hasPublishPermission();
+		        var showStoreURL = api.showStoreURL();
+		        var hasTierPermission = api.hasManageTierPermission();
+		        jagg.setCreatePermitted(isCreatePermitted);
+		        jagg.setPublishPermitted(isPublishPermitted);
+		        jagg.setManageTierPermitted(hasTierPermission);
+		        jagg.setShowStoreURL(showStoreURL);
+		        
+		        obj = {
+		        	error:false
+		        }    
+		        print(obj);
+        	}
+        } catch(e){
+        	obj = {
+        	    error:true,
+        	    message:"Tenant "+ tenantDomain +" is invalid"
+        	};
+        	print(obj);
+        }
+        
+    } 
+}());
+%>

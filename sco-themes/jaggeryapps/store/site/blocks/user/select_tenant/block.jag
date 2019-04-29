@@ -1,0 +1,14 @@
+<%
+jagg.block("user/select_tenant", {
+
+    initializer:function (data) {
+
+    },
+
+    getOutputs:function (inputs) {
+        return {
+            "user":jagg.getUser()
+        }
+    }
+});
+%>

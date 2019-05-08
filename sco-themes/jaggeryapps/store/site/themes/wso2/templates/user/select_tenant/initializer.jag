@@ -1,9 +1,0 @@
-<%
-jagg.initializer("user/select_tenant", {
-
-    preInitialize:function () {
-     jagg.addHeaderJS("user/select_tenant", "login", "templates/user/select_tenant/js/login.js");
-    }
-});
-%>
-

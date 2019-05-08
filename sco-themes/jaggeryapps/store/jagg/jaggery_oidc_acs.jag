@@ -6,6 +6,8 @@
     include("jagg.jag");
     include("jaggery_roles.jag");
     var i18n = require("i18n");
+    var mod = jagg.module("user");
+    var api = jagg.module("api");
     var localeResourcesBasePath = "/site/conf/locales/jaggery/";
     i18n.init(request, localeResourcesBasePath);
 
@@ -38,38 +40,35 @@
 
     // Check OIDC signature valid and set session as a authenticated if success
 	var isSignatureValid = jagg_roles.validateOIDCSignature(authorizationCode,session.get("NONCE"), sessionId);
-    var rolesList = jagg_roles.getRolesList();
-    var rolesCount = Math.round(rolesList.length);
     var username = jagg_roles.getLoggedInUser();
-    if(rolesCount == 1){
-	    var domain= rolesList[0];
-	    username = username + "@" + domain;
-    }
-	session.put("rolesList", rolesList);
+    
 	session.put("LOGGED_IN_USER", username);
 	log.info("username: " + username);
-	log.info("rolesCount: " + rolesCount);
-	log.info("rolesCount > 1 ");
-	log.info(rolesCount > 1);
-	if(rolesCount > 1){
-	    log.info("rolesCount > 1 ");
-	    jagg.module("manager").loadTenantRegistry(String("yesterday.it"));
-	    response.sendRedirect(jagg.getAbsoluteUrl("/site/pages/select_tenant.jag?tenant=yesterday.it"));
-	    return;
-	}
-
-    if (!Boolean(isSignatureValid) || rolesCount == 0) {
+	
+    if (!Boolean(isSignatureValid)) {
         log.error("OIDC signature is verification failed.");
         response.sendRedirect("../site/pages/error-pages/401.html");
         return;
     }
-
-
     session.put("showLogin", "false");
+    var userExist = mod.checkIfUserExsits(username);
+    log.info("userExists: ");
+    log.info(userExist);
+    if(userExist) {
+    	log.info("User already exists");
+    }         
+    else {
+    	 var SecureRandom = Packages.java.security.SecureRandom;
+    	 var random = new SecureRandom();
+    	 var BigInteger = Packages.java.math.BigInteger;
+    	 var password = new BigInteger(130, random).toString(32)+"";
+         result = mod.addUser(username, password, "");
 
-    var api = jagg.module("api");
+         subscriberCheckResult = mod.checkIfSubscriberRolePresent(username);
+         log.info("subscriberCheckResult: "); log.info(subscriberCheckResult);
+    }
+
     var isUserPermitted = api.hasUserPermissions(username);
-
     var hasPublisherAccess = api.hasPublisherAccess(username);
     var oidcUser = username; //oidcRelyingParty.getLoggedInUser(sessionId);
 
@@ -132,11 +131,15 @@
         var manager = jagg.module("manager");
         var store = manager.getAPIStoreObj();
         var subscriber = store.getSubscriber(username);
+        log.info("isSubscriber? ");
+        log.info(subscriber);
         if (!subscriber) {
             store.addSubscriber(username, groupId);
             subscriber = store.getSubscriber(username);
+            log.info("Adding new subscriber");
         }
-        log.info("has publisher access: " + hasPublisherAccess);
+        log.info("has publisher access: ");
+        log.info(hasPublisherAccess);
         session.put("hasPublisherAccess", hasPublisherAccess);
         response.sendRedirect(requestedURI);
     }

@@ -83,16 +83,19 @@ Regarding the configuration inside site.json below you can find one example of c
         "responseType" : "code",
         "authorizationType" : "authorization_code",
         "scope" : "openid email profile user.roles.me user.roles.read",
-        "redirectURI" : "https://localhost:9443/publisher/jagg/jaggery_oidc_acs.jag",
+        "redirectURI" : "$APIM_URL/publisher/jagg/jaggery_oidc_acs.jag",
         "postLogoutRedirectURI" : "https://localhost:9443/publisher/",
 	"clientAlgorithm" : "RS256",
 	"context":"apimanager"
       }
      }
-     
+
 ## Files/Folders changes for Store
 - jaggeryapps/publisher/jagg/jaggery_oidc_acs.jag
 - jaggeryapps/publisher/jagg/jaggery_roles.jag
 - jaggeryapps/publisher/site/conf/site.json
 
-The configuration inside site.json is similar to the configuration of publisher
+The configuration inside site.json is similar to the configuration of publisher<br>
+Regarding the configuration on AAC side it is important to add to the redirect URL the following values:<br> $APIM_URL/publisher/jagg/jaggery_oidc_acs.jag  
+$APIM_URL/store/jagg/jaggery_oidc_acs.jag  
+

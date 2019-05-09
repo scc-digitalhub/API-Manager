@@ -1,5 +1,5 @@
 # API-Manager Modified Themes
-	- Store. 
+	- Store.
 	- Publisher.
 
 # Setup Store Theme
@@ -24,8 +24,6 @@
 - jaggeryapps/store/site/themes/wso2/templates/page/base/template.jag
 - jaggeryapps/store/site/themes/wso2/templates/search/api-search/template.jag
 - jaggeryapps/store/site/themes/wso2/templates/user/login/template.jag
-### specific list of changes for wso2.6 API Manager
-- jaggeryapps/store/site/themes/wso2/templates/search/api-search/template.jag
 
 
 # Setup Publisher Theme
@@ -50,6 +48,53 @@
 - jaggeryapps/publisher/site/themes/wso2/templates/page/base/template.jag
 - jaggeryapps/publisher/site/themes/wso2/templates/search/api-search/template.jag
 - jaggeryapps/publisher/site/themes/wso2/templates/user/login/template.jag
-### specific list of changes for wso2.6 API Manager
-- jaggeryapps/publisher/site/themes/wso2/templates/page/base/template.jag
-- jaggeryapps/publisher/site/themes/wso2/templates/user/login/js/login.js
+
+# Single Sign On in Publisher/Store
+
+API Manager already has integrated OpenID Connect for managing single sign-on in Publisher and Store.<br/>
+In order to make it compatible with AAC OAuth2 Provider it is necessary to provide methods for accessing Roles resources.<br/>
+This extension is made possible through the following list of file changes:<br/>
+
+## Files/Folders changes for Publisher
+- jaggeryapps/publisher/jagg/jaggery_oidc_acs.jag
+- jaggeryapps/publisher/jagg/jaggery_roles.jag
+- jaggeryapps/publisher/site/blocks/use/select_tenant
+- jaggeryapps/publisher/site/conf/locales/jaggery/locale_default.json
+- jaggeryapps/publisher/site/conf/site.json
+- jaggeryapps/publisher/site/pages/select_tenant.jag
+- jaggeryapps/publisher/site/themes/wso2/templates/user/select_tenant
+
+Regarding the configuration inside site.json below you can find one example of configuration: <br/>
+>
+    "oidcConfiguration" : {
+      "enabled" : "true",
+      "issuer" : "API_PUBLISHER",
+      "identityProviderURI" : "http://localhost:8080/aac",
+      "authorizationEndpointURI" : "http://localhost:8080/aac/oauth/authorize",
+      "tokenEndpointURI" : "http://localhost:8080/aac/oauth/token",
+      "userInfoURI" : "http://localhost:8080/aac/userinfo",
+      "jwksURI" : "http://localhost:8080/aac/jwk",
+      "logoutEndpointURI" : "http://localhost:8080/aac/endsession",
+      "authHttpMethod": "POST",
+      "rolesEndpointURI" : "http://localhost:8080/aac/userroles/me",
+      "clientConfiguration" : {
+        "clientId" : "API_MGT_CLIENT_ID",
+        "clientSecret" : "e17d7e15-3e04-403c-87e0-a28b630b3fb5",
+        "responseType" : "code",
+        "authorizationType" : "authorization_code",
+        "scope" : "openid email profile user.roles.me user.roles.read",
+        "redirectURI" : "$APIM_URL/publisher/jagg/jaggery_oidc_acs.jag",
+        "postLogoutRedirectURI" : "https://localhost:9443/publisher/",
+	"clientAlgorithm" : "RS256",
+	"context":"apimanager"
+      }
+     }
+
+## Files/Folders changes for Store
+- jaggeryapps/publisher/jagg/jaggery_oidc_acs.jag
+- jaggeryapps/publisher/jagg/jaggery_roles.jag
+- jaggeryapps/publisher/site/conf/site.json
+
+The configuration inside site.json is similar to the configuration of publisher<br>
+Regarding the configuration on AAC side it is important to add to the redirect URL the following values:<br> $APIM_URL/publisher/jagg/jaggery_oidc_acs.jag  
+$APIM_URL/store/jagg/jaggery_oidc_acs.jag  

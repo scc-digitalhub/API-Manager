@@ -1,0 +1,66 @@
+<%
+include("/jagg/jagg.jag");
+var site = require("/site/conf/site.json");
+
+var i18n = require("i18n");
+var localeResourcesBasePath="/site/conf/locales/jaggery/";
+i18n.init(request,localeResourcesBasePath);
+var tenantDomain = jagg.getTenantDomain();
+
+var encode = require('encode');
+encode = new encode.Encode();
+
+(function () {
+    jagg.render({
+        "name":"page/base",
+        "inputs":{
+            "title":"API Publisher- Select Tenant",
+            "body":[
+	                {
+	                    "name":"user/select_tenant",
+	                    "inputs":{
+	                        "top":null,
+	                        "left":null,
+	                        "middle":{
+	                            "name":"user/select_tenant"
+	                        },
+	                        "right":null,
+	                        "bottom":null
+	                    }
+	                }
+	            ],
+	        "footer":[
+	                {
+	                    "name":"footer"
+	                }
+            ]
+        }
+    });
+}());
+
+
+%>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

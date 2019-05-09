@@ -35,13 +35,19 @@
       "tokenEndpointURI" : "http://localhost:8080/openid-connect-server-webapp/token",
       "userInfoURI" : "http://localhost:8080/openid-connect-server-webapp/userinfo",
       "jwksURI" : "http://localhost:8080/openid-connect-server-webapp/jwk",
+      "logoutEndpointURI" : "http://localhost:8080/aac/endsession",
+      "authHttpMethod": "POST",
+      "rolesEndpointURI" : "http://localhost:8080/aac/userroles/me",
       "clientConfiguration" : {
         "clientId" : "client_am_publisher",
         "clientSecret" : "secret",
         "responseType" : "code",
         "authorizationType" : "authorization_code",
-        "scope" : "phone email address openid profile",
-        "redirectURI" : "https://localhost:9443/publisher/jagg/jaggery_oidc_acs.jag"
+        "scope" : "phone email address openid profile user.roles.me user.roles.read",
+        "redirectURI" : "https://localhost:9443/publisher/jagg/jaggery_oidc_acs.jag",
+        "postLogoutRedirectURI" : "https://localhost:9443/publisher/",
+	"clientAlgorithm" : "RS256",
+	"context":"apimanager"
       }
     },
 

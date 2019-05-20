@@ -31,15 +31,21 @@ if(request.isSecure()){
 				                </div>
 				                <%
 				                	var rolesList = session.get("rolesList");
-				                	for(var i=0;i<rolesList.length;i++){
+				                	for(role in rolesList){
 								%>
 										<div class="form-group">
 		                                    <div class="col-xs-12 col-sm-12 col-md-5 col-lg-5">
 		                                        <div class="input-group input-wrap">
-		                                            <input type="radio" id="<%=rolesList[i]%>" name="role" value="<%=rolesList[i]%>">&nbsp;
-		                                            <label for="<%=rolesList[i]%>" id="label_<%=rolesList[i]%>">
-		                                            	<%=rolesList[i]%>
-		                                            </label>
+		                                            <table>
+		                                            	<tr>
+			                                            	<td width="300">
+			                                            		<input type="radio" id="<%=role%>::<%=rolesList[role]%>" name="role" value="<%=role%>::<%=rolesList[role]%>">
+			                                            		<label for="<%=role%>::<%=rolesList[role]%>"><%=role%></label>
+			                                            	</td>
+			                                            	<td>[<%=rolesList[role]%>]</td>
+			                                            </tr>
+		                                            </table>
+		                                            
 		                                        </div>
 		                                    </div>
 		                                </div>
@@ -79,3 +85,4 @@ var select_tenant = function () {
         response.sendRedirect(jagg.getHttpsUrl("/"));
 } %>
 <%});%>
+

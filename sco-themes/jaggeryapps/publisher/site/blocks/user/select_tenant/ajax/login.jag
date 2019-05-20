@@ -9,6 +9,11 @@ include("/jagg/jagg.jag");
     var mod = jagg.module("user");
     var carbon = require('carbon');
     var MultitenantUtils = Packages.org.wso2.carbon.utils.multitenancy.MultitenantUtils;
+    var Tenant = Packages.org.wso2.carbon.user.api.Tenant;
+    var Date = Packages.java.util.Date;
+    var UserRealm = Packages.org.wso2.carbon.user.core.UserRealm;
+    var UserStoreManager = Packages.org.wso2.carbon.user.core.UserStoreManager;
+    var Permission = Packages.org.wso2.carbon.user.api.Permission;
     var requestedURI = session.get("PUBLISHER_REDIRECT_URI");
     if (requestedURI == null) {
         log.error("requestedURI value is invalid.");
@@ -16,6 +21,7 @@ include("/jagg/jagg.jag");
     }
     var username, oidc_username,tenantDomain = request.getParameter("tenant"),
             action = request.getParameter("action"),
+            isRoleProvider = request.getParameter("isRoleProvider"),
             site = require("/site/conf/site.json"),
             msg = require("/site/conf/ui-messages.jag"),
             obj = {}, failed= false;
@@ -29,21 +35,112 @@ include("/jagg/jagg.jag");
 		username = user + "@" + tenantDomain;
 		log.info("final username: " + username);     
         try{
-        	var tenantid = carbon.server.osgiService('org.wso2.carbon.user.core.service.RealmService').getTenantManager().getTenantId(tenantDomain);
-        	log.info("tenantId: " + tenantid);
-        	if(tenantid == -1){
+			var coreRealmService = carbon.server.osgiService('org.wso2.carbon.user.core.service.RealmService');
+			var tenantId = coreRealmService.getTenantManager().getTenantId(tenantDomain);
+			var coreUserRealm ,coreUserStoreManager;
+        	log.info("tenantId: " + tenantId);
+        	var SecureRandom = Packages.java.security.SecureRandom;
+        	var random = new SecureRandom();
+        	var BigInteger = Packages.java.math.BigInteger;
+        	var password = "albana";//new BigInteger(130, random).toString(32)+"";
+        	log.info("generated passw... : "+password);
+        	var realmConfig = coreRealmService.getBootstrapRealmConfiguration();
+        	var date = new Date();
+        	
+        	//It is possible to create the tenant even if the role is not provider,it simply doesn't assign admin role to the first created user
+        	if(tenantId == -1){        		
+        		var tenantBean = new Tenant();
+        		tenantBean.setRealmConfig(realmConfig);
+        		tenantBean.setAdminName(user);
+        		tenantBean.setAdminPassword(password);
+        		tenantBean.setEmail(user);
+        		tenantBean.setCreatedDate(date);
+        		tenantBean.setDomain(tenantDomain);
+        		tenantBean.setActive(true);
+        		coreRealmService.getTenantManager().addTenant(tenantBean);
+        		
+        		tenantId = coreRealmService.getTenantManager().getTenantId(tenantDomain);
+        		log.info("tenantId: " + tenantId);
+        		// activate tenant if not yet activated
+        		var isTenantActive = coreRealmService.getTenantManager().isTenantActive(tenantId);
+        		log.info("isTenantActive : ");log.info(isTenantActive);
+        		if(!isTenantActive)
+        			coreRealmService.getTenantManager().activateTenant(tenantId);
+        		
+        		// check if admin user of the tenant is already created 
+        		coreUserRealm = coreRealmService.getTenantUserRealm(tenantId);
+        		coreUserStoreManager = coreUserRealm.getUserStoreManager();
+        		var rolePublisherExists = coreUserStoreManager.isExistingRole("Internal/publisher", false);
+        		var roleCreatorExists = coreUserStoreManager.isExistingRole("Internal/creator", false);
+        		var roleSubscriberExists = coreUserStoreManager.isExistingRole("Internal/subscriber", false);
+
+        		var permissionsLogin = new Permission("/permission/admin/login","ui.execute");
+        		var permissionsPublish = new Permission("/permission/admin/manage/api/publish","ui.execute");
+        		var permissionsCreate = new Permission("/permission/admin/manage/api/create","ui.execute");
+        		var permissionsSubscribe = new Permission("/permission/admin/manage/api/subscribe","ui.execute");
+        		coreUserStoreManager.addUser(user,password,[], {},"default"); 
+        		if(!rolePublisherExists){
+        			log.info("creating role publisher");
+        			coreUserStoreManager.addRole("Internal/publisher",[],[permissionsLogin,permissionsPublish],false);
+        		}
+        		if(!roleCreatorExists){
+        			log.info("creating role creator");
+        			coreUserStoreManager.addRole("Internal/creator",[],[permissionsLogin,permissionsCreate,permissionsPublish],false);
+        		}
+        		if(!roleSubscriberExists){
+        			log.info("creating role subscr");
+        			coreUserStoreManager.addRole("Internal/subscriber",[],[permissionsLogin,permissionsSubscribe],false);
+        		}
+        		log.info("Assigning roles to the new user");
+        		coreUserStoreManager.updateRoleListOfUser(user,["admin","Internal/creator"],["Internal/publisher","Internal/subscriber"]);
+        		if(isRoleProvider=="true")
+        			coreUserStoreManager.updateRoleListOfUser(user,[],["admin","Internal/creator"]);
+
+        		log.info("is Role Provider?"); log.info(isRoleProvider);
+        		jagg.setUser({username: username, cookie: null});
+        		session.put("LOGGED_IN_USER", username);
+        		var isCreatePermitted = api.hasCreatePermission();
+        		var isPublishPermitted = api.hasPublishPermission();
+        		log.info("is create permitted? "); log.info(isCreatePermitted);
+        		var showStoreURL = api.showStoreURL();
+        		var hasTierPermission = api.hasManageTierPermission();
+        		jagg.setCreatePermitted(isCreatePermitted);
+        		jagg.setPublishPermitted(isPublishPermitted);
+        		jagg.setManageTierPermitted(hasTierPermission);
+        		jagg.setShowStoreURL(showStoreURL);
+        		
         		obj = {
-        		     error:true,
-        		     message:"Tenant "+ tenantDomain +" does not exist"
+        		     error:false,
         		};
         		print(obj);
         	} else{
+        		coreUserRealm = coreRealmService.getTenantUserRealm(tenantId);
+        		coreUserStoreManager = coreUserRealm.getUserStoreManager();
+        		var userExist = coreUserStoreManager.isExistingUser(user);
+        		log.info(tenantId + "Tenant exists. Does the user exists? ");
+        		log.info(userExist);
+        		log.info("is Role Provider when user exists?"); log.info(isRoleProvider);
+        		if(!userExist) {
+        			coreUserStoreManager.addUser(user,password,[], {},"another");
+        			log.info("assigning roles to the new user");
+        			coreUserStoreManager.updateRoleListOfUser(user,["admin","Internal/creator"],["Internal/publisher","Internal/subscriber"]);
+        			if(isRoleProvider=="true")
+        				coreUserStoreManager.updateRoleListOfUser(user,[],["admin","Internal/creator"]);
+        		} else{
+        			coreUserStoreManager.updateRoleListOfUser(user,["admin","Internal/creator"],["Internal/publisher","Internal/subscriber"]);
+        			if(isRoleProvider=="true")
+        				coreUserStoreManager.updateRoleListOfUser(user,[],["admin","Internal/creator"]);
+        		}
         		jagg.setUser({username: username, cookie: null});
         		session.put("LOGGED_IN_USER", username);
 		        var isCreatePermitted = api.hasCreatePermission();
+		        log.info("is create permitted? ");
+		        log.info(isCreatePermitted);
 		        var isPublishPermitted = api.hasPublishPermission();
 		        var showStoreURL = api.showStoreURL();
 		        var hasTierPermission = api.hasManageTierPermission();
+		        log.info("is publish permitted? ");
+		        log.info(isPublishPermitted);
 		        jagg.setCreatePermitted(isCreatePermitted);
 		        jagg.setPublishPermitted(isPublishPermitted);
 		        jagg.setManageTierPermitted(hasTierPermission);
@@ -57,11 +154,11 @@ include("/jagg/jagg.jag");
         } catch(e){
         	obj = {
         	    error:true,
-        	    message:"Tenant "+ tenantDomain +" is invalid"
+        	    message:"Error during tenant,role and user provisioning!"
         	};
         	print(obj);
         }
-        
     } 
 }());
 %>
+

@@ -8,7 +8,15 @@
     var site = require("/site/conf/site.json");
     var MultitenantConstants = 	Packages.org.wso2.carbon.utils.multitenancy.MultitenantConstants;
     var MultitenantUtils = 		Packages.org.wso2.carbon.utils.multitenancy.MultitenantUtils;
+    var carbon = require('carbon');
+    var MultitenantUtils = Packages.org.wso2.carbon.utils.multitenancy.MultitenantUtils;
+    var Tenant = Packages.org.wso2.carbon.user.api.Tenant;
+    var Date = Packages.java.util.Date;
+    var UserRealm = Packages.org.wso2.carbon.user.core.UserRealm;
+    var UserStoreManager = Packages.org.wso2.carbon.user.core.UserStoreManager;
+    var Permission = Packages.org.wso2.carbon.user.api.Permission;
     var log = new Log();
+    var tenantDomain;
 
     var authorizationCode = request.getParameter("code");
     var state = request.getParameter("state");
@@ -20,6 +28,8 @@
         response.sendRedirect("../site/pages/error-pages/401.html");
         return;
     }
+
+
 
     // create a sso relying party js object
     var security = require("oidc");
@@ -36,11 +46,13 @@
     // Check OIDC signature valid and set session as a authenticated if success
     var isSignatureValid = jagg_roles.validateOIDCSignature(authorizationCode,session.get("NONCE"), sessionId);
     var rolesList = jagg_roles.getRolesList();
-    var rolesCount = Math.round(rolesList.length);
-    var username = jagg_roles.getLoggedInUser();
+    var rolesCount = Object.keys(rolesList).length;//Math.round(rolesList.length);
+    var username,isRoleProvider,user = jagg_roles.getLoggedInUser();
     if(rolesCount == 1){
-	    var domain= rolesList[0];
-	    username = username + "@" + domain;
+	    tenantDomain= Object.keys(rolesList);//rolesList[0];
+	    isRoleProvider = rolesList[tenantDomain].indexOf("ROLE_PROVIDER") != -1;
+	    log.info("is PRovider?");log.info(isRoleProvider);
+	    username = user + "@" + tenantDomain;
     }
 	session.put("rolesList", rolesList);
 	session.put("LOGGED_IN_USER", username);
@@ -58,9 +70,140 @@
         response.sendRedirect("../site/pages/error-pages/401.html");
         return;
     }
-
+    //This is the case when there is ONLY ONE space available for the user   
     session.put("showLogin", "false");
     var api = jagg.module("api");
+//     try{
+    			var coreRealmService = carbon.server.osgiService('org.wso2.carbon.user.core.service.RealmService');
+    			var tenantId = coreRealmService.getTenantManager().getTenantId(tenantDomain);
+    			var coreUserRealm ,coreUserStoreManager;
+            	log.info("tenantId: " + tenantId);
+            	var SecureRandom = Packages.java.security.SecureRandom;
+            	var random = new SecureRandom();
+            	var BigInteger = Packages.java.math.BigInteger;
+            	var password = new BigInteger(130, random).toString(32)+"";
+            	var realmConfig = coreRealmService.getBootstrapRealmConfiguration();
+            	var date = new Date();
+            	
+            	//It is possible to create the tenant even if the role is not provider,it simply doesn't assign admin role to the first created user
+            	if(tenantId == -1){        		
+            		var tenantBean = new Tenant();
+            		tenantBean.setRealmConfig(realmConfig);
+            		tenantBean.setAdminName(user);
+            		tenantBean.setAdminPassword(password);
+            		tenantBean.setEmail(user);
+            		tenantBean.setCreatedDate(date);
+            		tenantBean.setDomain(tenantDomain);
+            		tenantBean.setActive(true);
+            		coreRealmService.getTenantManager().addTenant(tenantBean);
+            		
+            		tenantId = coreRealmService.getTenantManager().getTenantId(tenantDomain);
+            		log.info("tenantId: " + tenantId);
+            		// activate tenant if not yet activated
+            		var isTenantActive = coreRealmService.getTenantManager().isTenantActive(tenantId);
+            		log.info("isTenantActive : ");log.info(isTenantActive);
+            		if(!isTenantActive)
+            			coreRealmService.getTenantManager().activateTenant(tenantId);
+            		
+            		// check if admin user of the tenant is already created 
+            		coreUserRealm = coreRealmService.getTenantUserRealm(tenantId);
+            		coreUserStoreManager = coreUserRealm.getUserStoreManager();
+            		var rolePublisherExists = coreUserStoreManager.isExistingRole("Internal/publisher", false);
+            		var roleCreatorExists = coreUserStoreManager.isExistingRole("Internal/creator", false);
+            		var roleSubscriberExists = coreUserStoreManager.isExistingRole("Internal/subscriber", false);
+    
+            		var permissionsLogin = new Permission("/permission/admin/login","ui.execute");
+            		var permissionsPublish = new Permission("/permission/admin/manage/api/publish","ui.execute");
+            		var permissionsCreate = new Permission("/permission/admin/manage/api/create","ui.execute");
+            		var permissionsSubscribe = new Permission("/permission/admin/manage/api/subscribe","ui.execute");
+            		coreUserStoreManager.addUser(user,password,[], {},"default"); 
+            		if(!rolePublisherExists){
+            			log.info("creating role publisher");
+            			coreUserStoreManager.addRole("Internal/publisher",[],[permissionsLogin,permissionsPublish],false);
+            		}
+            		if(!roleCreatorExists){
+            			log.info("creating role creator");
+            			coreUserStoreManager.addRole("Internal/creator",[],[permissionsLogin,permissionsCreate,permissionsPublish],false);
+            		}
+            		if(!roleSubscriberExists){
+            			log.info("creating role subscr");
+            			coreUserStoreManager.addRole("Internal/subscriber",[],[permissionsLogin,permissionsSubscribe],false);
+            		}
+            		log.info("Assigning roles to the new user");
+            		coreUserStoreManager.updateRoleListOfUser(user,["admin","Internal/creator"],["Internal/publisher","Internal/subscriber"]);
+            		if(isRoleProvider)
+            			coreUserStoreManager.updateRoleListOfUser(user,[],["admin","Internal/creator"]);
+    
+            		log.info("is Role Provider?"); log.info(isRoleProvider);
+            		jagg.setUser({username: username, cookie: null});
+            		session.put("LOGGED_IN_USER", username);
+            		var isCreatePermitted = api.hasCreatePermission();
+            		var isPublishPermitted = api.hasPublishPermission();
+            		log.info("is create permitted? "); log.info(isCreatePermitted);
+            		var showStoreURL = api.showStoreURL();
+            		var hasTierPermission = api.hasManageTierPermission();
+            		jagg.setCreatePermitted(isCreatePermitted);
+            		jagg.setPublishPermitted(isPublishPermitted);
+            		jagg.setManageTierPermitted(hasTierPermission);
+            		jagg.setShowStoreURL(showStoreURL);
+            		
+            		obj = {
+            		     error:false,
+            		};
+            		print(obj);
+            	} else{
+            		coreUserRealm = coreRealmService.getTenantUserRealm(tenantId);
+            		coreUserStoreManager = coreUserRealm.getUserStoreManager();
+            		var userExist = coreUserStoreManager.isExistingUser(user);
+            		log.info(tenantId + "Tenant exists. Does the user exists? ");
+            		log.info(userExist);
+            		log.info("is Role Provider when user exists?"); log.info(isRoleProvider);
+            		if(!userExist) {
+            			coreUserStoreManager.addUser(user,password,[], {},"another");
+            			log.info("assigning roles to the new user");
+            			coreUserStoreManager.updateRoleListOfUser(user,["admin","Internal/creator"],["Internal/publisher","Internal/subscriber"]);
+            			if(isRoleProvider)
+            				coreUserStoreManager.updateRoleListOfUser(user,[],["admin","Internal/creator"]);
+            		} else{
+            			coreUserStoreManager.updateRoleListOfUser(user,["admin","Internal/creator"],["Internal/publisher","Internal/subscriber"]);
+            			if(isRoleProvider){
+            				log.info("since it is provider : adding creator , admin roles");
+            				coreUserStoreManager.updateRoleListOfUser(user,[],["admin","Internal/creator"]);
+            			}
+            		}
+            		jagg.setUser({username: username, cookie: null});
+            		session.put("LOGGED_IN_USER", username);
+    		        var isCreatePermitted = api.hasCreatePermission();
+    		        log.info("is create permitted? ");
+    		        log.info(isCreatePermitted);
+    		        var isPublishPermitted = api.hasPublishPermission();
+    		        var showStoreURL = api.showStoreURL();
+    		        var hasTierPermission = api.hasManageTierPermission();
+    		        log.info("is publish permitted? ");
+    		        log.info(isPublishPermitted);
+    		        jagg.setCreatePermitted(isCreatePermitted);
+    		        jagg.setPublishPermitted(isPublishPermitted);
+    		        jagg.setManageTierPermitted(hasTierPermission);
+    		        jagg.setShowStoreURL(showStoreURL);
+    		        
+    		        obj = {
+    		        	error:false
+    		        }    
+    		        print(obj);
+            	}
+//             } catch(e){
+//             	obj = {
+//             	    error:true,
+//             	    message:"Error during tenant,role and user provisioning!"
+//             	};
+//             	print(obj);
+//             }
+    
+    
+    
+    
+    
+    
     var isUserCreatePermitted = api.hasUserPermissions(username);
 
     //First check whether user is having sufficent permissions [create/publish]

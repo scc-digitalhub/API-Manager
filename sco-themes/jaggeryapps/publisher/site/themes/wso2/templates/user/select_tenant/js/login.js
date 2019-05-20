@@ -1,9 +1,13 @@
 var select_tenant_test = function () {
 	var selectedTenant = $("#tenantForm input[type='radio']:checked").val();
 	console.log(selectedTenant);
-    var tenantDomain = selectedTenant;
+	var compTenant = selectedTenant.split("::");
+    var tenantDomain = compTenant[0];
+    var role = compTenant[1];
+    var isRoleProvider = role.indexOf("ROLE_PROVIDER") != -1;
     tenantDomain = tenantDomain.trim();
-    jagg.post("/site/blocks/user/select_tenant/ajax/login.jag", { action:"login", tenant:tenantDomain },
+    console.log(isRoleProvider);
+    jagg.post("/site/blocks/user/select_tenant/ajax/login.jag", { action:"login", tenant:tenantDomain, isRoleProvider:isRoleProvider },
               function (result) {
                   if (!result.error) { 
                       var current = window.location.pathname;

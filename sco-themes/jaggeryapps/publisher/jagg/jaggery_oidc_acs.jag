@@ -73,7 +73,7 @@
     //This is the case when there is ONLY ONE space available for the user   
     session.put("showLogin", "false");
     var api = jagg.module("api");
-//     try{
+    try{
     			var coreRealmService = carbon.server.osgiService('org.wso2.carbon.user.core.service.RealmService');
     			var tenantId = coreRealmService.getTenantManager().getTenantId(tenantDomain);
     			var coreUserRealm ,coreUserStoreManager;
@@ -191,19 +191,13 @@
     		        }    
     		        print(obj);
             	}
-//             } catch(e){
-//             	obj = {
-//             	    error:true,
-//             	    message:"Error during tenant,role and user provisioning!"
-//             	};
-//             	print(obj);
-//             }
-    
-    
-    
-    
-    
-    
+            } catch(e){
+            	obj = {
+            	    error:true,
+            	    message:"Error during tenant,role and user provisioning!"
+            	};
+            	print(obj);
+            }      
     var isUserCreatePermitted = api.hasUserPermissions(username);
 
     //First check whether user is having sufficent permissions [create/publish]

@@ -47,7 +47,7 @@
     var isSignatureValid = jagg_roles.validateOIDCSignature(authorizationCode,session.get("NONCE"), sessionId);
     var rolesList = jagg_roles.getRolesList();
     var rolesCount = Object.keys(rolesList).length;//Math.round(rolesList.length);
-    var username,isRoleProvider,user = jagg_roles.getLoggedInUser();
+    var username = user = jagg_roles.getLoggedInUser(),isRoleProvider;
     if(rolesCount == 1){
 	    tenantDomain= Object.keys(rolesList);//rolesList[0];
 	    isRoleProvider = rolesList[tenantDomain].indexOf("ROLE_PROVIDER") != -1;

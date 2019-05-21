@@ -1,5 +1,5 @@
 <% jagg.template("user/select_tenant", function(inputs, outputs, jagg) { %>
-<%    
+<%
 if(request.isSecure()){
 	var log = new Log();
 	if(jagg.getUser() != null){
@@ -27,23 +27,29 @@ if(request.isSecure()){
                         <div class="data-container">
                             <form class="form-horizontal" id="tenantForm" name="tenantForm">
                                 <h3><%=i18n.localize("Select the proper tenant")%>:</h3>
-                                <div class="alert alert-danger" role="alert" id="loginErrorMsg" style="display:none">				                    
+                                <div class="alert alert-danger" role="alert" id="loginErrorMsg" style="display:none">
 				                </div>
 				                <%
 				                	var rolesList = session.get("rolesList");
-				                	for(var i=0;i<rolesList.length;i++){
+				                	for(role in rolesList){
 								%>
 										<div class="form-group">
 		                                    <div class="col-xs-12 col-sm-12 col-md-5 col-lg-5">
 		                                        <div class="input-group input-wrap">
-		                                            <input type="radio" id="<%=rolesList[i]%>" name="role" value="<%=rolesList[i]%>">&nbsp;
-		                                            <label for="<%=rolesList[i]%>" id="label_<%=rolesList[i]%>">
-		                                            	<%=rolesList[i]%>
-		                                            </label>
+		                                            <table>
+		                                            	<tr>
+			                                            	<td width="300">
+			                                            		<input type="radio" id="<%=role%>::<%=rolesList[role]%>" name="role" value="<%=role%>::<%=rolesList[role]%>">
+			                                            		<label for="<%=role%>::<%=rolesList[role]%>"><%=role%></label>
+			                                            	</td>
+			                                            	<td>[<%=rolesList[role]%>]</td>
+			                                            </tr>
+		                                            </table>
+
 		                                        </div>
 		                                    </div>
 		                                </div>
-								<%	
+								<%
 									}
 				                %>
                                 <div class="form-group">
@@ -66,9 +72,9 @@ var select_tenant = function () {
 	console.log(selectedTenant);
     var tenantDomain = selectedTenant;
     tenantDomain = tenantDomain.trim();
-    
+
 };
-				                
+
 </script>
 
 <% } else {

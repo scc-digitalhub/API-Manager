@@ -1,11 +1,15 @@
 var select_tenant_test = function () {
 	var selectedTenant = $("#tenantForm input[type='radio']:checked").val();
 	console.log(selectedTenant);
-    var tenantDomain = selectedTenant;
+	var compTenant = selectedTenant.split("::");
+    var tenantDomain = compTenant[0];
+    var role = compTenant[1];
+    var isRoleProvider = role.indexOf("ROLE_PROVIDER") != -1;
     tenantDomain = tenantDomain.trim();
-    jagg.post("/site/blocks/user/select_tenant/ajax/login.jag", { action:"login", tenant:tenantDomain },
+    console.log(isRoleProvider);
+    jagg.post("/site/blocks/user/select_tenant/ajax/login.jag", { action:"login", tenant:tenantDomain, isRoleProvider:isRoleProvider },
               function (result) {
-                  if (!result.error) { 
+                  if (!result.error) {
                       var current = window.location.pathname;
                       var currentHref=window.location.search;
                       var requestedPage=getParameterByName("requestedPage");
@@ -29,7 +33,7 @@ var select_tenant_test = function () {
                       //@todo: param_string
                       $('#loginErrorMsg').html('<i class="icon fw fw-error"></i><strong>'  + i18n.t("Error! ") +
                       '</strong>' + text.html() + '<button type="button" class="close" aria-label="close" data-dismiss="alert"><span aria-hidden="true"><i class="fw fw-cancel"></i></span></button>');
-                      
+
                   }
               }, "json");
 };

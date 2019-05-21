@@ -2,11 +2,11 @@
 
 var site = require("/site/conf/site.json");
 var jagg_roles = jagg_roles || (function () {
-     
+
     var access_token;
     var id_token;
     var userName;
-    var rolesList = [];
+    var rolesList = {};
     var String = 				Packages.java.lang.String;
     var Base64 = 				Packages.com.nimbusds.jose.util.Base64;
     var InputStreamReader = 	Packages.java.io.InputStreamReader;
@@ -21,7 +21,7 @@ var jagg_roles = jagg_roles || (function () {
     var ServerConfiguration = 	Packages.org.wso2.carbon.apimgt.hostobjects.oidc.internal.ServerConfiguration;
     var AuthClient = 			Packages.org.wso2.carbon.apimgt.hostobjects.oidc.internal.AuthClient;
     var log = new Log();
-    
+
 
 var getServerConfiguration = function() {
 
@@ -49,7 +49,7 @@ var getClientConfiguration = function() {
 };
 
 var getRolesFromEP = function(authenticationToken){
-    	
+
 		var url = site.oidcConfiguration.rolesEndpointURI;
         var headers = {"Authorization":"Bearer " + authenticationToken,"Accept":"application/json"};
         var response = get(url,null,headers,"json");
@@ -95,7 +95,7 @@ var getTokenFromTokenEP = function(code) {
 var getUserName = function(token) {
 
         var userInfoJson = getUserInfoFromRP(token);
-        
+
         if (userInfoJson.preferred_username != null) {
             userName = userInfoJson.preferred_username;
             log.info("User name taken from user info endpoint : " + userName);
@@ -110,12 +110,12 @@ var getLoggedInUser = function(){
 };
 
 var getRolesList = function () {
-    	  	
+
     	var rolesResponse = getRolesFromEP(access_token);
     	if (rolesResponse== null) {
             throw new Exception("Roles Endpoint did not return a valid JSON object: " + rolesResponse);
-        } else {      	
-			var roleName,context,space,definedContext;
+        } else {
+			var roleName,context,space,definedContext,tempRole = [];
 			definedContext = site.oidcConfiguration.clientConfiguration.context;
 			var length = Math.round(rolesResponse.length);
 			for(var i = 0;i<length;i++) {
@@ -129,10 +129,13 @@ var getRolesList = function () {
 					space = entityRow.space;
 					log.info("currentRoleName: "+roleName+ " currentContext: "+context+" currentSpace: "+space+" definedContext: "+definedContext);
 					if (context.equals(definedContext)) {
-						rolesList.push(space);
+						if(rolesList[space] == undefined || rolesList[space] != "ROLE_PROVIDER"){
+							rolesList[space] = roleName;
+							//rolesList.push(tempRole);
+						}
 					}
 				}
-			} 
+			}
         }
         log.info(rolesList);
     	return rolesList;
@@ -147,7 +150,7 @@ var validateSignature = function(serverConfiguration, authClient, idToken, nonce
         // Supports only signedJWT
         if (idToken instanceof SignedJWT) {
             var signedIdToken = idToken;
-            isSignatureValid = Util.verifySignature(signedIdToken, serverConfiguration);   
+            isSignatureValid = Util.verifySignature(signedIdToken, serverConfiguration);
 
         } else if (idToken instanceof PlainJWT) {
             log.info("Plain JWT not supported");
@@ -156,7 +159,7 @@ var validateSignature = function(serverConfiguration, authClient, idToken, nonce
             log.info("JWT type not supported");
         }
 
-        var isValidClaimSet = Util.validateIdClaims(serverConfiguration, authClient, idToken, nonce, idClaims);  
+        var isValidClaimSet = Util.validateIdClaims(serverConfiguration, authClient, idToken, nonce, idClaims);
         return  isSignatureValid && isValidClaimSet;
 };
 
@@ -164,7 +167,7 @@ var validateOIDCSignature = function(authorizationCode, storedNonce, sessionId) 
 
         log.info("Validating OIDC signature");
         var isSignatureValid;
-        
+
         var oidcAuthenticationToken = getTokenFromTokenEP(authorizationCode);
         var serverConfiguration = getServerConfiguration();
         var authClient = getClientConfiguration();
@@ -176,7 +179,7 @@ var validateOIDCSignature = function(authorizationCode, storedNonce, sessionId) 
             log.info("Authentication Request is rejected. " + "User Name is Null");
             return false;
         }
-        isSignatureValid = validateSignature(serverConfiguration, authClient, id_token, storedNonce);      
+        isSignatureValid = validateSignature(serverConfiguration, authClient, id_token, storedNonce);
 
         return isSignatureValid;
 };

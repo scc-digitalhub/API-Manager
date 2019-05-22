@@ -113,17 +113,41 @@
             		var roleSubscriberExists = coreUserStoreManager.isExistingRole("Internal/subscriber", false);
 
             		var permissionsLogin = new Permission("/permission/admin/login","ui.execute");
-            		var permissionsPublish = new Permission("/permission/admin/manage/api/publish","ui.execute");
-            		var permissionsCreate = new Permission("/permission/admin/manage/api/create","ui.execute");
-            		var permissionsSubscribe = new Permission("/permission/admin/manage/api/subscribe","ui.execute");
-            		coreUserStoreManager.addUser(user,password,[], {},"default");
+	        		var permissionsPublish = new Permission("/permission/admin/manage/api/publish","ui.execute");
+	        		var permissionsCreate = new Permission("/permission/admin/manage/api/create","ui.execute");
+	        		var permissionsSubscribe = new Permission("/permission/admin/manage/api/subscribe","ui.execute");
+	        		
+	        		var permissions1 = new Permission("/permission/admin/configure/governance","ui.execute");
+	        		var permissions2 = new Permission("/_system/governance/trunk","http://www.wso2.org/projects/registry/actions/get");
+	        		var permissions3 = new Permission("/_system/governance/trunk","http://www.wso2.org/projects/registry/actions/add");
+	        		var permissions4 = new Permission("/_system/governance/trunk","http://www.wso2.org/projects/registry/actions/delete");
+	        		var permissions5 = new Permission("/_system/governance/apimgt/applicationdata","http://www.wso2.org/projects/registry/actions/get");
+	        		var permissions6 = new Permission("/_system/governance/apimgt/applicationdata","http://www.wso2.org/projects/registry/actions/add");
+	        		var permissions7 = new Permission("/_system/governance/apimgt/applicationdata","http://www.wso2.org/projects/registry/actions/delete");
+	        		var permissions8 = new Permission("/permission/admin/manage/resources/govern","ui.execute");
+	        		var permissions9 = new Permission("/permission/admin/manage/resources/govern/api/add","ui.execute");
+	        		var permissions10 = new Permission("/permission/admin/manage/resources/govern/api/list","ui.execute");
+	        		var permissions11 = new Permission("/permission/admin/manage/resources/govern/document","ui.execute");
+	        		var permissions12 = new Permission("/permission/admin/manage/resources/govern/generic","ui.execute");
+	        		var permissions13 = new Permission("/permission/admin/manage/resources/govern/lifecycles","ui.execute");
+	        		var permissions14 = new Permission("/permission/admin/manage/resources/govern/metadata","ui.execute");
+	        		var permissions15 = new Permission("/permission/admin/manage/resources/govern/provider","ui.execute");
+	        		var permissions16 = new Permission("/permission/admin/manage/resources/govern/reply","ui.execute");
+	        		var permissions17 = new Permission("/permission/admin/manage/resources/govern/topic","ui.execute");
+        		
+            		coreUserStoreManager.addUser(user,password,[], {},"default"); 
             		if(!rolePublisherExists){
             			log.info("creating role publisher");
             			coreUserStoreManager.addRole("Internal/publisher",[],[permissionsLogin,permissionsPublish],false);
             		}
             		if(!roleCreatorExists){
             			log.info("creating role creator");
-            			coreUserStoreManager.addRole("Internal/creator",[],[permissionsLogin,permissionsCreate,permissionsPublish],false);
+            			coreUserStoreManager.addRole("Internal/creator",[],[permissionsLogin,permissionsCreate,permissionsPublish,permissionsSubscribe,
+																		permissions1,permissions2,permissions3,permissions4,
+																		permissions5,permissions6,permissions7,permissions8,
+																		permissions9,permissions10,permissions11,permissions12,
+																		permissions13,permissions14,permissions15,permissions16,
+																		permissions17],false);
             		}
             		if(!roleSubscriberExists){
             			log.info("creating role subscr");
@@ -209,7 +233,10 @@
        response.sendRedirect("../site/pages/error-pages/403.html");
        return;
     }
-
+    
+    log.info("load tenant registry");
+    jagg.module("manager").loadTenantRegistry(String(tenantDomain));
+    jagg.module("manager").loadTenantAxisConfiguration(String(tenantDomain));
     var isCreatePermitted = api.hasCreatePermission();
     var isPublishPermitted = api.hasPublishPermission();
     var showStoreURL = api.showStoreURL();

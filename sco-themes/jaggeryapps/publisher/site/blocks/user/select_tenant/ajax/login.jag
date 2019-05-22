@@ -122,6 +122,10 @@ include("/jagg/jagg.jag");
         		log.info("is Role Provider?"); log.info(isRoleProvider);
         		jagg.setUser({username: username, cookie: null});
         		session.put("LOGGED_IN_USER", username);
+        		
+        		log.info("load tenant registry");
+        		jagg.module("manager").loadTenantRegistry(String(tenantDomain));
+        		jagg.module("manager").loadTenantAxisConfiguration(String(tenantDomain));
         		var isCreatePermitted = api.hasCreatePermission();
         		var isPublishPermitted = api.hasPublishPermission();
         		log.info("is create permitted? "); log.info(isCreatePermitted);
@@ -140,9 +144,9 @@ include("/jagg/jagg.jag");
         		coreUserRealm = coreRealmService.getTenantUserRealm(tenantId);
         		coreUserStoreManager = coreUserRealm.getUserStoreManager();
         		var userExist = coreUserStoreManager.isExistingUser(user);
-        		log.info(tenantId + "Tenant exists. Does the user exists? ");
+        		log.info(tenantId + "Tenant exists. Does the user exist? ");
         		log.info(userExist);
-        		log.info("is Role Provider when user exists?"); log.info(isRoleProvider);
+        		log.info("is Role Provider when tenant exists?"); log.info(isRoleProvider);
         		if(!userExist) {
         			coreUserStoreManager.addUser(user,password,[], {},"another");
         			log.info("assigning roles to the new user");
@@ -156,6 +160,10 @@ include("/jagg/jagg.jag");
         		}
         		jagg.setUser({username: username, cookie: null});
         		session.put("LOGGED_IN_USER", username);
+        		
+        		log.info("load tenant registry");
+        		jagg.module("manager").loadTenantRegistry(String(tenantDomain));
+        		jagg.module("manager").loadTenantAxisConfiguration(String(tenantDomain));
 		        var isCreatePermitted = api.hasCreatePermission();
 		        log.info("is create permitted? ");
 		        log.info(isCreatePermitted);

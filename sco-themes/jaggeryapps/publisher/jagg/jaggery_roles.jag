@@ -128,7 +128,7 @@ var getRolesList = function () {
 					context = entityRow.context;
 					space = entityRow.space;
 					log.info("currentRoleName: "+roleName+ " currentContext: "+context+" currentSpace: "+space+" definedContext: "+definedContext);
-					if (context.equals(definedContext)) {
+					if (context.equals(definedContext) || (userName.equals("admin") && space.equals("carbon.super")) ) {
 						if(rolesList[space] == undefined || rolesList[space] != "ROLE_PROVIDER"){
 							rolesList[space] = roleName;
 							//rolesList.push(tempRole);

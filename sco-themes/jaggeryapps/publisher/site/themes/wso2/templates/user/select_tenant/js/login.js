@@ -1,4 +1,4 @@
-var select_tenant_test = function () {
+var select_tenant = function () {
 	var selectedTenant = $("#tenantForm input[type='radio']:checked").val();
 	console.log(selectedTenant);
 	var compTenant = selectedTenant.split("::");
@@ -6,7 +6,8 @@ var select_tenant_test = function () {
     var role = compTenant[1];
     var isRoleProvider = role.indexOf("ROLE_PROVIDER") != -1;
     tenantDomain = tenantDomain.trim();
-    console.log(isRoleProvider);
+    $("#tenantForm button[type='button']").attr("disabled", true);
+    $("#tenantForm button[type='button']").text('Redirecting...');
     jagg.post("/site/blocks/user/select_tenant/ajax/login.jag", { action:"login", tenant:tenantDomain, isRoleProvider:isRoleProvider },
               function (result) {
                   if (!result.error) { 

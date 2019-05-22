@@ -233,7 +233,10 @@
        response.sendRedirect("../site/pages/error-pages/403.html");
        return;
     }
-            
+    
+    log.info("load tenant registry");
+    jagg.module("manager").loadTenantRegistry(String(tenantDomain));
+    jagg.module("manager").loadTenantAxisConfiguration(String(tenantDomain));
     var isCreatePermitted = api.hasCreatePermission();
     var isPublishPermitted = api.hasPublishPermission();
     var showStoreURL = api.showStoreURL();

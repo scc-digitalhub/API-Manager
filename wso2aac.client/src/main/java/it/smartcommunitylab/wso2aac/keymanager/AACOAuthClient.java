@@ -29,6 +29,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -56,6 +57,7 @@ import org.apache.oltu.oauth2.as.issuer.OAuthIssuer;
 import org.apache.oltu.oauth2.common.OAuth;
 import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.model.API;
+import org.wso2.carbon.apimgt.api.model.APIKey;
 import org.wso2.carbon.apimgt.api.model.AccessTokenInfo;
 import org.wso2.carbon.apimgt.api.model.AccessTokenRequest;
 import org.wso2.carbon.apimgt.api.model.KeyManagerConfiguration;
@@ -81,6 +83,7 @@ import org.wso2.carbon.identity.oauth2.model.AccessTokenDO;
 import org.wso2.carbon.identity.oauth2.util.OAuth2Util;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
@@ -88,7 +91,6 @@ import com.google.common.collect.Sets;
 
 import it.smartcommunitylab.wso2aac.keymanager.model.AACResource;
 import it.smartcommunitylab.wso2aac.keymanager.model.AACService;
-import it.smartcommunitylab.wso2aac.keymanager.model.AACTokenValidation;
 import it.smartcommunitylab.wso2aac.keymanager.model.ClientAppBasic;
 
 public class AACOAuthClient extends AbstractKeyManager {
@@ -115,7 +117,7 @@ public class AACOAuthClient extends AbstractKeyManager {
 		HttpClient httpClient = getHttpClient();
 		ApiMgtDAO dao = ApiMgtDAO.getInstance();
 
-		ObjectMapper mapper = new ObjectMapper();
+		ObjectMapper mapper = objectMapper();
 		mapper.setVisibility(mapper.getSerializationConfig().getDefaultVisibilityChecker()
                 .withFieldVisibility(JsonAutoDetect.Visibility.ANY)
                 .withGetterVisibility(JsonAutoDetect.Visibility.ANY)
@@ -185,6 +187,12 @@ public class AACOAuthClient extends AbstractKeyManager {
 		}
 		return null;
 	}
+
+	protected ObjectMapper objectMapper() {
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+		return mapper;
+	}
     
     private void storeApplication(OAuthApplicationInfo oauthApplicationInfo) throws Exception {
     	OAuthAppDO app = new OAuthAppDO();
@@ -226,7 +234,7 @@ public class AACOAuthClient extends AbstractKeyManager {
     	info.setAppOwner(oAuthApplicationInfo.getAppOwner());
     	info.setJsonString(oAuthApplicationInfo.getJsonString());
     	
-    	ObjectMapper mapper = new  ObjectMapper();
+    	ObjectMapper mapper = objectMapper();
     	Map pars = mapper.readValue(info.getJsonString(), Map.class);
     	info.putAll(pars);
     	
@@ -235,7 +243,7 @@ public class AACOAuthClient extends AbstractKeyManager {
     
     
     private ClientAppBasic convertRequest(OAuthApplicationInfo oAuthApplicationInfo) throws Exception {
-        ObjectMapper mapper = new  ObjectMapper();
+        ObjectMapper mapper = objectMapper();
         
         Map parametersMap = mapper.readValue(oAuthApplicationInfo.getJsonString(), Map.class);
         
@@ -262,7 +270,7 @@ public class AACOAuthClient extends AbstractKeyManager {
     }
     
     private OAuthApplicationInfo convertResponse(ClientAppBasic app) throws Exception {
-    	ObjectMapper mapper = new  ObjectMapper();
+    	ObjectMapper mapper = objectMapper();
     	
         OAuthApplicationInfo oAuthApplicationInfo = new OAuthApplicationInfo();
         
@@ -300,7 +308,7 @@ public class AACOAuthClient extends AbstractKeyManager {
 
     	BufferedReader reader = null;
 		HttpClient httpClient = getHttpClient();
-		ObjectMapper mapper = new ObjectMapper();
+		ObjectMapper mapper = objectMapper();
 
 		try {
 
@@ -415,7 +423,7 @@ public class AACOAuthClient extends AbstractKeyManager {
     public OAuthApplicationInfo retrieveApplication(String consumerKey) throws APIManagementException {
 
         HttpClient client = getHttpClient();
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = objectMapper();
 
         String registrationURL = configuration.getParameter(ClientConstants.CLIENT_REG_ENDPOINT);
         String accessToken = getOauthToken();
@@ -459,7 +467,7 @@ public class AACOAuthClient extends AbstractKeyManager {
 
 	@Override
 	public AccessTokenRequest buildAccessTokenRequestFromOAuthApp(OAuthApplicationInfo oAuthApplication, AccessTokenRequest tokenRequest) throws APIManagementException {
-		ObjectMapper mapper = new ObjectMapper(); 
+		ObjectMapper mapper = objectMapper(); 
 		mapper.setVisibility(mapper.getSerializationConfig().getDefaultVisibilityChecker()
                 .withFieldVisibility(JsonAutoDetect.Visibility.ANY)
                 .withGetterVisibility(JsonAutoDetect.Visibility.ANY)
@@ -482,7 +490,7 @@ public class AACOAuthClient extends AbstractKeyManager {
 
     	BufferedReader reader = null;
 		HttpClient httpClient = getHttpClient();
-		ObjectMapper mapper = new ObjectMapper();    	
+		ObjectMapper mapper = objectMapper();    	
 		mapper.setVisibility(mapper.getSerializationConfig().getDefaultVisibilityChecker()
                 .withFieldVisibility(JsonAutoDetect.Visibility.ANY)
                 .withGetterVisibility(JsonAutoDetect.Visibility.ANY)
@@ -749,22 +757,26 @@ public class AACOAuthClient extends AbstractKeyManager {
 		}
 	}    
     
-    @Override
+    @SuppressWarnings("unchecked")
+	@Override
     public AccessTokenInfo getTokenMetaData(String token) throws APIManagementException {
     	AccessTokenInfo tokenInfo = new AccessTokenInfo();
     	tokenInfo.setAccessToken(token);
     	
     	HttpClient client = getHttpClient();
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = objectMapper();
 
         String registrationURL = configuration.getParameter(ClientConstants.CLIENT_REG_ENDPOINT);
+        String client_id = configuration.getParameter(ClientConstants.INTROSPECTION_CK);
+        String client_secret = configuration.getParameter(ClientConstants.INTROSPECTION_CS);
 //        String accessToken = getOauthToken();
         BufferedReader reader = null;
 
         try {
-            HttpGet request = new HttpGet(registrationURL.trim() + "/resources/token");
+        	log.debug("Checking token " + token);
+            HttpPost request = new HttpPost(registrationURL.trim() + "/token_introspection?token="+token);
             //set authorization header.
-            request.addHeader(ClientConstants.AUTHORIZATION, ClientConstants.BEARER + token);
+            request.addHeader(ClientConstants.AUTHORIZATION, "Basic "+ Base64.getEncoder().encodeToString(new String(client_id+":"+client_secret).getBytes()));
             HttpResponse response = client.execute(request);
 
             int responseCode = response.getStatusLine().getStatusCode();
@@ -775,18 +787,23 @@ public class AACOAuthClient extends AbstractKeyManager {
 
             if (responseCode == HttpStatus.SC_OK) {
 
-            	AACTokenValidation validation = mapper.readValue(reader, AACTokenValidation.class);
+            	Map<String, Object> validation = mapper.readValue(reader, Map.class);
+            	log.debug("Got info " + validation);
             	
-            	tokenInfo.setApplicationToken(validation.isApplicationToken());
-            	tokenInfo.setConsumerKey(validation.getClientId());
-            	tokenInfo.setScope(validation.getScope());
-            	tokenInfo.setTokenValid(validation.isValid());
-            	tokenInfo.setIssuedTime(validation.getIssuedTime());
-            	tokenInfo.setValidityPeriod(validation.getValidityPeriod() * 1000L);
-            	tokenInfo.setEndUserName(validation.getUsername());
+            	tokenInfo.setApplicationToken((boolean) validation.get("aac_applicationToken"));
+            	tokenInfo.setConsumerKey((String) validation.get("client_id"));
+            	tokenInfo.setScope(((String) validation.get("scope")).split(" "));
+            	tokenInfo.setTokenValid((boolean) validation.get("active"));
+            	tokenInfo.setIssuedTime(((int) validation.get("iat")) * 1000L);
+            	long exp = ((int) validation.get("exp")) * 1000L; 
+            	tokenInfo.setValidityPeriod(exp - tokenInfo.getIssuedTime());
+            	tokenInfo.setEndUserName(((String) validation.get("username")) + "@" + ((String) validation.get("aac_am_tenant")));
+            	
+            	
             	
 //            	storeTokenLocally(tokenInfo, validation.getGrantType());
             } else {
+            	log.error("ERROR: " + mapper.readValue(reader, Map.class));
                 handleException("Could not get token metadata for token " + token);
             }
 
@@ -834,7 +851,7 @@ public class AACOAuthClient extends AbstractKeyManager {
 		BufferedReader reader = null;
 		HttpClient httpClient = getHttpClient();
 
-		ObjectMapper mapper = new ObjectMapper();
+		ObjectMapper mapper = objectMapper();
 
 		try {
 			AACService service = new AACService();
@@ -949,20 +966,40 @@ public class AACOAuthClient extends AbstractKeyManager {
     }
 
     @Override
-    public Set<String> getActiveTokensByConsumerKey(String s) throws APIManagementException {
-        return null;
+    public Set<String> getActiveTokensByConsumerKey(String consumerKey) throws APIManagementException {
+    	ApiMgtDAO apiMgtDAO = ApiMgtDAO.getInstance();
+        return apiMgtDAO.getActiveTokensOfConsumerKey(consumerKey);
     }
 
     @Override
-    public AccessTokenInfo getAccessTokenByConsumerKey(String s) throws APIManagementException {
-        return null;
+    public AccessTokenInfo getAccessTokenByConsumerKey(String consumerKey) throws APIManagementException {
+    	AccessTokenInfo tokenInfo = new AccessTokenInfo();
+        ApiMgtDAO apiMgtDAO = ApiMgtDAO.getInstance();
+
+        Set<String> tokens = getActiveTokensByConsumerKey(consumerKey);
+        
+        APIKey apiKey;
+        if (tokens != null && tokens.size() > 0) {
+        	String token = tokens.iterator().next();
+        	apiKey = apiMgtDAO.getAccessTokenData(token);
+            tokenInfo.setAccessToken(apiKey.getAccessToken());                
+            tokenInfo.setConsumerSecret(apiKey.getConsumerSecret());
+            tokenInfo.setValidityPeriod(apiKey.getValidityPeriod());
+            tokenInfo.setScope(apiKey.getTokenScope().split("\\s"));
+        } else {
+            tokenInfo.setAccessToken("");
+            //set default validity period
+            tokenInfo.setValidityPeriod(3600);
+        }
+        tokenInfo.setConsumerKey(consumerKey);
+        return tokenInfo;
     }
     
 	private String getOauthToken() throws APIManagementException {
 		HttpClient httpClient = getHttpClient();
 		BufferedReader reader = null;
 		KeyManagerConfiguration config = KeyManagerHolder.getKeyManagerInstance().getKeyManagerConfiguration();
-		ObjectMapper mapper = new ObjectMapper();
+		ObjectMapper mapper = objectMapper();
 		mapper.setVisibility(mapper.getSerializationConfig().getDefaultVisibilityChecker().withFieldVisibility(JsonAutoDetect.Visibility.ANY).withGetterVisibility(JsonAutoDetect.Visibility.ANY)
 				.withSetterVisibility(JsonAutoDetect.Visibility.ANY).withCreatorVisibility(JsonAutoDetect.Visibility.ANY));
 

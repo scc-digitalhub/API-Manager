@@ -1,0 +1,114 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <artifactId>apim.custom.user.store</artifactId>
+  <version>1.0.0</version>
+  <packaging>bundle</packaging>
+  <name>WSO2 APIM Custom User Store Manager</name>
+  <description>WSO2 APIM Custom User Store Manager</description>
+  
+  <parent>
+  		<groupId>it.smartcommunitylab.orgmanager</groupId>
+	  	<artifactId>orgmanager-wso2connector</artifactId>
+		<version>1.0.0</version>
+  </parent>
+  <dependencies>
+  		<dependency>
+            <groupId>org.wso2.carbon</groupId>
+            <artifactId>org.wso2.carbon.core</artifactId>
+            <version>${carbon.kernel.version}</version>
+        </dependency>
+       <dependency>
+		    <groupId>org.wso2.carbon.identity.user.ws</groupId>
+		    <artifactId>org.wso2.carbon.um.ws.service</artifactId>
+		    <version>${carbon.identity.user}</version>
+		</dependency>
+  </dependencies>
+  
+  <build>
+		<plugins>
+			<plugin>
+		        <groupId>org.apache.maven.plugins</groupId>
+        		<artifactId>maven-compiler-plugin</artifactId>
+		        <configuration>
+        		    <source>1.6</source>
+		            <target>1.6</target>
+       			</configuration>
+	    </plugin>
+    	<plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
+                        <Bundle-Name>${project.artifactId}</Bundle-Name>
+                        <Private-Package>it.smartcommunitylab.apim.user.internal</Private-Package>
+                        <Export-Package>
+                            !it.smartcommunitylab.apim.user.internal,
+                            it.smartcommunitylab.apim.user.*;version="${project.version}"
+                        </Export-Package>
+                        <Import-Package>
+                        	org.wso2.carbon.core;version="${carbon.kernel.version}",
+                        	org.wso2.carbon.identity.user.ws.*;version="${carbon.identity.user}"
+                        </Import-Package>
+                        <DynamicImport-Package>*</DynamicImport-Package>
+                        <Axis2Deployer>DataServicesDeployer</Axis2Deployer>
+                    </instructions>
+                </configuration>
+            </plugin>
+           </plugins>
+    </build>
+    
+  	<distributionManagement>
+		<repository>
+			<id>SmartCommunityLab-releases</id>
+			<url>http://repository.smartcommunitylab.it/content/repositories/releases</url>
+		</repository>
+		<snapshotRepository>
+			<id>SmartCommunityLab-snapshots</id>
+			<url>http://repository.smartcommunitylab.it/content/repositories/snapshots</url>
+		</snapshotRepository>
+	</distributionManagement>
+	
+	 <repositories>
+        <repository>
+            <id>wso2-nexus</id>
+            <name>WSO2 internal Repository</name>
+            <url>http://maven.wso2.org/nexus/content/groups/wso2-public/</url>
+            <releases>
+                <enabled>true</enabled>
+                <updatePolicy>daily</updatePolicy>
+                <checksumPolicy>ignore</checksumPolicy>
+            </releases>
+        </repository>
+
+        <repository>
+            <id>wso2.releases</id>
+            <name>WSO2 internal Repository</name>
+            <url>http://maven.wso2.org/nexus/content/repositories/releases/</url>
+            <releases>
+                <enabled>true</enabled>
+                <updatePolicy>daily</updatePolicy>
+                <checksumPolicy>ignore</checksumPolicy>
+            </releases>
+        </repository>
+
+        <repository>
+            <id>wso2.snapshots</id>
+            <name>Apache Snapshot Repository</name>
+            <url>http://maven.wso2.org/nexus/content/repositories/snapshots/</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>daily</updatePolicy>
+            </snapshots>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+        </repository>
+    </repositories>
+    
+   	<properties>
+       	<carbon.kernel.version>4.4.24</carbon.kernel.version>
+       	<carbon.identity.user>5.1.12-SNAPSHOT</carbon.identity.user>
+    </properties>
+</project>

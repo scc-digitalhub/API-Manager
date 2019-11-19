@@ -174,14 +174,14 @@ Some important performance tricks:
 - Change the default configuration for the anaytics scripts: Analytics Carbon Console > Manage > Batch Analysis > Scripts. Set the appropriate CRON configurations for the script execution (e.g., each hour `0 0 * ? * * *` instead of each 2 mins). Remeber that the configurations are reset after the server restart
 
 ### 5. API-M Custom User Store Manager
-In order to provide the necessary infrastructure for allowing API-M to interact with [Oganization Manager](https://github.com/smartcommunitylab/AAC-Org/tree/master/connectors/orgmanager-wso2connector) it is important to deploy the two new bundles that extend the existing [UserStoreManagerService admin](https://github.com/wso2-extensions/identity-user-ws/blob/master/components/org.wso2.carbon.um.ws.service/src/main/java/org/wso2/carbon/um/ws/service/UserStoreManagerService.java).<br/>
+In order to provide the necessary infrastructure for allowing components to interact with API Manager in multitenant mode, it is important to deploy the two new bundles that extend the existing [UserStoreManagerService admin](https://github.com/wso2-extensions/identity-user-ws/blob/master/components/org.wso2.carbon.um.ws.service/src/main/java/org/wso2/carbon/um/ws/service/UserStoreManagerService.java).<br/>
 This extension is done in order to permit the admin account to create,update,delete users and assign/revoke roles within specific tenants.
 
 The configuration steps are the following:
-- build **[orgmanager-wso2connector](https://github.com/smartcommunitylab/AAC-Org/tree/master/connectors/orgmanager-wso2connector)** project with Maven.
+- build **usermgmt** project with Maven.
 
-- copy **apim.custom.user.store-0.0.1.jar** from the project *orgmanager-wso2connector/apim.custom.user.store* to the WSO2 directory **repository/components/dropins**
+- copy **apim.custom.user.store-XXX.jar** from the project *orgmanager-wso2connector/apim.custom.user.store* to the WSO2 directory **repository/components/dropins**
 
-- copy **apim.custom.user.store.stub-0.0.1.jar** from the project *orgmanager-wso2connector/apim.custom.user.store.stub* to the WSO2 directory **repository/components/dropins**
+- copy **apim.custom.user.store.stub-XXX.jar** from the project *orgmanager-wso2connector/apim.custom.user.store.stub* to the WSO2 directory **repository/components/dropins**
 
 As a result the  new admin stub can be accessible from the following endpoint: https://$APIM_URL/services/CustomUserStoreManagerService

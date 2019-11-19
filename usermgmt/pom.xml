@@ -1,0 +1,25 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>it.smartcommunitylab.orgmanager</groupId>
+  <artifactId>orgmanager-wso2connector</artifactId>
+  <version>1.0.0</version>
+  <packaging>pom</packaging>
+  <name>Custom WSO2 APIM User Store</name>
+  <description>Contains the modules for extending wso2 apim user store admin stub</description>
+  
+  <modules>
+  	<module>apim.custom.user.store</module>
+  	<module>apim.custom.user.store.stub</module>
+  </modules>
+
+  <distributionManagement>
+	<repository>
+	<id>SmartCommunityLab-releases</id>
+		<url>http://repository.smartcommunitylab.it/content/repositories/releases</url>
+	</repository>
+	<snapshotRepository>
+		<id>SmartCommunityLab-snapshots</id>
+		<url>http://repository.smartcommunitylab.it/content/repositories/snapshots</url>
+	</snapshotRepository>
+  </distributionManagement>
+</project>

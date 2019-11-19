@@ -1,0 +1,21 @@
+# Ignore everything in this directory
+*target
+.classpath
+.settings
+.project
+*.iml
+.idea
+# Package Files #
+*.jar
+*.war
+*.ear
+*generated-sources
+*bin/*
+*.iml
+*.idea
+message_out.xml
+tags
+.*.sw[op]
+*default.yml
+~                                                                                                                                                                                                           
+~              

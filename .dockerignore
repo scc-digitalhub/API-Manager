@@ -1,0 +1,7 @@
+dockerfiles/apim-analytics/**
+*.git
+*.gitignore
+LICENSE
+VERSION
+README.md
+Changelog.md

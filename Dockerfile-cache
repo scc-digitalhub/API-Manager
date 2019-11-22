@@ -1,0 +1,9 @@
+# syntax=docker/dockerfile:experimental
+FROM maven:3-jdk-8 AS build
+COPY wso2aac.client/pom.xml /tmp/wso2aac.client/pom.xml
+COPY usermgmt/apim.custom.user.store/pom.xml /tmp/usermgmt/apim.custom.user.store/pom.xml
+COPY usermgmt/apim.custom.user.store.stub/pom.xml /tmp/usermgmt/apim.custom.user.store.stub/pom.xml
+COPY usermgmt/pom.xml /tmp/usermgmt/pom.xml
+WORKDIR /tmp
+RUN cd wso2aac.client && mvn dependency:resolve -DincludeParents=true
+RUN cd usermgmt && mvn dependency:resolve -DincludeParents=true

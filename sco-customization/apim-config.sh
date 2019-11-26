@@ -26,7 +26,7 @@ xml_replace 'Password' ${APIM_PASS} '/APIManager/AuthManager' "${conf_path}/${co
 xml_replace 'Username' ${APIM_USER} '/APIManager/APIGateway/Environments/Environment' "${conf_path}/${conf_file}"
 xml_replace 'Password' ${APIM_PASS} '/APIManager/APIGateway/Environments/Environment' "${conf_path}/${conf_file}"
 xml_replace 'GatewayEndpoint' "http://${APIM_GATEWAYENDPOINT},https://${APIM_GATEWAYENDPOINT}" '/APIManager/APIGateway/Environments/Environment' "${conf_path}/${conf_file}"
-xml_replace 'Enabled' 'true' '/APIManager/Analytics' "${conf_path}/${conf_file}"
+xml_replace 'Enabled' ${ANALYTICS_ENABLED} '/APIManager/Analytics' "${conf_path}/${conf_file}"
 xml_replace 'StreamProcessorServerURL' "tcp://${ANALYTICS_HOSTNAME}:7612" '/APIManager/Analytics' "${conf_path}/${conf_file}"
 xml_uncomment 'StreamProcessorAuthServerURL' "${conf_path}/${conf_file}"
 xml_replace 'StreamProcessorAuthServerURL' "ssl://${ANALYTICS_HOSTNAME}:7712" '/APIManager/Analytics' "${conf_path}/${conf_file}"

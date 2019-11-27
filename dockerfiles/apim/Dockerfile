@@ -21,7 +21,7 @@ FROM maven:3-jdk-8 AS build-aac-client
 COPY wso2aac.client/src /tmp/src
 COPY wso2aac.client/pom.xml /tmp/pom.xml
 WORKDIR /tmp/
-RUN --mount=type=bind,target=/root/.m2,source=/root/.m2,from=smartcommunitylab/apim-dependency:with_parents mvn package -Dskiptests
+RUN --mount=type=bind,target=/root/.m2,source=/root/.m2,from=smartcommunitylab/apim-dependency:with_parents mvn package
 # RUN mvn package -Dskiptests
 
 FROM maven:3-jdk-8 AS build-usermgmt
@@ -31,7 +31,7 @@ COPY usermgmt/apim.custom.user.store.stub/src /tmp/apim.custom.user.store.stub/s
 COPY usermgmt/apim.custom.user.store.stub/pom.xml /tmp/apim.custom.user.store.stub/pom.xml
 COPY usermgmt/pom.xml /tmp/pom.xml
 WORKDIR /tmp/
-RUN --mount=type=bind,target=/root/.m2,source=/root/.m2,from=smartcommunitylab/apim-dependency:with_parents mvn package -Dskiptests
+RUN --mount=type=bind,target=/root/.m2,source=/root/.m2,from=smartcommunitylab/apim-dependency:with_parents mvn package
 # RUN mvn package -Dskiptests
 
 # set base Docker image to AdoptOpenJDK Alpine Docker image

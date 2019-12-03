@@ -46,7 +46,9 @@ ARG USER_GROUP_ID=802
 ARG USER_HOME=/home/${USER}
 # set dependant files directory
 ARG FILES=./dockerfiles/apim/files
-ARG SCO_CUSTOMIZATION=./sco-customization
+ARG SCO_CUSTOMIZATION=./sco-customization/apim
+ARG SCO_CUSTOMIZATION_GLOBAL=./sco-customization/global
+
 # set wso2 product configurations
 ARG WSO2_SERVER=wso2am
 ARG WSO2_SERVER_VERSION=2.6.0
@@ -94,7 +96,7 @@ COPY --chown=wso2carbon:wso2 ${FILES}/${WSO2_SERVER_PACK}/repository/deployment/
 # copy init script to user home
 COPY --chown=wso2carbon:wso2 ${SCO_CUSTOMIZATION}/init.sh ${USER_HOME}/
 COPY --chown=wso2carbon:wso2 ${SCO_CUSTOMIZATION}/apim-config.sh ${USER_HOME}/
-COPY --chown=wso2carbon:wso2 ${SCO_CUSTOMIZATION}/common.sh ${USER_HOME}/
+COPY --chown=wso2carbon:wso2 ${SCO_CUSTOMIZATION_GLOBAL}/common.sh ${USER_HOME}/
 # copy mysql connector jar to the server as a third party library
 COPY --chown=wso2carbon:wso2 ${FILES}/mysql-connector-java-*.jar ${WSO2_SERVER_HOME}/repository/components/lib/
 # copy smartcommunitylab customization to the server as a thids party library

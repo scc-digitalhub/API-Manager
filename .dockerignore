@@ -1,4 +1,3 @@
-dockerfiles/apim-analytics/**
 *.git
 *.gitignore
 LICENSE

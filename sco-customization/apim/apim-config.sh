@@ -211,7 +211,7 @@ json_replace 'host' ${APIM_REVERSEPROXY} '.reverseProxy' "${conf_path}/${conf_fi
 json_replace 'context' '/publisher' '.reverseProxy' "${conf_path}/${conf_file}"
 if [ ! -z ${AAC_HOSTNAME} ]; then
   json_replace 'enabled' 'true' '.oidcConfiguration' "${conf_path}/${conf_file}"
-  json_replace 'identityProviderURI' "${AAC_HOSTNAME}" '.oidcConfiguration' "${conf_path}/${conf_file}"
+  json_replace 'identityProviderURI' "${AAC_REVERSEPROXY}" '.oidcConfiguration' "${conf_path}/${conf_file}"
   json_replace 'authorizationEndpointURI' "${AAC_REVERSEPROXY}/oauth/authorize" '.oidcConfiguration' "${conf_path}/${conf_file}"
   json_replace 'tokenEndpointURI' "${AAC_HOSTNAME}/oauth/token" '.oidcConfiguration' "${conf_path}/${conf_file}"
   json_replace 'userInfoURI' "${AAC_HOSTNAME}/userinfo" '.oidcConfiguration' "${conf_path}/${conf_file}"
@@ -232,7 +232,7 @@ json_replace 'host' ${APIM_REVERSEPROXY} '.reverseProxy' "${conf_path}/${conf_fi
 json_replace 'context' '/store' '.reverseProxy' "${conf_path}/${conf_file}"
 if [ ! -z ${AAC_HOSTNAME} ]; then
   json_replace 'enabled' 'true' '.oidcConfiguration' "${conf_path}/${conf_file}"
-  json_replace 'identityProviderURI' "${AAC_HOSTNAME}" '.oidcConfiguration' "${conf_path}/${conf_file}"
+  json_replace 'identityProviderURI' "${AAC_REVERSEPROXY}" '.oidcConfiguration' "${conf_path}/${conf_file}"
   json_replace 'authorizationEndpointURI' "${AAC_REVERSEPROXY}/oauth/authorize" '.oidcConfiguration' "${conf_path}/${conf_file}"
   json_replace 'tokenEndpointURI' "${AAC_HOSTNAME}/oauth/token" '.oidcConfiguration' "${conf_path}/${conf_file}"
   json_replace 'userInfoURI' "${AAC_HOSTNAME}/userinfo" '.oidcConfiguration' "${conf_path}/${conf_file}"

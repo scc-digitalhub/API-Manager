@@ -7,18 +7,23 @@
 # APIM_HOSTNAME="wso2apim"
 # APIM_REVERSEPROXY="apim.platform.domain.com"
 # APIM_GATEWAYENDPOINT="gwapim.platform.domain.com"
+# APIM_KEYSTORE_FILENAME=""
+# APIM_KEYSTORE_PASS=""
+# APIM_KEYSTORE_KEYALIAS=""
+# APIM_TRUSTSTORE_FILENAME=""
+# APIM_TRUSTSTORE_PASS=""
 # ANALYTICS_HOSTNAME="wso2apim-with-analytics-apim-analytics-service"
-# AAC_HOSTNAME="aac"
+# AAC_HOSTNAME="http://aac:8080/aac"
+# AAC_REVERSEPROXY="https://aac.platform.local"
 # AAC_CONSUMERKEY="API_MGT_CLIENT_ID"
 # AAC_CONSUMERSECRET="API_MGT_CLIENT_SECRET"
-# AAC_REVERSEPROXY="aac.platform.domain.com"
 # APIM_MYSQL_HOSTNAME="mysql"
 # APIM_MYSQL_USER="user"
 # APIM_MYSQL_PASS="pass"
 
-# Directory ${WSO2_SERVER_HOME}/repository/conf
+### Directory ${WSO2_SERVER_HOME}/repository/conf
 conf_path="${WSO2_SERVER_HOME}/repository/conf"
-# Edit properties in api-manager.xml file
+## Edit properties in api-manager.xml file
 conf_file='api-manager.xml'
 echo ${conf_file}
 xml_replace 'Username' ${APIM_USER} '/APIManager/AuthManager' "${conf_path}/${conf_file}"
@@ -26,7 +31,7 @@ xml_replace 'Password' ${APIM_PASS} '/APIManager/AuthManager' "${conf_path}/${co
 xml_replace 'Username' ${APIM_USER} '/APIManager/APIGateway/Environments/Environment' "${conf_path}/${conf_file}"
 xml_replace 'Password' ${APIM_PASS} '/APIManager/APIGateway/Environments/Environment' "${conf_path}/${conf_file}"
 xml_replace 'GatewayEndpoint' "http://${APIM_GATEWAYENDPOINT},https://${APIM_GATEWAYENDPOINT}" '/APIManager/APIGateway/Environments/Environment' "${conf_path}/${conf_file}"
-xml_replace 'Enabled' 'true' '/APIManager/Analytics' "${conf_path}/${conf_file}"
+xml_replace 'Enabled' ${ANALYTICS_ENABLED} '/APIManager/Analytics' "${conf_path}/${conf_file}"
 xml_replace 'StreamProcessorServerURL' "tcp://${ANALYTICS_HOSTNAME}:7612" '/APIManager/Analytics' "${conf_path}/${conf_file}"
 xml_uncomment 'StreamProcessorAuthServerURL' "${conf_path}/${conf_file}"
 xml_replace 'StreamProcessorAuthServerURL' "ssl://${ANALYTICS_HOSTNAME}:7712" '/APIManager/Analytics' "${conf_path}/${conf_file}"
@@ -38,23 +43,31 @@ xml_replace 'StreamProcessorRestApiPassword' ${APIM_PASS} '/APIManager/Analytics
 if [ ! -z ${AAC_HOSTNAME} ]; then
   xml_uncomment 'APIKeyManager' "${conf_path}/${conf_file}"
   xml_replace 'KeyManagerClientImpl' 'it.smartcommunitylab.wso2aac.keymanager.AACOAuthClient' '/APIManager/APIKeyManager' "${conf_path}/${conf_file}"
-  xml_add 'RegistrationEndpoint' "http://${AAC_HOSTNAME}:8080/aac" '/APIManager/APIKeyManager/Configuration' "${conf_path}/${conf_file}"
+  xml_add 'RegistrationEndpoint' "${AAC_HOSTNAME}" '/APIManager/APIKeyManager/Configuration' "${conf_path}/${conf_file}"
   xml_add 'ConsumerKey' ${AAC_CONSUMERKEY} '/APIManager/APIKeyManager/Configuration' "${conf_path}/${conf_file}"
   xml_add 'ConsumerSecret' ${AAC_CONSUMERSECRET} '/APIManager/APIKeyManager/Configuration' "${conf_path}/${conf_file}"
   xml_add 'IntrospectionURL' ${AAC_INTROSPECTION_URL} '/APIManager/APIKeyManager/Configuration' "${conf_path}/${conf_file}"
   xml_replace 'ServerURL' "https://$APIM_HOSTNAME:9443/services" '/APIManager/APIKeyManager/Configuration' "${conf_path}/${conf_file}"
   xml_replace 'Username' ${APIM_USER} '/APIManager/APIKeyManager/Configuration' "${conf_path}/${conf_file}"
   xml_replace 'Password' ${APIM_PASS} '/APIManager/APIKeyManager/Configuration' "${conf_path}/${conf_file}"
-  xml_replace 'TokenURL' "http://${AAC_HOSTNAME}:8080/aac/oauth/token" '/APIManager/APIKeyManager/Configuration' "${conf_path}/${conf_file}"
+  xml_replace 'TokenURL' "${AAC_HOSTNAME}/oauth/token" '/APIManager/APIKeyManager/Configuration' "${conf_path}/${conf_file}"
   xml_replace 'RevokeURL' "https://${APIM_HOSTNAME}:9443/oauth2/revoke" '/APIManager/APIKeyManager/Configuration' "${conf_path}/${conf_file}"
   xml_uncomment 'RemoveOAuthHeadersFromOutMessage' "${conf_path}/${conf_file}"
   xml_replace 'RemoveOAuthHeadersFromOutMessage' 'false' '/APIManager/OAuthConfigurations' "${conf_path}/${conf_file}"
 fi
 xml_replace 'URL' "${APIM_REVERSEPROXY}/store" '/APIManager/APIStore' "${conf_path}/${conf_file}"
 xml_replace 'connectionfactory.TopicConnectionFactory' "amqp://${APIM_USER}:${APIM_PASS}@clientid/carbon?brokerlist='tcp://\${carbon.local.ip}:\${jms.port}'" '/APIManager/ThrottlingConfigurations/JMSConnectionDetails/JMSConnectionParameters' "${conf_path}/${conf_file}"
-
-# Edit properties in carbon.xml file
-## xml with default namaspace declaration using underscore _ to match namespace
+## Edit properties in broker.xml file
+conf_file='broker.xml'
+echo ${conf_file}
+if [ ! -z ${APIM_KEYSTORE_FILENAME} ]; then
+  xml_replace 'location' "repository/resources/security/${APIM_KEYSTORE_FILENAME}" '/broker/transports/amqp/sslConnection/keyStore' "${conf_path}/${conf_file}"
+  xml_replace 'password' "${APIM_KEYSTORE_PASS}" '/broker/transports/amqp/sslConnection/keyStore' "${conf_path}/${conf_file}"
+  xml_replace 'location' "repository/resources/security/${APIM_TRUSTSTORE_FILENAME}" '/broker/transports/amqp/sslConnection/trustStore' "${conf_path}/${conf_file}"
+  xml_replace 'password' "${APIM_TRUSTSTORE_PASS}" '/broker/transports/amqp/sslConnection/trustStore' "${conf_path}/${conf_file}"
+fi
+## Edit properties in carbon.xml file
+# xml with default namaspace declaration using underscore _ to match namespace
 conf_file='carbon.xml'
 echo ${conf_file}
 xml_uncomment 'HostName' "${conf_path}/${conf_file}"
@@ -62,85 +75,129 @@ xml_uncomment 'MgtHostName' "${conf_path}/${conf_file}"
 xml_replace '_:HostName' "${APIM_REVERSEPROXY}" '_:Server' "${conf_path}/${conf_file}"
 xml_replace '_:MgtHostName' "${APIM_REVERSEPROXY}" '_:Server' "${conf_path}/${conf_file}"
 xml_uncomment 'EnableEmailUserName' "${conf_path}/${conf_file}"
-
-# Edit properties in jndi.properties file
+if [ ! -z ${APIM_KEYSTORE_FILENAME} ]; then
+  xml_replace '_:Location' "\${carbon.home}/repository/resources/security/${APIM_KEYSTORE_FILENAME}" '_:Server/_:Security/_:KeyStore' "${conf_path}/${conf_file}"
+  xml_replace '_:Password' "${APIM_KEYSTORE_PASS}" '_:Server/_:Security/_:KeyStore' "${conf_path}/${conf_file}"
+  xml_replace '_:KeyAlias' "${APIM_KEYSTORE_KEYALIAS}" '_:Server/_:Security/_:KeyStore' "${conf_path}/${conf_file}"
+  xml_replace '_:KeyPassword' "${APIM_KEYSTORE_PASS}" '_:Server/_:Security/_:KeyStore' "${conf_path}/${conf_file}"
+  xml_replace '_:Location' "\${carbon.home}/repository/resources/security/${APIM_KEYSTORE_FILENAME}" '_:Server/_:Security/_:InternalKeyStore' "${conf_path}/${conf_file}"
+  xml_replace '_:Password' "${APIM_KEYSTORE_PASS}" '_:Server/_:Security/_:InternalKeyStore' "${conf_path}/${conf_file}"
+  xml_replace '_:KeyAlias' "${APIM_KEYSTORE_KEYALIAS}" '_:Server/_:Security/_:InternalKeyStore' "${conf_path}/${conf_file}"
+  xml_replace '_:KeyPassword' "${APIM_KEYSTORE_PASS}" '_:Server/_:Security/_:InternalKeyStore' "${conf_path}/${conf_file}"
+  xml_replace '_:Location' "\${carbon.home}/repository/resources/security/${APIM_TRUSTSTORE_FILENAME}" '_:Server/_:Security/_:TrustStore' "${conf_path}/${conf_file}"
+  xml_replace '_:Password' "${APIM_TRUSTSTORE_PASS}" '_:Server/_:Security/_:TrustStore' "${conf_path}/${conf_file}"
+fi
+## Edit properties in jndi.properties file
 conf_file='jndi.properties'
 echo ${conf_file}
 prop_replace 'connectionfactory.TopicConnectionFactory' "amqp://${APIM_USER}:${APIM_PASS}@clientid/carbon?brokerlist='tcp://localhost:5672'" "${conf_path}/${conf_file}"
 prop_replace 'connectionfactory.QueueConnectionFactory' "amqp://${APIM_USER}:${APIM_PASS}@clientID/test?brokerlist='tcp://localhost:5672'" "${conf_path}/${conf_file}"
-
-# Edit properties in Log4j.properties file
+## Edit properties in Log4j.properties file
 conf_file='log4j.properties'
 echo ${conf_file}
 prop_replace 'log4j.appender.DAS_AGENT.userName' ${APIM_USER} "${conf_path}/${conf_file}"
 prop_replace 'log4j.appender.DAS_AGENT.password' ${APIM_PASS} "${conf_path}/${conf_file}"
 prop_replace 'log4j.appender.LOGEVENT.userName' ${APIM_USER} "${conf_path}/${conf_file}"
 prop_replace 'log4j.appender.LOGEVENT.password' ${APIM_PASS} "${conf_path}/${conf_file}"
-
-# Edit properties in registry.xml file
+## Edit properties in registry.xml file
 conf_file='registry.xml'
 echo ${conf_file}
 xml_replace 'cacheId' "${APIM_MYSQL_USER}@jdbc:mysql://${APIM_MYSQL_HOSTNAME}:3306/WSO2AM_COMMON_DB" '/wso2registry/remoteInstance' "${conf_path}/${conf_file}"
-
-
-# Edit properties in user-mgt.xml file
+## Edit properties in user-mgt.xml file
 conf_file='user-mgt.xml'
 echo ${conf_file}
 xml_replace 'Password' "${APIM_PASS}" '/UserManager/Realm/Configuration/AdminUser' "${conf_path}/${conf_file}"
 xml_replace 'Property[@name="dataSource"]' "jdbc/WSO2UM_DB" '/UserManager/Realm/Configuration' "${conf_path}/${conf_file}"
-## xml_add function with attribute
+# xml_add function with attribute
 xml_append_elem 'Property' '^[\S]{3,30}$' '/UserManager/Realm/UserStoreManager/Property[@name="UserNameUniqueAcrossTenants"]' "${conf_path}/${conf_file}" 'name=UsernameWithEmailJavaScriptRegEx'
 
-# Directory ${WSO2_SERVER_HOME}/repository/conf/axis2
+### Directory ${WSO2_SERVER_HOME}/repository/conf/axis2
 conf_path="${WSO2_SERVER_HOME}/repository/conf/axis2"
+## Edit properties in axis2.xml file
 conf_file='axis2.xml'
 echo ${conf_file}
-## Edit properties in axis2.xml file
-### HTTP
+# HTTP
 xml_append_elem 'parameter' '80' '/axisconfig/transportReceiver[@name="http"]/parameter[@name="non-blocking"]' "${conf_path}/${conf_file}" 'name=proxyPort' 'locked=false'
 xml_append_elem 'parameter' "${APIM_GATEWAYENDPOINT}" '/axisconfig/transportReceiver[@name="http"]/parameter[@name="non-blocking"]' "${conf_path}/${conf_file}" 'name=hostname' 'locked=false'
-### HTTPS
+# HTTPS
 xml_append_elem 'parameter' '443' '/axisconfig/transportReceiver[@name="https"]/parameter[@name="non-blocking"]' "${conf_path}/${conf_file}" 'name=proxyPort' 'locked=false'
 xml_append_elem 'parameter' "${APIM_GATEWAYENDPOINT}" '/axisconfig/transportReceiver[@name="https"]/parameter[@name="non-blocking"]' "${conf_path}/${conf_file}" 'name=hostname' 'locked=false'
+if [ ! -z ${APIM_KEYSTORE_FILENAME} ]; then
+  # transportReceiver
+  xml_replace 'Location' "repository/resources/security/${APIM_KEYSTORE_FILENAME}" '/axisconfig/transportReceiver[@name="https"]/parameter[@name="keystore"]/KeyStore' "${conf_path}/${conf_file}"
+  xml_replace 'Password' "${APIM_KEYSTORE_PASS}" '/axisconfig/transportReceiver[@name="https"]/parameter[@name="keystore"]/KeyStore' "${conf_path}/${conf_file}"
+  xml_replace 'KeyPassword' "${APIM_KEYSTORE_PASS}" '/axisconfig/transportReceiver[@name="https"]/parameter[@name="keystore"]/KeyStore' "${conf_path}/${conf_file}"
+  xml_replace 'Location' "repository/resources/security/${APIM_TRUSTSTORE_FILENAME}" '/axisconfig/transportReceiver[@name="https"]/parameter[@name="truststore"]/TrustStore' "${conf_path}/${conf_file}"
+  xml_replace 'Password' "${APIM_TRUSTSTORE_PASS}" '/axisconfig/transportReceiver[@name="https"]/parameter[@name="truststore"]/TrustStore' "${conf_path}/${conf_file}"
+  # transportSender
+  xml_replace 'Location' "repository/resources/security/${APIM_KEYSTORE_FILENAME}" '/axisconfig/transportSender[@name="https"]/parameter[@name="keystore"]/KeyStore' "${conf_path}/${conf_file}"
+  xml_replace 'Password' "${APIM_KEYSTORE_PASS}" '/axisconfig/transportSender[@name="https"]/parameter[@name="keystore"]/KeyStore' "${conf_path}/${conf_file}"
+  xml_replace 'KeyPassword' "${APIM_KEYSTORE_PASS}" '/axisconfig/transportSender[@name="https"]/parameter[@name="keystore"]/KeyStore' "${conf_path}/${conf_file}"
+  xml_replace 'Location' "repository/resources/security/${APIM_TRUSTSTORE_FILENAME}" '/axisconfig/transportSender[@name="https"]/parameter[@name="truststore"]/TrustStore' "${conf_path}/${conf_file}"
+  xml_replace 'Password' "${APIM_TRUSTSTORE_PASS}" '/axisconfig/transportSender[@name="https"]/parameter[@name="truststore"]/TrustStore' "${conf_path}/${conf_file}"
+  xml_replace 'ws.trust.store.location' "repository/resources/security/${APIM_TRUSTSTORE_FILENAME}" '/axisconfig/transportSender[@name="wss"]/parameter[@name="ws.trust.store"]' "${conf_path}/${conf_file}"
+  xml_replace 'ws.trust.store.Password' "${APIM_TRUSTSTORE_PASS}" '/axisconfig/transportSender[@name="wss"]/parameter[@name="ws.trust.store"]' "${conf_path}/${conf_file}"
+fi
 
-# Directory ${WSO2_SERVER_HOME}/repository/conf/datasources
+### Directory ${WSO2_SERVER_HOME}/repository/conf/data-bridge
+conf_path="${WSO2_SERVER_HOME}/repository/conf/data-bridge"
+## Edit properties in data-bridge-config.xml file
+conf_file='data-bridge-config.xml'
+if [ ! -z ${APIM_KEYSTORE_FILENAME} ]; then
+  echo ${conf_file}
+  xml_replace 'keyStoreLocation' "\${carbon.home}/repository/resources/security/${APIM_KEYSTORE_FILENAME}" '/dataBridgeConfiguration' "${conf_path}/${conf_file}"
+  xml_replace 'keyStorePassword' "${APIM_KEYSTORE_PASS}" '/dataBridgeConfiguration' "${conf_path}/${conf_file}"
+fi
+
+### Directory ${WSO2_SERVER_HOME}/repository/conf/datasources
 conf_path="${WSO2_SERVER_HOME}/repository/conf/datasources"
+## Edit properties in master-datasources.xml file
 conf_file='master-datasources.xml'
 echo ${conf_file}
-## Edit properties in master-datasources.xml file
-### WSO2AM_DB
+# WSO2AM_DB
 xml_replace 'url' "jdbc:mysql://${APIM_MYSQL_HOSTNAME}:3306/WSO2AM_APIMGT_DB?autoReconnect=true&useSSL=false" 'datasources-configuration/datasources/datasource[name="WSO2AM_DB"]/definition/configuration' "${conf_path}/${conf_file}"
 xml_replace 'username' "${APIM_MYSQL_USER}" 'datasources-configuration/datasources/datasource[name="WSO2AM_DB"]/definition/configuration' "${conf_path}/${conf_file}"
 xml_replace 'password' "${APIM_MYSQL_PASS}" 'datasources-configuration/datasources/datasource[name="WSO2AM_DB"]/definition/configuration' "${conf_path}/${conf_file}"
-### WSO2UM_DB
+# WSO2UM_DB
 xml_replace 'url' "jdbc:mysql://${APIM_MYSQL_HOSTNAME}:3306/WSO2AM_COMMON_DB?autoReconnect=true&useSSL=false" 'datasources-configuration/datasources/datasource[name="WSO2UM_DB"]/definition/configuration' "${conf_path}/${conf_file}"
 xml_replace 'username' "${APIM_MYSQL_USER}" 'datasources-configuration/datasources/datasource[name="WSO2UM_DB"]/definition/configuration' "${conf_path}/${conf_file}"
 xml_replace 'password' "${APIM_MYSQL_PASS}" 'datasources-configuration/datasources/datasource[name="WSO2UM_DB"]/definition/configuration' "${conf_path}/${conf_file}"
-### WSO2REG_DB
+# WSO2REG_DB
 xml_replace 'url' "jdbc:mysql://${APIM_MYSQL_HOSTNAME}:3306/WSO2AM_COMMON_DB?autoReconnect=true&useSSL=false" 'datasources-configuration/datasources/datasource[name="WSO2REG_DB"]/definition/configuration' "${conf_path}/${conf_file}"
 xml_replace 'username' "${APIM_MYSQL_USER}" 'datasources-configuration/datasources/datasource[name="WSO2REG_DB"]/definition/configuration' "${conf_path}/${conf_file}"
 xml_replace 'password' "${APIM_MYSQL_PASS}" 'datasources-configuration/datasources/datasource[name="WSO2REG_DB"]/definition/configuration' "${conf_path}/${conf_file}"
 
-# Directory ${WSO2_SERVER_HOME}/repository/conf/identity
+### Directory ${WSO2_SERVER_HOME}/repository/conf/identity
+conf_path="${WSO2_SERVER_HOME}/repository/conf/identity"
+## Edit properties in identity.xmln
+conf_file='identity.xml'
+echo ${conf_file}
 if [ ! -z ${AAC_HOSTNAME} ]; then
-  conf_path="${WSO2_SERVER_HOME}/repository/conf/identity"
-  conf_file='identity.xml'
-  echo ${conf_file}
-  ## Edit properties in identity.xmlns
-  ## xml with default namaspace declaration using underscore '_:' to match namespace
-  #xml_delete '_:GrantTypeName' 'iwa:ntlm' '//_:Server/_:OAuth/_:SupportedGrantTypes/_:SupportedGrantType' "${conf_path}/${conf_file}"
+  # xml with default namaspace declaration using underscore '_:' to match namespace
+  xml_delete '_:GrantTypeName' 'iwa:ntlm' '//_:Server/_:OAuth/_:SupportedGrantTypes/_:SupportedGrantType' "${conf_path}/${conf_file}"
   xml_delete '_:GrantTypeName' 'urn:ietf:params:oauth:grant-type:saml2-bearer' '//_:Server/_:OAuth/_:SupportedGrantTypes/_:SupportedGrantType' "${conf_path}/${conf_file}"
   xml_replace '_:GrantTypeName' "native" '//_:Server/_:OAuth/_:SupportedGrantTypes/_:SupportedGrantType[_:GrantTypeName="iwa:ntlm"]' "${conf_path}/${conf_file}"
   xml_replace '_:GrantTypeValidatorImplClass' 'it.smartcommunitylab.wso2aac.grants.NativeGrantValidator' '//_:Server/_:OAuth/_:SupportedGrantTypes/_:SupportedGrantType[_:GrantTypeName="native"]' "${conf_path}/${conf_file}"
   xml_replace '_:GrantTypeHandlerImplClass' 'it.smartcommunitylab.wso2aac.grants.NativeGrantType' '//_:Server/_:OAuth/_:SupportedGrantTypes/_:SupportedGrantType[_:GrantTypeName="native"]' "${conf_path}/${conf_file}"
   xml_replace '@class' 'it.smartcommunitylab.wso2aac.keymanager.CustomJDBCScopeValidator' '//_:Server/_:OAuth/_:OAuthScopeValidator' "${conf_path}/${conf_file}"
 fi
+if [ ! -z ${APIM_KEYSTORE_FILENAME} ]; then
+  xml_replace '_:Location' "\${carbon.home}/repository/resources/security/${APIM_KEYSTORE_FILENAME}" '//_:Server/_:EntitlementSettings/_:ThirftBasedEntitlementConfig/_:KeyStore' "${conf_path}/${conf_file}"
+  xml_replace '_:Password' "${APIM_KEYSTORE_PASS}" '//_:Server/_:EntitlementSettings/_:ThirftBasedEntitlementConfig/_:KeyStore' "${conf_path}/${conf_file}"
+  ## Edit properties in EndpointConfig.properties
+  conf_file='EndpointConfig.properties'
+  echo ${conf_file}
+  prop_replace 'client.keyStore' "./repository/resources/security/${APIM_KEYSTORE_FILENAME}" "${conf_path}/${conf_file}"
+  prop_replace 'Carbon.Security.KeyStore.Password' "${APIM_KEYSTORE_PASS}" "${conf_path}/${conf_file}"
+  prop_replace 'client.trustStore' "./repository/resources/security/${APIM_TRUSTSTORE_FILENAME}" "${conf_path}/${conf_file}"
+  prop_replace 'Carbon.Security.TrustStore.Password' "${APIM_TRUSTSTORE_PASS}" "${conf_path}/${conf_file}"
+fi
 
-# Directory ${WSO2_SERVER_HOME}/repository/deployment/server/jaggeryapps/
+### Directory ${WSO2_SERVER_HOME}/repository/deployment/server/jaggeryapps/
 conf_path="${WSO2_SERVER_HOME}/repository/deployment/server/jaggeryapps/admin/site/conf"
+## Edit properties in admin/site.json
 conf_file='site.json'
 echo "admin ${conf_file}"
-## Edit properties in admin/site.json
 json_replace 'enabled' 'true' '.reverseProxy' "${conf_path}/${conf_file}"
 json_replace 'host' ${APIM_REVERSEPROXY} '.reverseProxy' "${conf_path}/${conf_file}"
 json_replace 'context' '/admin' '.reverseProxy' "${conf_path}/${conf_file}"
@@ -154,13 +211,13 @@ json_replace 'host' ${APIM_REVERSEPROXY} '.reverseProxy' "${conf_path}/${conf_fi
 json_replace 'context' '/publisher' '.reverseProxy' "${conf_path}/${conf_file}"
 if [ ! -z ${AAC_HOSTNAME} ]; then
   json_replace 'enabled' 'true' '.oidcConfiguration' "${conf_path}/${conf_file}"
-  json_replace 'identityProviderURI' "https://${AAC_REVERSEPROXY}/aac" '.oidcConfiguration' "${conf_path}/${conf_file}"
-  json_replace 'authorizationEndpointURI' "https://${AAC_REVERSEPROXY}/aac/oauth/authorize" '.oidcConfiguration' "${conf_path}/${conf_file}"
-  json_replace 'tokenEndpointURI' "https://${AAC_REVERSEPROXY}/aac/oauth/token" '.oidcConfiguration' "${conf_path}/${conf_file}"
-  json_replace 'userInfoURI' "https://${AAC_REVERSEPROXY}/aac/userinfo" '.oidcConfiguration' "${conf_path}/${conf_file}"
-  json_replace 'jwksURI' "https://${AAC_REVERSEPROXY}/aac/jwk" '.oidcConfiguration' "${conf_path}/${conf_file}"
-  json_replace 'logoutEndpointURI' "https://${AAC_REVERSEPROXY}/aac/endsession" '.oidcConfiguration' "${conf_path}/${conf_file}"
-  json_replace 'rolesEndpointURI' "https://${AAC_REVERSEPROXY}/aac/userroles/me" '.oidcConfiguration' "${conf_path}/${conf_file}"
+  json_replace 'identityProviderURI' "${AAC_HOSTNAME}" '.oidcConfiguration' "${conf_path}/${conf_file}"
+  json_replace 'authorizationEndpointURI' "${AAC_REVERSEPROXY}/oauth/authorize" '.oidcConfiguration' "${conf_path}/${conf_file}"
+  json_replace 'tokenEndpointURI' "${AAC_HOSTNAME}/oauth/token" '.oidcConfiguration' "${conf_path}/${conf_file}"
+  json_replace 'userInfoURI' "${AAC_HOSTNAME}/userinfo" '.oidcConfiguration' "${conf_path}/${conf_file}"
+  json_replace 'jwksURI' "${AAC_HOSTNAME}/jwk" '.oidcConfiguration' "${conf_path}/${conf_file}"
+  json_replace 'logoutEndpointURI' "${AAC_REVERSEPROXY}/endsession" '.oidcConfiguration' "${conf_path}/${conf_file}"
+  json_replace 'rolesEndpointURI' "${AAC_HOSTNAME}/userroles/me" '.oidcConfiguration' "${conf_path}/${conf_file}"
   json_replace 'clientId' ${AAC_CONSUMERKEY} '.oidcConfiguration.clientConfiguration' "${conf_path}/${conf_file}"
   json_replace 'clientSecret' ${AAC_CONSUMERSECRET} '.oidcConfiguration.clientConfiguration' "${conf_path}/${conf_file}"
   json_replace 'redirectURI' "https://${APIM_REVERSEPROXY}/publisher/jagg/jaggery_oidc_acs.jag" '.oidcConfiguration.clientConfiguration' "${conf_path}/${conf_file}"
@@ -175,22 +232,39 @@ json_replace 'host' ${APIM_REVERSEPROXY} '.reverseProxy' "${conf_path}/${conf_fi
 json_replace 'context' '/store' '.reverseProxy' "${conf_path}/${conf_file}"
 if [ ! -z ${AAC_HOSTNAME} ]; then
   json_replace 'enabled' 'true' '.oidcConfiguration' "${conf_path}/${conf_file}"
-  json_replace 'identityProviderURI' "https://${AAC_REVERSEPROXY}/aac" '.oidcConfiguration' "${conf_path}/${conf_file}"
-  json_replace 'authorizationEndpointURI' "https://${AAC_REVERSEPROXY}/aac/oauth/authorize" '.oidcConfiguration' "${conf_path}/${conf_file}"
-  json_replace 'tokenEndpointURI' "https://${AAC_REVERSEPROXY}/aac/oauth/token" '.oidcConfiguration' "${conf_path}/${conf_file}"
-  json_replace 'userInfoURI' "https://${AAC_REVERSEPROXY}/aac/userinfo" '.oidcConfiguration' "${conf_path}/${conf_file}"
-  json_replace 'jwksURI' "https://${AAC_REVERSEPROXY}/aac/jwk" '.oidcConfiguration' "${conf_path}/${conf_file}"
-  json_replace 'logoutEndpointURI' "https://${AAC_REVERSEPROXY}/aac/endsession" '.oidcConfiguration' "${conf_path}/${conf_file}"
-  json_replace 'rolesEndpointURI' "https://${AAC_REVERSEPROXY}/aac/userroles/me" '.oidcConfiguration' "${conf_path}/${conf_file}"
+  json_replace 'identityProviderURI' "${AAC_HOSTNAME}" '.oidcConfiguration' "${conf_path}/${conf_file}"
+  json_replace 'authorizationEndpointURI' "${AAC_REVERSEPROXY}/oauth/authorize" '.oidcConfiguration' "${conf_path}/${conf_file}"
+  json_replace 'tokenEndpointURI' "${AAC_HOSTNAME}/oauth/token" '.oidcConfiguration' "${conf_path}/${conf_file}"
+  json_replace 'userInfoURI' "${AAC_HOSTNAME}/userinfo" '.oidcConfiguration' "${conf_path}/${conf_file}"
+  json_replace 'jwksURI' "${AAC_HOSTNAME}/jwk" '.oidcConfiguration' "${conf_path}/${conf_file}"
+  json_replace 'logoutEndpointURI' "${AAC_REVERSEPROXY}/endsession" '.oidcConfiguration' "${conf_path}/${conf_file}"
+  json_replace 'rolesEndpointURI' "${AAC_HOSTNAME}/userroles/me" '.oidcConfiguration' "${conf_path}/${conf_file}"
   json_replace 'clientId' ${AAC_CONSUMERKEY} '.oidcConfiguration.clientConfiguration' "${conf_path}/${conf_file}"
   json_replace 'clientSecret' ${AAC_CONSUMERSECRET} '.oidcConfiguration.clientConfiguration' "${conf_path}/${conf_file}"
   json_replace 'redirectURI' "https://${APIM_REVERSEPROXY}/store/jagg/jaggery_oidc_acs.jag" '.oidcConfiguration.clientConfiguration' "${conf_path}/${conf_file}"
   json_replace 'postLogoutRedirectURI' "https://${APIM_REVERSEPROXY}/store/" '.oidcConfiguration.clientConfiguration' "${conf_path}/${conf_file}"
 fi
-# Directory ${WSO2_SERVER_HOME}/repository/conf/tomcat
+
+### Directory ${WSO2_SERVER_HOME}/repository/resources/security
+if [ ! -z ${APIM_KEYSTORE_FILENAME} ]; then
+  conf_path="${WSO2_SERVER_HOME}/repository/resources/security"
+  ## Edit properties in sslprofiles.xml
+  conf_file='sslprofiles.xml'
+  echo ${conf_file}
+  xml_replace 'Location' "repository/resources/security/${APIM_KEYSTORE_FILENAME}" '/parameter[@name="customSSLProfiles"]/profile/KeyStore' "${conf_path}/${conf_file}"
+  xml_replace 'Password' "${APIM_KEYSTORE_PASS}" '/parameter[@name="customSSLProfiles"]/profile/KeyStore' "${conf_path}/${conf_file}"
+  xml_replace 'KeyPassword' "${APIM_KEYSTORE_PASS}" '/parameter[@name="customSSLProfiles"]/profile/KeyStore' "${conf_path}/${conf_file}"
+  xml_replace 'Location' "repository/resources/security/${APIM_TRUSTSTORE_FILENAME}" '/parameter[@name="customSSLProfiles"]/profile/TrustStore' "${conf_path}/${conf_file}"
+  xml_replace 'Password' "${APIM_TRUSTSTORE_PASS}" '/parameter[@name="customSSLProfiles"]/profile/TrustStore' "${conf_path}/${conf_file}"
+fi
+### Directory ${WSO2_SERVER_HOME}/repository/conf/tomcat
 conf_path="${WSO2_SERVER_HOME}/repository/conf/tomcat"
+## Edit properties in catalina-server.xml
 conf_file='catalina-server.xml'
 echo ${conf_file}
-## Edit properties in catalina-server.xml
 xml_append_attr 'Connector[@port="9443"]' "proxyName=${APIM_REVERSEPROXY}" '/Server/Service' "${conf_path}/${conf_file}"
 xml_append_attr 'Connector[@port="9443"]' 'proxyPort=443' '/Server/Service' "${conf_path}/${conf_file}"
+if [ ! -z ${APIM_KEYSTORE_FILENAME} ]; then
+  xml_replace '@keystoreFile' "\${carbon.home}/repository/resources/security/${APIM_KEYSTORE_FILENAME}" '/Server/Service/Connector[@port="9443"]' "${conf_path}/${conf_file}"
+  xml_replace '@keystorePass' "${APIM_KEYSTORE_PASS}" '/Server/Service/Connector[@port="9443"]' "${conf_path}/${conf_file}"
+fi

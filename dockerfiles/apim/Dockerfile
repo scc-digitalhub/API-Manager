@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:experimental
+
 # ------------------------------------------------------------------------
 #
 # Copyright 2018 WSO2, Inc. (http://wso2.com)
@@ -15,6 +17,22 @@
 # limitations under the License
 #
 # ------------------------------------------------------------------------
+FROM maven:3-jdk-8 AS build-aac-client
+COPY wso2aac.client/src /tmp/src
+COPY wso2aac.client/pom.xml /tmp/pom.xml
+WORKDIR /tmp/
+RUN --mount=type=bind,target=/root/.m2,source=/root/.m2,from=smartcommunitylab/apim-dependency:with_parents mvn package
+# RUN mvn package -Dskiptests
+
+FROM maven:3-jdk-8 AS build-usermgmt
+COPY usermgmt/apim.custom.user.store/src /tmp/apim.custom.user.store/src
+COPY usermgmt/apim.custom.user.store/pom.xml /tmp/apim.custom.user.store/pom.xml
+COPY usermgmt/apim.custom.user.store.stub/src /tmp/apim.custom.user.store.stub/src
+COPY usermgmt/apim.custom.user.store.stub/pom.xml /tmp/apim.custom.user.store.stub/pom.xml
+COPY usermgmt/pom.xml /tmp/pom.xml
+WORKDIR /tmp/
+RUN --mount=type=bind,target=/root/.m2,source=/root/.m2,from=smartcommunitylab/apim-dependency:with_parents mvn package
+# RUN mvn package -Dskiptests
 
 # set base Docker image to AdoptOpenJDK Alpine Docker image
 FROM adoptopenjdk/openjdk8:alpine
@@ -27,7 +45,10 @@ ARG USER_GROUP=wso2
 ARG USER_GROUP_ID=802
 ARG USER_HOME=/home/${USER}
 # set dependant files directory
-ARG FILES=./files
+ARG FILES=./dockerfiles/apim/files
+ARG SCO_CUSTOMIZATION=./sco-customization/apim
+ARG SCO_CUSTOMIZATION_GLOBAL=./sco-customization/global
+
 # set wso2 product configurations
 ARG WSO2_SERVER=wso2am
 ARG WSO2_SERVER_VERSION=2.6.0
@@ -73,22 +94,22 @@ COPY --chown=wso2carbon:wso2 ${FILES}/${WSO2_SERVER_PACK}/ ${WSO2_SERVER_HOME}/
 # copy shared artifacts to a temporary location
 COPY --chown=wso2carbon:wso2 ${FILES}/${WSO2_SERVER_PACK}/repository/deployment/server/ ${USER_HOME}/wso2-tmp/server/
 # copy init script to user home
-COPY --chown=wso2carbon:wso2 init.sh ${USER_HOME}/
-COPY --chown=wso2carbon:wso2 apim-config.sh ${USER_HOME}/
-COPY --chown=wso2carbon:wso2 common.sh ${USER_HOME}/
+COPY --chown=wso2carbon:wso2 ${SCO_CUSTOMIZATION}/init.sh ${USER_HOME}/
+COPY --chown=wso2carbon:wso2 ${SCO_CUSTOMIZATION}/apim-config.sh ${USER_HOME}/
+COPY --chown=wso2carbon:wso2 ${SCO_CUSTOMIZATION_GLOBAL}/common.sh ${USER_HOME}/
 # copy mysql connector jar to the server as a third party library
 COPY --chown=wso2carbon:wso2 ${FILES}/mysql-connector-java-*.jar ${WSO2_SERVER_HOME}/repository/components/lib/
-# copy aac connector jar to the server as a thids party library
-COPY --chown=wso2carbon:wso2 ${FILES}/wso2aac.client*.jar ${WSO2_SERVER_HOME}/repository/components/lib/
+# copy smartcommunitylab customization to the server as a thids party library
 COPY --chown=wso2carbon:wso2 ${FILES}/lets-encrypt-x3-cross-signed.pem ${USER_HOME}/
-COPY --chown=wso2carbon:wso2 ${FILES}/apim.custom.user.store.stub-0.0.1.jar ${WSO2_SERVER_HOME}/repository/components/dropins/
-COPY --chown=wso2carbon:wso2 ${FILES}/apim.custom.user.store-0.0.1.jar ${WSO2_SERVER_HOME}/repository/components/dropins/
+COPY --chown=wso2carbon:wso2 --from=build-aac-client /tmp/target/wso2aac.client*.jar ${WSO2_SERVER_HOME}/repository/components/lib/
+COPY --chown=wso2carbon:wso2 --from=build-usermgmt /tmp/apim.custom.user.store.stub/target/apim.custom.user.store.stub-*.jar ${WSO2_SERVER_HOME}/repository/components/dropins/
+COPY --chown=wso2carbon:wso2 --from=build-usermgmt /tmp/apim.custom.user.store/target/apim.custom.user.store-*.jar ${WSO2_SERVER_HOME}/repository/components/dropins/
 # add libraries for Kubernetes membership scheme based clustering
 ADD --chown=wso2carbon:wso2 https://repo1.maven.org/maven2/dnsjava/dnsjava/2.1.8/dnsjava-2.1.8.jar ${WSO2_SERVER_HOME}/repository/components/lib/
 ADD --chown=wso2carbon:wso2 https://repo1.maven.org/maven2/org/wso2/carbon/kubernetes/artifacts/kubernetes-membership-scheme/1.0.5/kubernetes-membership-scheme-1.0.5.jar ${WSO2_SERVER_HOME}/repository/components/dropins/
 # copy scl customization
-COPY --chown=wso2carbon:wso2 ${FILES}/changed_files/ ${WSO2_SERVER_HOME}/repository/
-COPY --chown=wso2carbon:wso2 ${FILES}/changed_files/deployment/server/ ${USER_HOME}/wso2-tmp/server/
+COPY --chown=wso2carbon:wso2 ${SCO_CUSTOMIZATION}/ ${WSO2_SERVER_HOME}/repository/
+COPY --chown=wso2carbon:wso2 ${SCO_CUSTOMIZATION}/deployment/server/ ${USER_HOME}/wso2-tmp/server/
 
 # set environment variables
 ENV WSO2_SERVER_HOME=${WSO2_SERVER_HOME} \

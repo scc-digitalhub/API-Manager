@@ -5,7 +5,7 @@
   <packaging>bundle</packaging>
   <name>WSO2 APIM Custom User Store Stub</name>
   <description>WSO2 APIM Custom User Store Stub</description>
- 
+
  <parent>
   		<groupId>it.smartcommunitylab.orgmanager</groupId>
 	  	<artifactId>orgmanager-wso2connector</artifactId>
@@ -23,7 +23,7 @@
            <version>1.6.1.wso2v12</version>
        </dependency>
    </dependencies>
-    
+
   <build>
     <plugins>
     	<plugin>
@@ -96,7 +96,7 @@
             </configuration>
         </plugin>
     </plugins>
-</build>    
+</build>
 
   	<distributionManagement>
 		<repository>

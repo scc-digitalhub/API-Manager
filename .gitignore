@@ -7,7 +7,9 @@ release.properties
 dependency-reduced-pom.xml
 buildNumber.properties
 .mvn/timing.properties
-
+**/wso2am-2.6.0
+**/mysql-connector-java*
+**/wso2am-analytics-2.6.0*
 .DS_Store
 
 aac/.classpath

@@ -1,0 +1,56 @@
+{
+    "theme" : {
+        "base" : "wso2",
+        "subtheme" : "scLab"
+    },
+    "context" : "/publisher",
+    "enableRestrictByRoles" : "true",
+    "enableSelectedTenantSubscription" : "true",
+    "ssoConfiguration" : {
+        "enabled" : "false",
+        "issuer" : "API_PUBLISHER",
+        "identityProviderURL" : "https://localhost:9443/samlsso",
+        "keyStorePassword" : "",
+        "identityAlias" : "",
+        "verifyAssertionValidityPeriod":"true",
+        "timestampSkewInSeconds":"300",
+        "audienceRestrictionsEnabled":"true",
+        "responseSigningEnabled":"true",
+        "assertionSigningEnabled":"true",
+        "keyStoreName" :"",
+        "signRequests" : "true",
+	    "assertionEncryptionEnabled" : "false",
+        "idpInit" : "false",
+        "idpInitSSOURL" : "https://localhost:9443/samlsso?spEntityID=API_PUBLISHER"
+    },
+
+    "oidcConfiguration" : {
+      "enabled" : "false",
+      "issuer" : "API_PUBLISHER",
+      "identityProviderURI" : "http://localhost:8080/openid-connect-server-webapp/",
+      "authorizationEndpointURI" : "http://localhost:8080/openid-connect-server-webapp/authorize",
+      "tokenEndpointURI" : "http://localhost:8080/openid-connect-server-webapp/token",
+      "userInfoURI" : "http://localhost:8080/openid-connect-server-webapp/userinfo",
+      "jwksURI" : "http://localhost:8080/openid-connect-server-webapp/jwk",
+      "logoutEndpointURI" : "http://localhost:8080/aac/endsession",
+      "authHttpMethod": "POST",
+      "rolesEndpointURI" : "http://localhost:8080/aac/userroles/me",
+      "clientConfiguration" : {
+        "clientId" : "client_am_publisher",
+        "clientSecret" : "secret",
+        "responseType" : "code",
+        "authorizationType" : "authorization_code",
+        "scope" : "phone email address openid profile user.roles.me user.roles.read",
+        "redirectURI" : "https://localhost:9443/publisher/jagg/jaggery_oidc_acs.jag",
+        "postLogoutRedirectURI" : "https://localhost:9443/publisher/",
+	"clientAlgorithm" : "RS256",
+	"context":"apimanager"
+      }
+    },
+
+    "reverseProxy" : {
+        "enabled" : false,
+        "host" : "sample.proxydomain.com",
+        "context":""
+    }
+}

@@ -17,12 +17,15 @@
 # ------------------------------------------------------------------------
 
 # set to product base image
-FROM smartcommunitylab/analytics-base:auto
+FROM smartcommunitylab/analytics-base:truststore
+
+ARG SCO_CUSTOMIZATION=./sco-customization/apim-analytics
+ARG SCO_CUSTOMIZATION_GLOBAL=./sco-customization/global
 
 # copy init script to user home
-COPY --chown=wso2carbon:wso2 init.sh ${WORKING_DIRECTORY}/
-COPY --chown=wso2carbon:wso2 analytics-config.sh ${WORKING_DIRECTORY}/
-COPY --chown=wso2carbon:wso2 common.sh ${WORKING_DIRECTORY}/
+COPY --chown=wso2carbon:wso2 ${SCO_CUSTOMIZATION}/init.sh ${WORKING_DIRECTORY}/
+COPY --chown=wso2carbon:wso2 ${SCO_CUSTOMIZATION}/analytics-config.sh ${WORKING_DIRECTORY}/
+COPY --chown=wso2carbon:wso2 ${SCO_CUSTOMIZATION_GLOBAL}/common.sh ${WORKING_DIRECTORY}/
 
 # expose ports
 EXPOSE 9091 9444 7712 7612 9613 9713 7444 7071

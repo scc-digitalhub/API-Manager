@@ -128,16 +128,17 @@ json_add() {
 }
 
 yml_replace() {
-  property_name=$1
-  property_value=$2
-  property_xpath=$3
+  property_name="$1"
+  property_value="$2"
+  property_xpath="$3"
+  echo "$property_value"
   target_file=$4
-  yq w -i ${target_file} "${property_xpath}.${property_name}" ${property_value}
+  yq w -i ${target_file} "${property_xpath}.${property_name}" "${property_value}"
 }
 
 yml_add() {
   property_value=$1
   property_xpath=$2
   target_file=$3
-  yq w -i ${target_file} ${property_xpath} ${property_value}
+  yq w -i ${target_file} ${property_xpath} "${property_value}"
 }

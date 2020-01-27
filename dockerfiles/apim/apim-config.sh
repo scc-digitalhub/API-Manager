@@ -41,6 +41,7 @@ if [ ! -z ${AAC_HOSTNAME} ]; then
   xml_add 'RegistrationEndpoint' "http://${AAC_HOSTNAME}:8080/aac" '/APIManager/APIKeyManager/Configuration' "${conf_path}/${conf_file}"
   xml_add 'ConsumerKey' ${AAC_CONSUMERKEY} '/APIManager/APIKeyManager/Configuration' "${conf_path}/${conf_file}"
   xml_add 'ConsumerSecret' ${AAC_CONSUMERSECRET} '/APIManager/APIKeyManager/Configuration' "${conf_path}/${conf_file}"
+  xml_add 'IntrospectionURL' ${AAC_INTROSPECTION_URL} '/APIManager/APIKeyManager/Configuration' "${conf_path}/${conf_file}"
   xml_replace 'ServerURL' "https://$APIM_HOSTNAME:9443/services" '/APIManager/APIKeyManager/Configuration' "${conf_path}/${conf_file}"
   xml_replace 'Username' ${APIM_USER} '/APIManager/APIKeyManager/Configuration' "${conf_path}/${conf_file}"
   xml_replace 'Password' ${APIM_PASS} '/APIManager/APIKeyManager/Configuration' "${conf_path}/${conf_file}"

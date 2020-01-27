@@ -766,15 +766,16 @@ public class AACOAuthClient extends AbstractKeyManager {
     	HttpClient client = getHttpClient();
         ObjectMapper mapper = objectMapper();
 
-        String registrationURL = configuration.getParameter(ClientConstants.CLIENT_REG_ENDPOINT);
-        String client_id = configuration.getParameter(ClientConstants.INTROSPECTION_CK);
-        String client_secret = configuration.getParameter(ClientConstants.INTROSPECTION_CS);
+        String registrationURL 		= configuration.getParameter(ClientConstants.CLIENT_REG_ENDPOINT);
+        String client_id 			= configuration.getParameter(ClientConstants.INTROSPECTION_CK);
+        String client_secret 		= configuration.getParameter(ClientConstants.INTROSPECTION_CS);
+        String introspectionURL 	= configuration.getParameter(ClientConstants.INTROSPECTION_URL);
 //        String accessToken = getOauthToken();
         BufferedReader reader = null;
 
         try {
         	log.debug("Checking token " + token);
-            HttpPost request = new HttpPost(registrationURL.trim() + "/token_introspection?token="+token);
+            HttpPost request = new HttpPost(registrationURL.trim() + introspectionURL + "?token="+token);
             //set authorization header.
             request.addHeader(ClientConstants.AUTHORIZATION, "Basic "+ Base64.getEncoder().encodeToString(new String(client_id+":"+client_secret).getBytes()));
             HttpResponse response = client.execute(request);

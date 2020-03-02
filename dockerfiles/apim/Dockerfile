@@ -110,6 +110,8 @@ ADD --chown=wso2carbon:wso2 https://repo1.maven.org/maven2/org/wso2/carbon/kuber
 # copy scl customization
 COPY --chown=wso2carbon:wso2 ${SCO_CUSTOMIZATION}/ ${WSO2_SERVER_HOME}/repository/
 COPY --chown=wso2carbon:wso2 ${SCO_CUSTOMIZATION}/deployment/server/ ${USER_HOME}/wso2-tmp/server/
+# copy original h2 database (wso2 h2 database autogeneration is not working properly)
+COPY --chown=wso2carbon:wso2 ${FILES}/${WSO2_SERVER_PACK}/repository/database/ ${USER_HOME}/wso2-tmp/database/
 
 # set environment variables
 ENV WSO2_SERVER_HOME=${WSO2_SERVER_HOME} \

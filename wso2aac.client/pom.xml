@@ -16,22 +16,22 @@
 		<dependency>
 			<groupId>org.wso2.carbon.apimgt</groupId>
 			<artifactId>org.wso2.carbon.apimgt.impl</artifactId>
-			<version>6.1.64</version>
+			<version>${carbon.apimgt.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.wso2.carbon.apimgt</groupId>
 			<artifactId>org.wso2.carbon.apimgt.gateway</artifactId>
-			<version>6.1.64</version>
+			<version>${carbon.apimgt.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.wso2.carbon.apimgt</groupId>
 			<artifactId>org.wso2.carbon.apimgt.keymgt</artifactId>
-			<version>6.1.64</version>
+			<version>${carbon.apimgt.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.wso2.carbon.apimgt</groupId>
 			<artifactId>org.wso2.carbon.apimgt.hostobjects</artifactId>
-			<version>6.1.64</version>
+			<version>${carbon.apimgt.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.guava</groupId>
@@ -95,4 +95,7 @@
 			</plugin>
 		</plugins>
 	</build>
+	<properties>
+        <carbon.apimgt.version>6.6.62</carbon.apimgt.version>
+	</properties>
 </project>  

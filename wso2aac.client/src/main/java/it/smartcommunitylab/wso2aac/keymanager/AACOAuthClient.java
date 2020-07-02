@@ -135,7 +135,6 @@ public class AACOAuthClient extends AbstractKeyManager {
 			String registrationToken = getOauthToken();
 
 			ClientAppBasic app = convertRequest(oAuthApplicationInfo);
-			
 			HttpPost httpPost = new HttpPost(registrationEndpoint.trim() + "/wso2/client/" + app.getUserName());
 
 			String jsonPayload = mapper.writeValueAsString(app);
@@ -173,7 +172,7 @@ public class AACOAuthClient extends AbstractKeyManager {
 				
 				return respOAuthApplicationInfo;
 			} else {
-				handleException("Some thing wrong here while registering the new client " + "HTTP Error response code is " + responseCode);
+				handleException("Some thing wrong here while registering the new client. Check out the scopes of the APIM client.  " + "HTTP Error response code is " + responseCode);
 			}
 
 		} catch (Exception e) {
@@ -260,9 +259,11 @@ public class AACOAuthClient extends AbstractKeyManager {
         Set<String> grantsSet = Sets.newHashSet(grants.split(","));
         client.setGrantedTypes(grantsSet);
         
-        client.setRedirectUris(oAuthApplicationInfo.getCallBackURL());
+        if(oAuthApplicationInfo.getCallBackURL() != null)
+        	client.setRedirectUris(oAuthApplicationInfo.getCallBackURL());
         client.setUserName(userName);
-        client.setScope(((String)parametersMap.get("tokenScope")).replace(" ", ","));
+        if(parametersMap.get("tokenScope") != null)
+        	client.setScope(((String)parametersMap.get("tokenScope")).replace(" ", ","));
         
         client.setParameters(oAuthApplicationInfo.getJsonString());
         
@@ -326,7 +327,6 @@ public class AACOAuthClient extends AbstractKeyManager {
 			HttpPut httpPost = new HttpPut(registrationEndpoint.trim() + "/wso2/client/" + app.getClientId());
 
 			String jsonPayload = mapper.writeValueAsString(app);
-
 			httpPost.setEntity(new StringEntity(jsonPayload, ClientConstants.UTF_8));
 			httpPost.setHeader(ClientConstants.CONTENT_TYPE, ClientConstants.APPLICATION_JSON_CONTENT_TYPE);
 			httpPost.setHeader(ClientConstants.AUTHORIZATION, ClientConstants.BEARER + registrationToken);
@@ -480,7 +480,8 @@ public class AACOAuthClient extends AbstractKeyManager {
 		req.setCallbackURI(oAuthApplication.getCallBackURL());
 		req.setScope(tokenRequest.getScope());
 		req.setGrantType("client_credentials");
-		req.setValidityPeriod(Long.parseLong((String)oAuthApplication.getParameter("validityPeriod")));
+		if(oAuthApplication.getParameter("validityPeriod") != null)
+			req.setValidityPeriod(Long.parseLong((String)oAuthApplication.getParameter("validityPeriod")));
 		
 		return req;
 	}
@@ -635,7 +636,6 @@ public class AACOAuthClient extends AbstractKeyManager {
 
 	private void revokeTokenLocally(AccessTokenRequest tokenRequest) throws Exception {
 		String revokeEndpoint = configuration.getParameter(APIConstants.REVOKE_URL);
-
 		// Call the /revoke only if there's a token to be revoked.
 		if (tokenRequest.getTokenToRevoke() != null && !"".equals(tokenRequest.getTokenToRevoke())) {
 			URL revokeEndpointURL = new URL(revokeEndpoint);
@@ -996,6 +996,20 @@ public class AACOAuthClient extends AbstractKeyManager {
         return tokenInfo;
     }
     
+    @Override
+    public Map<String, Set<Scope>> getScopesForAPIS(String apiIdsString) throws APIManagementException {
+        log.debug("Invoking getScopesForAPIS() method for apiId " + apiIdsString);
+        ApiMgtDAO apiMgtDAO = ApiMgtDAO.getInstance();
+        Map<String, Set<Scope>> scopes = apiMgtDAO.getScopesForAPIS(apiIdsString);
+        return scopes;
+    }
+    
+    @Override
+    public String getNewApplicationConsumerSecret(AccessTokenRequest arg0) throws APIManagementException {
+        log.warn("Consumer key updating is not supported");
+        return null;
+    }
+    
 	private String getOauthToken() throws APIManagementException {
 		HttpClient httpClient = getHttpClient();
 		BufferedReader reader = null;
@@ -1124,18 +1138,6 @@ public class AACOAuthClient extends AbstractKeyManager {
     
 
     /**
-     * common method to throw exceptions.
-     *
-     * @param msg this parameter contain error message that we need to throw.
-     * @param e   Exception object.
-     * @throws APIManagementException
-     */
-    private void handleException(String msg, Exception e) throws APIManagementException {
-        log.error(msg, e);
-        throw new APIManagementException(msg, e);
-    }
-
-    /**
      * common method to throw exceptions. This will only expect one parameter.
      *
      * @param msg error message as a string.
@@ -1144,6 +1146,18 @@ public class AACOAuthClient extends AbstractKeyManager {
     private void handleException(String msg) throws APIManagementException {
         log.error(msg);
         throw new APIManagementException(msg);
+    }
+
+    /**
+     * common method to throw exceptions.
+     *
+     * @param msg this parameter contain error message that we need to throw.
+     * @param e   Exception object.
+     * @throws APIManagementException
+     */
+    public void handleException(String msg, Exception e) throws APIManagementException {
+        log.error(msg, e);
+        throw new APIManagementException(msg, e);
     }
 
     /**

@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+  <classpathentry kind="src" path="src/test/java" output="target/test-classes" including="**/*.java"/>
+  <classpathentry kind="src" path="src/test/resources" output="target/test-classes" excluding="**/*.java"/>
+  <classpathentry kind="src" path="src/main/java" including="**/*.java"/>
+  <classpathentry kind="src" path="src/main/resources" excluding="**/*.java"/>
+  <classpathentry kind="src" path="target/maven-shared-archive-resources" excluding="**/*.java"/>
+  <classpathentry kind="output" path="target/classes"/>
+  <classpathentry kind="var" path="M2_REPO/javax/xml/stream/stax-api/1.0-2/stax-api-1.0-2.jar" sourcepath="M2_REPO/javax/xml/stream/stax-api/1.0-2/stax-api-1.0-2-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/javax/servlet/jsp/jstl/wso2/jstl/1.2.1.wso2v2/jstl-1.2.1.wso2v2.jar"/>
+  <classpathentry kind="var" path="M2_REPO/javax/servlet/servlet-api/2.3/servlet-api-2.3.jar" sourcepath="M2_REPO/javax/servlet/servlet-api/2.3/servlet-api-2.3-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/javax/ws/rs/jsr311-api/1.0/jsr311-api-1.0.jar" sourcepath="M2_REPO/javax/ws/rs/jsr311-api/1.0/jsr311-api-1.0-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/javax/mail/mail/1.4.1/mail-1.4.1.jar" sourcepath="M2_REPO/javax/mail/mail/1.4.1/mail-1.4.1-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/javax/activation/activation/1.1/activation-1.1.jar" sourcepath="M2_REPO/javax/activation/activation/1.1/activation-1.1-sources.jar"/>
+  <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/oltu/oauth2/org.apache.oltu.oauth2.client/0.31/org.apache.oltu.oauth2.client-0.31.jar" sourcepath="M2_REPO/org/apache/oltu/oauth2/org.apache.oltu.oauth2.client/0.31/org.apache.oltu.oauth2.client-0.31-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/oltu/oauth2/org.apache.oltu.oauth2.common/1.0.1/org.apache.oltu.oauth2.common-1.0.1.jar" sourcepath="M2_REPO/org/apache/oltu/oauth2/org.apache.oltu.oauth2.common/1.0.1/org.apache.oltu.oauth2.common-1.0.1-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/codehaus/jettison/jettison/1.2/jettison-1.2.jar" sourcepath="M2_REPO/org/codehaus/jettison/jettison/1.2/jettison-1.2-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/commons-codec/commons-codec/1.9/commons-codec-1.9.jar" sourcepath="M2_REPO/commons-codec/commons-codec/1.9/commons-codec-1.9-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/slf4j/slf4j-api/1.6.1/slf4j-api-1.6.1.jar" sourcepath="M2_REPO/org/slf4j/slf4j-api/1.6.1/slf4j-api-1.6.1-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/json/json/20140107/json-20140107.jar" sourcepath="M2_REPO/org/json/json/20140107/json-20140107-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/identity/org.wso2.carbon.identity.application.authenticator.openid/5.0.7/org.wso2.carbon.identity.application.authenticator.openid-5.0.7.jar" sourcepath="M2_REPO/org/wso2/carbon/identity/org.wso2.carbon.identity.application.authenticator.openid/5.0.7/org.wso2.carbon.identity.application.authenticator.openid-5.0.7-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/org.wso2.carbon.utils/4.4.3/org.wso2.carbon.utils-4.4.3.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/bouncycastle/wso2/bcprov-jdk15on/1.49.0.wso2v2/bcprov-jdk15on-1.49.0.wso2v2.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/bouncycastle/bcprov-jdk15on/1.49/bcprov-jdk15on-1.49.jar" sourcepath="M2_REPO/org/bouncycastle/bcprov-jdk15on/1.49/bcprov-jdk15on-1.49-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/org.wso2.carbon.user.api/4.6.0/org.wso2.carbon.user.api-4.6.0.jar" sourcepath="M2_REPO/org/wso2/carbon/org.wso2.carbon.user.api/4.6.0/org.wso2.carbon.user.api-4.6.0-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/org.wso2.carbon.base/4.4.3/org.wso2.carbon.base-4.4.3.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/ws/commons/axiom/wso2/axiom/1.2.11.wso2v9/axiom-1.2.11.wso2v9.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/geronimo/specs/wso2/geronimo-stax-api_1.0_spec/1.0.1.wso2v2/geronimo-stax-api_1.0_spec-1.0.1.wso2v2.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/geronimo/specs/geronimo-stax-api_1.0_spec/1.0.1/geronimo-stax-api_1.0_spec-1.0.1.jar" sourcepath="M2_REPO/org/apache/geronimo/specs/geronimo-stax-api_1.0_spec/1.0.1/geronimo-stax-api_1.0_spec-1.0.1-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/codehaus/woodstox/stax2-api/3.1.1/stax2-api-3.1.1.jar" sourcepath="M2_REPO/org/codehaus/woodstox/stax2-api/3.1.1/stax2-api-3.1.1-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/codehaus/woodstox/woodstox-core-asl/4.2.0/woodstox-core-asl-4.2.0.jar" sourcepath="M2_REPO/org/codehaus/woodstox/woodstox-core-asl/4.2.0/woodstox-core-asl-4.2.0-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/org.wso2.carbon.logging/4.4.3/org.wso2.carbon.logging-4.4.3.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/log4j/wso2/log4j/1.2.17.wso2v1/log4j-1.2.17.wso2v1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/commons-logging/commons-logging/1.2/commons-logging-1.2.jar" sourcepath="M2_REPO/commons-logging/commons-logging/1.2/commons-logging-1.2-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/org.wso2.carbon.bootstrap/4.4.3/org.wso2.carbon.bootstrap-4.4.3.jar" sourcepath="M2_REPO/org/wso2/carbon/org.wso2.carbon.bootstrap/4.4.3/org.wso2.carbon.bootstrap-4.4.3-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/wrapper/wrapper/3.2.3/wrapper-3.2.3.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/eclipse/osgi/org.eclipse.osgi/3.9.1.v20130814-1242/org.eclipse.osgi-3.9.1.v20130814-1242.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/org.wso2.carbon.queuing/4.4.3/org.wso2.carbon.queuing-4.4.3.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/securevault/org.wso2.securevault/1.1.3/org.wso2.securevault-1.1.3.jar" sourcepath="M2_REPO/org/wso2/securevault/org.wso2.securevault/1.1.3/org.wso2.securevault-1.1.3-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/ws/commons/axiom/axiom-api/1.2.11/axiom-api-1.2.11.jar" sourcepath="M2_REPO/org/apache/ws/commons/axiom/axiom-api/1.2.11/axiom-api-1.2.11-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/geronimo/specs/geronimo-activation_1.1_spec/1.0.2/geronimo-activation_1.1_spec-1.0.2.jar" sourcepath="M2_REPO/org/apache/geronimo/specs/geronimo-activation_1.1_spec/1.0.2/geronimo-activation_1.1_spec-1.0.2-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/geronimo/specs/geronimo-javamail_1.4_spec/1.6/geronimo-javamail_1.4_spec-1.6.jar" sourcepath="M2_REPO/org/apache/geronimo/specs/geronimo-javamail_1.4_spec/1.6/geronimo-javamail_1.4_spec-1.6-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/jaxen/jaxen/1.1.1/jaxen-1.1.1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/ws/commons/axiom/axiom-impl/1.2.11/axiom-impl-1.2.11.jar" sourcepath="M2_REPO/org/apache/ws/commons/axiom/axiom-impl/1.2.11/axiom-impl-1.2.11-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/codehaus/woodstox/wstx-asl/3.2.9/wstx-asl-3.2.9.jar" sourcepath="M2_REPO/org/codehaus/woodstox/wstx-asl/3.2.9/wstx-asl-3.2.9-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/jline/jline/0.9.94/jline-0.9.94.jar" sourcepath="M2_REPO/jline/jline/0.9.94/jline-0.9.94-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/junit/junit/3.8.1/junit-3.8.1.jar" sourcepath="M2_REPO/junit/junit/3.8.1/junit-3.8.1-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/commons-cli/commons-cli/1.0/commons-cli-1.0.jar" sourcepath="M2_REPO/commons-cli/commons-cli/1.0/commons-cli-1.0-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/commons-lang/commons-lang/2.3/commons-lang-2.3.jar" sourcepath="M2_REPO/commons-lang/commons-lang/2.3/commons-lang-2.3-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/commons-io/commons-io/2.0/commons-io-2.0.jar" sourcepath="M2_REPO/commons-io/commons-io/2.0/commons-io-2.0-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/org.wso2.carbon.securevault/4.4.3/org.wso2.carbon.securevault-4.4.3.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/eclipse/osgi/org.eclipse.osgi.services/3.3.100.v20130513-1956/org.eclipse.osgi.services-3.3.100.v20130513-1956.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/eclipse/equinox/javax.servlet/3.0.0.v201112011016/javax.servlet-3.0.0.v201112011016.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/axis2/wso2/axis2/1.6.1.wso2v16/axis2-1.6.1.wso2v16.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/igniterealtime/smack/wso2/smack/3.0.4.wso2v1/smack-3.0.4.wso2v1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/igniterealtime/smack/wso2/smackx/3.0.4.wso2v1/smackx-3.0.4.wso2v1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/xerces/wso2/xercesImpl/2.8.1.wso2v2/xercesImpl-2.8.1.wso2v2.jar"/>
+  <classpathentry kind="var" path="M2_REPO/dom4j/dom4j/1.6.1/dom4j-1.6.1.jar" sourcepath="M2_REPO/dom4j/dom4j/1.6.1/dom4j-1.6.1-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/jdom/jdom/1.0/jdom-1.0.jar" sourcepath="M2_REPO/jdom/jdom/1.0/jdom-1.0-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/xml-apis/xml-apis/1.3.02/xml-apis-1.3.02.jar"/>
+  <classpathentry kind="var" path="M2_REPO/xerces/xercesImpl/2.6.2/xercesImpl-2.6.2.jar" sourcepath="M2_REPO/xerces/xercesImpl/2.6.2/xercesImpl-2.6.2-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/xom/xom/1.0/xom-1.0.jar"/>
+  <classpathentry kind="var" path="M2_REPO/xerces/xmlParserAPIs/2.6.2/xmlParserAPIs-2.6.2.jar"/>
+  <classpathentry kind="var" path="M2_REPO/xalan/xalan/2.6.0/xalan-2.6.0.jar"/>
+  <classpathentry kind="var" path="M2_REPO/com/ibm/icu/icu4j/2.6.1/icu4j-2.6.1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/commons-fileupload/wso2/commons-fileupload/1.2.2.wso2v1/commons-fileupload-1.2.2.wso2v1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/commons-fileupload/commons-fileupload/1.2.2/commons-fileupload-1.2.2.jar" sourcepath="M2_REPO/commons-fileupload/commons-fileupload/1.2.2/commons-fileupload-1.2.2-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/ant/wso2/ant/1.7.0.wso2v1/ant-1.7.0.wso2v1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/ant/ant/1.7.0/ant-1.7.0.jar" sourcepath="M2_REPO/org/apache/ant/ant/1.7.0/ant-1.7.0-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/ant/ant-launcher/1.7.0/ant-launcher-1.7.0.jar"/>
+  <classpathentry kind="var" path="M2_REPO/commons-httpclient/wso2/commons-httpclient/3.1.0.wso2v2/commons-httpclient-3.1.0.wso2v2.jar"/>
+  <classpathentry kind="var" path="M2_REPO/commons-httpclient/commons-httpclient/3.1/commons-httpclient-3.1.jar" sourcepath="M2_REPO/commons-httpclient/commons-httpclient/3.1/commons-httpclient-3.1-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/commons/ssl/not-yet-commons-ssl/0.3.9/not-yet-commons-ssl-0.3.9.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/org.wso2.carbon.registry.api/4.4.3/org.wso2.carbon.registry.api-4.4.3.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/org.wso2.carbon.ui/4.4.3/org.wso2.carbon.ui-4.4.3.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/tiles/wso2/tiles-jsp/2.0.5.wso2v1/tiles-jsp-2.0.5.wso2v1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/org.wso2.carbon.core/4.4.3/org.wso2.carbon.core-4.4.3.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/orbit/com/hazelcast/hazelcast/3.5.2.wso2v1/hazelcast-3.5.2.wso2v1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/com/hazelcast/hazelcast-all/3.5.2/hazelcast-all-3.5.2.jar" sourcepath="M2_REPO/com/hazelcast/hazelcast-all/3.5.2/hazelcast-all-3.5.2-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/eclipse/equinox/org.eclipse.equinox.http.helper/1.1.0.wso2v1/org.eclipse.equinox.http.helper-1.1.0.wso2v1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/javax.cache.wso2/4.6.0/javax.cache.wso2-4.6.0.jar" sourcepath="M2_REPO/org/wso2/carbon/javax.cache.wso2/4.6.0/javax.cache.wso2-4.6.0-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/geronimo/specs/geronimo-jta_1.1_spec/1.1/geronimo-jta_1.1_spec-1.1.jar" sourcepath="M2_REPO/org/apache/geronimo/specs/geronimo-jta_1.1_spec/1.1/geronimo-jta_1.1_spec-1.1-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/org.wso2.carbon.registry.core/4.5.3/org.wso2.carbon.registry.core-4.5.3.jar"/>
+  <classpathentry kind="var" path="M2_REPO/commons-io/wso2/commons-io/2.4.0.wso2v1/commons-io-2.4.0.wso2v1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/net/sourceforge/findbugs/annotations/1.3.2/annotations-1.3.2.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/ws/commons/schema/wso2/XmlSchema/1.4.7.wso2v6/XmlSchema-1.4.7.wso2v6.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/org.wso2.carbon.registry.xboot/4.5.3/org.wso2.carbon.registry.xboot-4.5.3.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/org.wso2.carbon.user.core/4.6.0/org.wso2.carbon.user.core-4.6.0.jar" sourcepath="M2_REPO/org/wso2/carbon/org.wso2.carbon.user.core/4.6.0/org.wso2.carbon.user.core-4.6.0-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/commons-dbcp/wso2/commons-dbcp/1.4.0.wso2v1/commons-dbcp-1.4.0.wso2v1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/tomcat/tomcat-juli/7.0.59/tomcat-juli-7.0.59.jar" sourcepath="M2_REPO/org/apache/tomcat/tomcat-juli/7.0.59/tomcat-juli-7.0.59-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/orbit/commons-collections/commons-collections/3.2.2.wso2v1/commons-collections-3.2.2.wso2v1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/compass-project/wso2/compass/2.0.1.wso2v2/compass-2.0.1.wso2v2.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/abdera/wso2/abdera/1.0.0.wso2v3/abdera-1.0.0.wso2v3.jar"/>
+  <classpathentry kind="var" path="M2_REPO/commons-pool/wso2/commons-pool/1.5.6.wso2v1/commons-pool-1.5.6.wso2v1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/commons-pool/commons-pool/1.5.6/commons-pool-1.5.6.jar" sourcepath="M2_REPO/commons-pool/commons-pool/1.5.6/commons-pool-1.5.6-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/orbit/org/apache/neethi/neethi/2.0.4.wso2v5/neethi-2.0.4.wso2v5.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/httpcomponents/wso2/httpcore/4.3.3.wso2v1/httpcore-4.3.3.wso2v1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/tomcat/tomcat-catalina-ha/7.0.59/tomcat-catalina-ha-7.0.59.jar" sourcepath="M2_REPO/org/apache/tomcat/tomcat-catalina-ha/7.0.59/tomcat-catalina-ha-7.0.59-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/tomcat/tomcat-tribes/7.0.59/tomcat-tribes-7.0.59.jar" sourcepath="M2_REPO/org/apache/tomcat/tomcat-tribes/7.0.59/tomcat-tribes-7.0.59-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/tomcat/tomcat-catalina/7.0.59/tomcat-catalina-7.0.59.jar" sourcepath="M2_REPO/org/apache/tomcat/tomcat-catalina/7.0.59/tomcat-catalina-7.0.59-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/tomcat/tomcat-annotations-api/7.0.59/tomcat-annotations-api-7.0.59.jar" sourcepath="M2_REPO/org/apache/tomcat/tomcat-annotations-api/7.0.59/tomcat-annotations-api-7.0.59-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/tomcat/tomcat-api/7.0.59/tomcat-api-7.0.59.jar" sourcepath="M2_REPO/org/apache/tomcat/tomcat-api/7.0.59/tomcat-api-7.0.59-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/tomcat/tomcat-util/7.0.59/tomcat-util-7.0.59.jar" sourcepath="M2_REPO/org/apache/tomcat/tomcat-util/7.0.59/tomcat-util-7.0.59-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/wsdl4j/wso2/wsdl4j/1.6.2.wso2v4/wsdl4j-1.6.2.wso2v4.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/org.wso2.carbon.authenticator.proxy/4.4.3/org.wso2.carbon.authenticator.proxy-4.4.3.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/org.wso2.carbon.core.common/4.4.3/org.wso2.carbon.core.common-4.4.3.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/org.wso2.carbon.authenticator.stub/4.4.3/org.wso2.carbon.authenticator.stub-4.4.3.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/eclipse/equinox/org.eclipse.equinox.http.servlet/1.1.400.v20130418-1354/org.eclipse.equinox.http.servlet-1.1.400.v20130418-1354.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/eclipse/equinox/org.apache.jasper.glassfish/2.2.2.v201205150955/org.apache.jasper.glassfish-2.2.2.v201205150955.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/eclipse/equinox/javax.servlet.jsp/2.2.0.v201112011158/javax.servlet.jsp-2.2.0.v201112011158.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/org.wso2.carbon.core.commons.stub/4.4.3/org.wso2.carbon.core.commons.stub-4.4.3.jar"/>
+  <classpathentry kind="var" path="M2_REPO/commons-lang/wso2/commons-lang/2.6.0.wso2v1/commons-lang-2.6.0.wso2v1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/identity/org.wso2.carbon.identity.base/5.0.7/org.wso2.carbon.identity.base-5.0.7.jar" sourcepath="M2_REPO/org/wso2/carbon/identity/org.wso2.carbon.identity.base/5.0.7/org.wso2.carbon.identity.base-5.0.7-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/rampart/wso2/rampart-core/1.6.1-wso2v41/rampart-core-1.6.1-wso2v41.jar" sourcepath="M2_REPO/org/apache/rampart/wso2/rampart-core/1.6.1-wso2v41/rampart-core-1.6.1-wso2v41-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/axis2/axis2-kernel/1.6.1-wso2v37/axis2-kernel-1.6.1-wso2v37.jar" sourcepath="M2_REPO/org/apache/axis2/axis2-kernel/1.6.1-wso2v37/axis2-kernel-1.6.1-wso2v37-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/geronimo/specs/geronimo-ws-metadata_2.0_spec/1.1.2/geronimo-ws-metadata_2.0_spec-1.1.2.jar" sourcepath="M2_REPO/org/apache/geronimo/specs/geronimo-ws-metadata_2.0_spec/1.1.2/geronimo-ws-metadata_2.0_spec-1.1.2-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/wsdl4j/wsdl4j/1.6.2/wsdl4j-1.6.2.jar" sourcepath="M2_REPO/wsdl4j/wsdl4j/1.6.2/wsdl4j-1.6.2-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/neethi/neethi/2.0.4-wso2v4/neethi-2.0.4-wso2v4.jar" sourcepath="M2_REPO/org/apache/neethi/neethi/2.0.4-wso2v4/neethi-2.0.4-wso2v4-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/woden/woden-api/1.0M9/woden-api-1.0M9.jar" sourcepath="M2_REPO/org/apache/woden/woden-api/1.0M9/woden-api-1.0M9-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/ws/commons/schema/XmlSchema/1.4.7/XmlSchema-1.4.7.jar" sourcepath="M2_REPO/org/apache/ws/commons/schema/XmlSchema/1.4.7/XmlSchema-1.4.7-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/woden/woden-impl-dom/1.0M9/woden-impl-dom-1.0M9.jar" sourcepath="M2_REPO/org/apache/woden/woden-impl-dom/1.0M9/woden-impl-dom-1.0M9-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/woden/woden-impl-commons/1.0M9/woden-impl-commons-1.0M9.jar" sourcepath="M2_REPO/org/apache/woden/woden-impl-commons/1.0M9/woden-impl-commons-1.0M9-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/santuario/xmlsec/1.5.7/xmlsec-1.5.7.jar" sourcepath="M2_REPO/org/apache/santuario/xmlsec/1.5.7/xmlsec-1.5.7-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/opensaml/opensaml/2.6.6/opensaml-2.6.6.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/opensaml/openws/1.5.6/openws-1.5.6.jar"/>
+  <classpathentry kind="var" path="M2_REPO/joda-time/joda-time/2.2/joda-time-2.2.jar" sourcepath="M2_REPO/joda-time/joda-time/2.2/joda-time-2.2-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/commons-collections/commons-collections/3.2.1/commons-collections-3.2.1.jar" sourcepath="M2_REPO/commons-collections/commons-collections/3.2.1/commons-collections-3.2.1-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/velocity/velocity/1.7/velocity-1.7.jar" sourcepath="M2_REPO/org/apache/velocity/velocity/1.7/velocity-1.7-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/owasp/esapi/esapi/2.0.1/esapi-2.0.1.jar" sourcepath="M2_REPO/org/owasp/esapi/esapi/2.0.1/esapi-2.0.1-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/opensaml/opensaml1/1.1/opensaml1-1.1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/slf4j/jcl-over-slf4j/1.7.5/jcl-over-slf4j-1.7.5.jar" sourcepath="M2_REPO/org/slf4j/jcl-over-slf4j/1.7.5/jcl-over-slf4j-1.7.5-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/slf4j/log4j-over-slf4j/1.7.5/log4j-over-slf4j-1.7.5.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/ws/security/wso2/wss4j/1.5.11.wso2v11/wss4j-1.5.11.wso2v11.jar" sourcepath="M2_REPO/org/apache/ws/security/wso2/wss4j/1.5.11.wso2v11/wss4j-1.5.11.wso2v11-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/neethi/wso2/neethi/2.0.4.wso2v4/neethi-2.0.4.wso2v4.jar"/>
+  <classpathentry kind="var" path="M2_REPO/commons-collections/wso2/commons-collections/3.2.0.wso2v1/commons-collections-3.2.0.wso2v1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/identity/org.wso2.carbon.identity.core/5.0.7/org.wso2.carbon.identity.core-5.0.7.jar" sourcepath="M2_REPO/org/wso2/carbon/identity/org.wso2.carbon.identity.core/5.0.7/org.wso2.carbon.identity.core-5.0.7-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/orbit/org/openid4java/openid4java/1.0.0.wso2v2/openid4java-1.0.0.wso2v2.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/identity/org.wso2.carbon.identity.application.common/5.0.7/org.wso2.carbon.identity.application.common-5.0.7.jar" sourcepath="M2_REPO/org/wso2/carbon/identity/org.wso2.carbon.identity.application.common/5.0.7/org.wso2.carbon.identity.application.common-5.0.7-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/identity/org.wso2.carbon.identity.application.authenticator.oidc/5.0.7/org.wso2.carbon.identity.application.authenticator.oidc-5.0.7.jar" sourcepath="M2_REPO/org/wso2/carbon/identity/org.wso2.carbon.identity.application.authenticator.oidc/5.0.7/org.wso2.carbon.identity.application.authenticator.oidc-5.0.7-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/net/minidev/json-smart/1.3/json-smart-1.3.jar" sourcepath="M2_REPO/net/minidev/json-smart/1.3/json-smart-1.3-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/orbit/org/apache/oltu/oauth2/oltu/1.0.0.wso2v3/oltu-1.0.0.wso2v3.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/eclipse/platform/org.eclipse.osgi/3.14.0/org.eclipse.osgi-3.14.0.jar" sourcepath="M2_REPO/org/eclipse/platform/org.eclipse.osgi/3.14.0/org.eclipse.osgi-3.14.0-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/ops4j/pax/logging/pax-logging-api/1.11.3/pax-logging-api-1.11.3.jar" sourcepath="M2_REPO/org/ops4j/pax/logging/pax-logging-api/1.11.3/pax-logging-api-1.11.3-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/osgi/osgi.core/6.0.0/osgi.core-6.0.0.jar" sourcepath="M2_REPO/org/osgi/osgi.core/6.0.0/osgi.core-6.0.0-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/osgi/osgi.cmpn/6.0.0/osgi.cmpn-6.0.0.jar" sourcepath="M2_REPO/org/osgi/osgi.cmpn/6.0.0/osgi.cmpn-6.0.0-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/osgi/org.osgi.service.component.annotations/1.3.0/org.osgi.service.component.annotations-1.3.0.jar" sourcepath="M2_REPO/org/osgi/org.osgi.service.component.annotations/1.3.0/org.osgi.service.component.annotations-1.3.0-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/osgi/org.osgi.annotation/6.0.0/org.osgi.annotation-6.0.0.jar" sourcepath="M2_REPO/org/osgi/org.osgi.annotation/6.0.0/org.osgi.annotation-6.0.0-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/osgi/org.osgi.service.metatype.annotations/1.3.0/org.osgi.service.metatype.annotations-1.3.0.jar" sourcepath="M2_REPO/org/osgi/org.osgi.service.metatype.annotations/1.3.0/org.osgi.service.metatype.annotations-1.3.0-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/orbit/org/apache/tomcat/jdbc-pool/9.0.16.wso2v1/jdbc-pool-9.0.16.wso2v1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/com/google/code/gson/gson/2.8.5/gson-2.8.5.jar" sourcepath="M2_REPO/com/google/code/gson/gson/2.8.5/gson-2.8.5-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/multitenancy/org.wso2.carbon.tenant.mgt/4.8.1/org.wso2.carbon.tenant.mgt-4.8.1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/multitenancy/org.wso2.carbon.tenant.mgt.core/4.8.1/org.wso2.carbon.tenant.mgt.core-4.8.1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/commons/org.wso2.carbon.tenant.common/4.7.19/org.wso2.carbon.tenant.common-4.7.19.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/commons/commons-lang3/3.1/commons-lang3-3.1.jar" sourcepath="M2_REPO/org/apache/commons/commons-lang3/3.1/commons-lang3-3.1-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/identity/framework/org.wso2.carbon.user.mgt/5.15.17/org.wso2.carbon.user.mgt-5.15.17.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/identity/framework/org.wso2.carbon.user.mgt.common/5.14.67/org.wso2.carbon.user.mgt.common-5.14.67.jar" sourcepath="M2_REPO/org/wso2/carbon/identity/framework/org.wso2.carbon.user.mgt.common/5.14.67/org.wso2.carbon.user.mgt.common-5.14.67-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/identity/framework/org.wso2.carbon.identity.base/5.17.5/org.wso2.carbon.identity.base-5.17.5.jar" sourcepath="M2_REPO/org/wso2/carbon/identity/framework/org.wso2.carbon.identity.base/5.17.5/org.wso2.carbon.identity.base-5.17.5-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/au/com/bytecode/opencsv/wso2/opencsv/1.8.wso2v1/opencsv-1.8.wso2v1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/poi/wso2/poi-ooxml/3.9.0.wso2v1/poi-ooxml-3.9.0.wso2v1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/poi/poi-ooxml/3.9/poi-ooxml-3.9.jar" sourcepath="M2_REPO/org/apache/poi/poi-ooxml/3.9/poi-ooxml-3.9-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/poi/poi-ooxml-schemas/3.9/poi-ooxml-schemas-3.9.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/xmlbeans/xmlbeans/2.3.0/xmlbeans-2.3.0.jar"/>
+  <classpathentry kind="var" path="M2_REPO/stax/stax-api/1.0.1/stax-api-1.0.1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/ops4j/pax/logging/pax-logging-log4j2/1.10.1/pax-logging-log4j2-1.10.1.jar" sourcepath="M2_REPO/org/ops4j/pax/logging/pax-logging-log4j2/1.10.1/pax-logging-log4j2-1.10.1-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/identity/framework/org.wso2.carbon.identity.core/5.17.5/org.wso2.carbon.identity.core-5.17.5.jar" sourcepath="M2_REPO/org/wso2/carbon/identity/framework/org.wso2.carbon.identity.core/5.17.5/org.wso2.carbon.identity.core-5.17.5-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/orbit/org/opensaml/opensaml/3.3.1.wso2v1/opensaml-3.3.1.wso2v1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/orbit/joda-time/joda-time/2.9.4.wso2v1/joda-time-2.9.4.wso2v1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/cryptacular/cryptacular/1.1.3/cryptacular-1.1.3.jar" sourcepath="M2_REPO/org/cryptacular/cryptacular/1.1.3/cryptacular-1.1.3-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/utils/org.wso2.carbon.database.utils/2.0.7/org.wso2.carbon.database.utils-2.0.7.jar" sourcepath="M2_REPO/org/wso2/carbon/utils/org.wso2.carbon.database.utils/2.0.7/org.wso2.carbon.database.utils-2.0.7-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/commons-dbcp/commons-dbcp/1.4/commons-dbcp-1.4.jar" sourcepath="M2_REPO/commons-dbcp/commons-dbcp/1.4/commons-dbcp-1.4-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/eclipse/osgi/org.eclipse.osgi.services/3.5.100.v20160504-1419/org.eclipse.osgi.services-3.5.100.v20160504-1419.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/felix/org.apache.felix.scr.ds-annotations/1.2.8/org.apache.felix.scr.ds-annotations-1.2.8.jar" sourcepath="M2_REPO/org/apache/felix/org.apache.felix.scr.ds-annotations/1.2.8/org.apache.felix.scr.ds-annotations-1.2.8-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/slf4j/slf4j-simple/1.7.21/slf4j-simple-1.7.21.jar" sourcepath="M2_REPO/org/slf4j/slf4j-simple/1.7.21/slf4j-simple-1.7.21-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/ua/parser/wso2/ua-parser/1.3.0.wso2v2/ua-parser-1.3.0.wso2v2.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/json/wso2/json/3.0.0.wso2v1/json-3.0.0.wso2v1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/orbit/commons-httpclient/commons-httpclient/3.1.0.wso2v6/commons-httpclient-3.1.0.wso2v6.jar" sourcepath="M2_REPO/org/wso2/orbit/commons-httpclient/commons-httpclient/3.1.0.wso2v6/commons-httpclient-3.1.0.wso2v6-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/identity/user/ws/org.wso2.carbon.um.ws.api/5.3.3/org.wso2.carbon.um.ws.api-5.3.3.jar" sourcepath="M2_REPO/org/wso2/carbon/identity/user/ws/org.wso2.carbon.um.ws.api/5.3.3/org.wso2.carbon.um.ws.api-5.3.3-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/identity/user/ws/org.wso2.carbon.um.ws.api.stub/5.3.3/org.wso2.carbon.um.ws.api.stub-5.3.3.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/axis2/wso2/axis2-client/1.6.1-wso2v38/axis2-client-1.6.1-wso2v38.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/axis2/wso2/axis2-json/1.6.1-wso2v38/axis2-json-1.6.1-wso2v38.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/woden/wso2/woden/1.0.0.M8-wso2v1/woden-1.0.0.M8-wso2v1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/orbit/commons-fileupload/commons-fileupload/1.3.1.wso2v1/commons-fileupload-1.3.1.wso2v1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/commons-codec/wso2/commons-codec/1.4.0.wso2v1/commons-codec-1.4.0.wso2v1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/orbit/javax/activation/activation/1.1.1.wso2v2/activation-1.1.1.wso2v2.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/rampart/wso2/rampart-policy/1.6.1-wso2v41/rampart-policy-1.6.1-wso2v41.jar" sourcepath="M2_REPO/org/apache/rampart/wso2/rampart-policy/1.6.1-wso2v41/rampart-policy-1.6.1-wso2v41-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/slf4j/jul-to-slf4j/1.7.5/jul-to-slf4j-1.7.5.jar" sourcepath="M2_REPO/org/slf4j/jul-to-slf4j/1.7.5/jul-to-slf4j-1.7.5-sources.jar"/>
+  <classpathentry kind="src" path="/org.wso2.carbon.identity.application.authentication.framework"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/identity/framework/org.wso2.carbon.identity.template.mgt/5.17.5/org.wso2.carbon.identity.template.mgt-5.17.5.jar" sourcepath="M2_REPO/org/wso2/carbon/identity/framework/org.wso2.carbon.identity.template.mgt/5.17.5/org.wso2.carbon.identity.template.mgt-5.17.5-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/identity/framework/org.wso2.carbon.identity.application.common/5.17.5/org.wso2.carbon.identity.application.common-5.17.5.jar" sourcepath="M2_REPO/org/wso2/carbon/identity/framework/org.wso2.carbon.identity.application.common/5.17.5/org.wso2.carbon.identity.application.common-5.17.5-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/orbit/javax/xml/bind/jaxb-api/2.3.1.wso2v1/jaxb-api-2.3.1.wso2v1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/identity/framework/org.wso2.carbon.idp.mgt/5.17.5/org.wso2.carbon.idp.mgt-5.17.5.jar" sourcepath="M2_REPO/org/wso2/carbon/identity/framework/org.wso2.carbon.idp.mgt/5.17.5/org.wso2.carbon.idp.mgt-5.17.5-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/identity/framework/org.wso2.carbon.identity.application.mgt/5.17.5/org.wso2.carbon.identity.application.mgt-5.17.5.jar" sourcepath="M2_REPO/org/wso2/carbon/identity/framework/org.wso2.carbon.identity.application.mgt/5.17.5/org.wso2.carbon.identity.application.mgt-5.17.5-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/consent/mgt/org.wso2.carbon.consent.mgt.core/2.2.4/org.wso2.carbon.consent.mgt.core-2.2.4.jar" sourcepath="M2_REPO/org/wso2/carbon/consent/mgt/org.wso2.carbon.consent.mgt.core/2.2.4/org.wso2.carbon.consent.mgt.core-2.2.4-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/identity/framework/org.wso2.carbon.security.mgt/5.17.5/org.wso2.carbon.security.mgt-5.17.5.jar" sourcepath="M2_REPO/org/wso2/carbon/identity/framework/org.wso2.carbon.security.mgt/5.17.5/org.wso2.carbon.security.mgt-5.17.5-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/rampart/wso2/rampart-trust/1.6.1-wso2v43/rampart-trust-1.6.1-wso2v43.jar" sourcepath="M2_REPO/org/apache/rampart/wso2/rampart-trust/1.6.1-wso2v43/rampart-trust-1.6.1-wso2v43-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/rampart/rampart-trust/1.6.1-wso2v43/rampart-trust-1.6.1-wso2v43.jar" sourcepath="M2_REPO/org/apache/rampart/rampart-trust/1.6.1-wso2v43/rampart-trust-1.6.1-wso2v43-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/backport-util-concurrent/wso2/backport-util-concurrent/3.1.0.wso2v1/backport-util-concurrent-3.1.0.wso2v1.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/identity/framework/org.wso2.carbon.identity.claim.metadata.mgt/5.17.5/org.wso2.carbon.identity.claim.metadata.mgt-5.17.5.jar" sourcepath="M2_REPO/org/wso2/carbon/identity/framework/org.wso2.carbon.identity.claim.metadata.mgt/5.17.5/org.wso2.carbon.identity.claim.metadata.mgt-5.17.5-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/identity/framework/org.wso2.carbon.identity.user.store.configuration/5.17.5/org.wso2.carbon.identity.user.store.configuration-5.17.5.jar" sourcepath="M2_REPO/org/wso2/carbon/identity/framework/org.wso2.carbon.identity.user.store.configuration/5.17.5/org.wso2.carbon.identity.user.store.configuration-5.17.5-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/org.wso2.carbon.ndatasource.core/4.6.0/org.wso2.carbon.ndatasource.core-4.6.0.jar" sourcepath="M2_REPO/org/wso2/carbon/org.wso2.carbon.ndatasource.core/4.6.0/org.wso2.carbon.ndatasource.core-4.6.0-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/org.wso2.carbon.ndatasource.common/4.6.0/org.wso2.carbon.ndatasource.common-4.6.0.jar" sourcepath="M2_REPO/org/wso2/carbon/org.wso2.carbon.ndatasource.common/4.6.0/org.wso2.carbon.ndatasource.common-4.6.0-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/org.wso2.carbon.ndatasource.rdbms/4.6.0/org.wso2.carbon.ndatasource.rdbms-4.6.0.jar" sourcepath="M2_REPO/org/wso2/carbon/org.wso2.carbon.ndatasource.rdbms/4.6.0/org.wso2.carbon.ndatasource.rdbms-4.6.0-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/identity/framework/org.wso2.carbon.identity.testutil/5.17.5/org.wso2.carbon.identity.testutil-5.17.5.jar" sourcepath="M2_REPO/org/wso2/carbon/identity/framework/org.wso2.carbon.identity.testutil/5.17.5/org.wso2.carbon.identity.testutil-5.17.5-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/logging/log4j/log4j-api/2.12.0/log4j-api-2.12.0.jar" sourcepath="M2_REPO/org/apache/logging/log4j/log4j-api/2.12.0/log4j-api-2.12.0-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/logging/log4j/log4j-core/2.12.0/log4j-core-2.12.0.jar" sourcepath="M2_REPO/org/apache/logging/log4j/log4j-core/2.12.0/log4j-core-2.12.0-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/jacoco/org.jacoco.agent/0.8.2/org.jacoco.agent-0.8.2-runtime.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/identity/framework/org.wso2.carbon.identity.user.profile/5.17.5/org.wso2.carbon.identity.user.profile-5.17.5.jar" sourcepath="M2_REPO/org/wso2/carbon/identity/framework/org.wso2.carbon.identity.user.profile/5.17.5/org.wso2.carbon.identity.user.profile-5.17.5-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/orbit/org/apache/httpcomponents/httpclient/4.3.1.wso2v2/httpclient-4.3.1.wso2v2.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/identity/framework/org.wso2.carbon.identity.event/5.17.5/org.wso2.carbon.identity.event-5.17.5.jar" sourcepath="M2_REPO/org/wso2/carbon/identity/framework/org.wso2.carbon.identity.event/5.17.5/org.wso2.carbon.identity.event-5.17.5-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/axis2/transport/axis2-transport-mail/2.0.0-wso2v42/axis2-transport-mail-2.0.0-wso2v42.jar" sourcepath="M2_REPO/org/apache/axis2/transport/axis2-transport-mail/2.0.0-wso2v42/axis2-transport-mail-2.0.0-wso2v42-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/axis2/axis2-transport-base/1.6.1-wso2v40/axis2-transport-base-1.6.1-wso2v40.jar" sourcepath="M2_REPO/org/apache/axis2/axis2-transport-base/1.6.1-wso2v40/axis2-transport-base-1.6.1-wso2v40-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/wso2/carbon/identity/framework/org.wso2.carbon.identity.functions.library.mgt/5.17.5/org.wso2.carbon.identity.functions.library.mgt-5.17.5.jar" sourcepath="M2_REPO/org/wso2/carbon/identity/framework/org.wso2.carbon.identity.functions.library.mgt/5.17.5/org.wso2.carbon.identity.functions.library.mgt-5.17.5-sources.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/apache/felix/org.osgi.core/1.0.0/org.osgi.core-1.0.0.jar"/>
+</classpath>

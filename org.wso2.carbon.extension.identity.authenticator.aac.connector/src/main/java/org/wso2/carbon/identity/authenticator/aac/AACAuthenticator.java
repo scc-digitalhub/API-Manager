@@ -72,7 +72,7 @@ public class AACAuthenticator extends OpenIDConnectAuthenticator implements Fede
      */
     @Override
     protected String getAuthorizationServerEndpoint(Map<String, String> authenticatorProperties) {
-        return AACAuthenticatorConstants.AAC_OAUTH_ENDPOINT;
+        return authenticatorProperties.get(OIDCAuthenticatorConstants.OAUTH2_AUTHZ_URL);
     }
 
     /**
@@ -80,15 +80,7 @@ public class AACAuthenticator extends OpenIDConnectAuthenticator implements Fede
      */
     @Override
     protected String getTokenEndpoint(Map<String, String> authenticatorProperties) {
-        return AACAuthenticatorConstants.AAC_TOKEN_ENDPOINT;
-    }
-
-    /**
-     * Get AAC user info endpoint.
-     */
-    @Override
-    protected String getUserInfoEndpoint(OAuthClientResponse token, Map<String, String> authenticatorProperties) {
-        return AACAuthenticatorConstants.AAC_USER_INFO_ENDPOINT;
+        return authenticatorProperties.get(OIDCAuthenticatorConstants.OAUTH2_TOKEN_URL);
     }
 
     /**
@@ -139,6 +131,7 @@ public class AACAuthenticator extends OpenIDConnectAuthenticator implements Fede
             String clientSecret = authenticatorProperties.get(OIDCAuthenticatorConstants.CLIENT_SECRET);
             String tokenEndPoint = getTokenEndpoint(authenticatorProperties);
             String callbackUrl = getCallbackUrl(authenticatorProperties);
+            
 
             OAuthAuthzResponse authorizationResponse = OAuthAuthzResponse.oauthCodeAuthzResponse(request);
             String code = authorizationResponse.getCode();
@@ -151,7 +144,8 @@ public class AACAuthenticator extends OpenIDConnectAuthenticator implements Fede
             if (StringUtils.isBlank(accessToken)) {
                 throw new AuthenticationFailedException("Access token is empty or null");
             }
-            String token = sendRequest(AACAuthenticatorConstants.AAC_USER_INFO_ENDPOINT, accessToken);
+            String userInfoUrl = getUserInfoEndpoint(oAuthResponse, authenticatorProperties);
+            String token = sendRequest(userInfoUrl, accessToken);
 
             if (StringUtils.isBlank(accessToken)) {
                 throw new AuthenticationFailedException("Access token is empty or null");
@@ -166,7 +160,7 @@ public class AACAuthenticator extends OpenIDConnectAuthenticator implements Fede
                     .get(AACAuthenticatorConstants.USER_ID).toString());
             claims = getSubjectAttributes(oAuthResponse, authenticatorProperties);
             log.error("starting entity provisioning in processAuth");
-            String tenantDomain = "koti.com";
+            String tenantDomain = "testing.com";//JSONUtils.parseJSON(token).get("tenant_name").toString();
             log.error(claims.toString());
             authenticatedUserObj.setTenantDomain(tenantDomain);
             authenticatedUserObj.setUserAttributes(claims);
@@ -176,6 +170,8 @@ public class AACAuthenticator extends OpenIDConnectAuthenticator implements Fede
             AACProvisioningHandler provHandler = AACProvisioningHandler.getInstance();
             List<String> roles = new ArrayList<>();
             roles.add("Internal/publisher");
+            roles.add("Internal/creator");
+            roles.add("Internal/subscriber");
             roles.add("Internal/everyone");
             roles.add("admin");
             Map<String, String> claimMap = getSubjectAttr(oAuthResponse, authenticatorProperties);
@@ -378,6 +374,27 @@ public class AACAuthenticator extends OpenIDConnectAuthenticator implements Fede
         callbackUrl.setDescription("Enter value corresponding to callback url.");
         callbackUrl.setDisplayOrder(4);
         configProperties.add(callbackUrl);
+        
+        Property authServerEP = new Property();
+        authServerEP.setDisplayName("Authorization Server Endpoint");
+        authServerEP.setName(IdentityApplicationConstants.OAuth2.OAUTH2_AUTHZ_URL);
+        authServerEP.setDescription("Enter value corresponding to authorization server url.");
+        authServerEP.setDisplayOrder(5);
+        configProperties.add(authServerEP);
+        
+        Property tokenUrl = new Property();
+        tokenUrl.setDisplayName("Token URL");
+        tokenUrl.setName(IdentityApplicationConstants.OAuth2.OAUTH2_TOKEN_URL);
+        tokenUrl.setDescription("Enter value corresponding to token url.");
+        tokenUrl.setDisplayOrder(6);
+        configProperties.add(tokenUrl);
+        
+        Property userInfoEP = new Property();
+        userInfoEP.setDisplayName("User Info URL");
+        userInfoEP.setName(IdentityApplicationConstants.Authenticator.OIDC.USER_INFO_URL);
+        userInfoEP.setDescription("Enter value corresponding to user Info url.");
+        userInfoEP.setDisplayOrder(7);
+        configProperties.add(userInfoEP);
 
         return configProperties;
     }
@@ -413,7 +430,7 @@ public class AACAuthenticator extends OpenIDConnectAuthenticator implements Fede
         }
         reader.close();
         if (log.isDebugEnabled() && IdentityUtil.isTokenLoggable(IdentityConstants.IdentityTokens.USER_ID_TOKEN)) {
-            log.debug("response: " + builder.toString());
+            log.info("response: " + builder.toString());
         }
         return builder.toString();
     }

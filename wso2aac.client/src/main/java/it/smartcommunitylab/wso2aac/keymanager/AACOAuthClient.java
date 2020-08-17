@@ -21,6 +21,7 @@
 package it.smartcommunitylab.wso2aac.keymanager;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -92,6 +93,7 @@ import com.google.common.collect.Sets;
 import it.smartcommunitylab.wso2aac.keymanager.model.AACResource;
 import it.smartcommunitylab.wso2aac.keymanager.model.AACService;
 import it.smartcommunitylab.wso2aac.keymanager.model.ClientAppBasic;
+import it.smartcommunitylab.wso2aac.keymanager.service.SPAdminService;
 
 public class AACOAuthClient extends AbstractKeyManager {
 
@@ -170,6 +172,12 @@ public class AACOAuthClient extends AbstractKeyManager {
 				
 				storeApplication(respOAuthApplicationInfo);
 				
+				if(app.getName().equals("apim_publisher") || app.getName().equals("apim_devportal")) {
+					log.info("Starting to update SP of " + app.getName());
+		            SPAdminService spAdminService = new SPAdminService("https://localhost:9443");
+		            spAdminService.updateApplication(app.getName());
+				}
+	            
 				return respOAuthApplicationInfo;
 			} else {
 				handleException("Some thing wrong here while registering the new client. Check out the scopes of the APIM client.  " + "HTTP Error response code is " + responseCode);
@@ -204,10 +212,8 @@ public class AACOAuthClient extends AbstractKeyManager {
     	app.setPkceMandatory(false);
     	app.setPkceSupportPlain(false);
     	app.setOauthVersion("OAuth-2.0");
-    	
     	AuthenticatedUser user = AuthenticatedUser.createLocalAuthenticatedUserFromSubjectIdentifier((String)oauthApplicationInfo.getParameter("username"));
     	app.setUser(user);
-    	
     	OAuthAppDAO dao = new OAuthAppDAO();
     	
     	dao.addOAuthApplication(app);
@@ -347,7 +353,8 @@ public class AACOAuthClient extends AbstractKeyManager {
 			} else {
 				handleException("Some thing wrong here while updating the client " + "HTTP Error response code is " + responseCode);
 			}
-
+			
+			
 		} catch (Exception e) {
 			cleanupRegistrationByAppName(oauthAppRequest.getOAuthApplicationInfo().getClientName(), (String)oauthAppRequest.getOAuthApplicationInfo().getParameter("username"), (String)oauthAppRequest.getOAuthApplicationInfo().getParameter("key_type"));
 			handleException("Error updating client app.", e);

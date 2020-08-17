@@ -1,12 +1,17 @@
 package org.wso2.carbon.identity.authenticator.aac;
 
+import org.apache.axis2.context.ConfigurationContext;
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.osgi.framework.BundleContext;
+import org.osgi.util.tracker.ServiceTracker;
 import org.wso2.carbon.CarbonConstants;
 import org.wso2.carbon.CarbonException;
+import org.wso2.carbon.caching.impl.Util;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
+import org.wso2.carbon.core.multitenancy.utils.TenantAxisUtils;
 import org.wso2.carbon.core.util.AnonymousSessionUtil;
 import org.wso2.carbon.core.util.PermissionUpdateUtil;
 import org.wso2.carbon.identity.application.authentication.framework.exception.FrameworkException;
@@ -14,15 +19,23 @@ import org.wso2.carbon.identity.application.authentication.framework.handler.pro
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
 import org.wso2.carbon.identity.application.common.model.User;
+import org.wso2.carbon.identity.application.mgt.cache.IdentityServiceProviderCache;
+import org.wso2.carbon.identity.application.mgt.cache.IdentityServiceProviderCacheKey;
 import org.wso2.carbon.identity.authenticator.aac.internal.AACAuthenticatorServiceComponent;
+import org.wso2.carbon.identity.authenticator.aac.service.LoginAdminService;
+import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
+import org.wso2.carbon.identity.tenant.resource.manager.TenantAwareAxis2ConfigurationContextObserver;
 import org.wso2.carbon.identity.user.profile.mgt.association.federation.FederatedAssociationManager;
 import org.wso2.carbon.identity.user.profile.mgt.association.federation.constant.FederatedAssociationConstants;
 import org.wso2.carbon.identity.user.profile.mgt.association.federation.exception.FederatedAssociationManagerException;
 import org.wso2.carbon.registry.core.exceptions.RegistryException;
 import org.wso2.carbon.registry.core.service.RegistryService;
+import org.wso2.carbon.registry.core.service.TenantRegistryLoader;
 import org.wso2.carbon.stratos.common.beans.TenantInfoBean;
 import org.wso2.carbon.tenant.mgt.services.TenantMgtAdminService;
+import org.wso2.carbon.tenant.mgt.util.TenantMgtUtil;
+import org.wso2.carbon.user.api.Permission;
 import org.wso2.carbon.user.api.RealmConfiguration;
 import org.wso2.carbon.user.api.Tenant;
 import org.wso2.carbon.user.api.TenantMgtConfiguration;
@@ -32,8 +45,11 @@ import org.wso2.carbon.user.core.UserStoreException;
 import org.wso2.carbon.user.core.UserStoreManager;
 import org.wso2.carbon.user.core.service.RealmService;
 import org.wso2.carbon.user.core.util.UserCoreUtil;
+import org.wso2.carbon.utils.AuthenticationObserver;
+import org.wso2.carbon.utils.Axis2ConfigurationContextObserver;
 import org.wso2.carbon.utils.multitenancy.MultitenantUtils;
 
+import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,6 +74,8 @@ public class AACProvisioningHandler implements ProvisioningHandler{
 	    private static final String ALREADY_ASSOCIATED_MESSAGE = "UserAlreadyAssociated";
 	    private static volatile AACProvisioningHandler instance;
 	    private SecureRandom random = new SecureRandom();
+	    private LoginAdminService loginService;
+	    private static TenantRegistryLoader tenantRegistryLoader;
 
 	    public static AACProvisioningHandler getInstance() {
 	        if (instance == null) {
@@ -75,53 +93,12 @@ public class AACProvisioningHandler implements ProvisioningHandler{
 	                       String provisioningUserStoreId, String tenantDomain) throws FrameworkException {
 
 	        log.info(subject + " " + tenantDomain);
-	                
 	        RegistryService registryService = AACAuthenticatorServiceComponent.getRegistryService();
 	        RealmService realmService = AACAuthenticatorServiceComponent.getRealmService();
-	        RealmConfiguration realmConfig = realmService.getBootstrapRealmConfiguration();
-	        TenantMgtConfiguration tenantMgtConfiguration = realmService.getTenantMgtConfiguration();
-	        TenantMgtAdminService tenantMgt = new TenantMgtAdminService();
+	        String username = MultitenantUtils.getTenantAwareUsername(subject);
+	        String password = generatePassword();
 	        try {
-	            int tenantId = realmService.getTenantManager().getTenantId(tenantDomain);
-	            String username = MultitenantUtils.getTenantAwareUsername(subject);
-	            if(tenantId == -1){        		
-//	        		Tenant tenantBean = new Tenant();
-//	        		tenantBean.setRealmConfig(realmConfig);
-//	        		tenantBean.setAdminName(username);
-//	        		tenantBean.setAdminPassword(generatePassword());
-//	        		tenantBean.setEmail(username);
-//	        		tenantBean.setCreatedDate(new Date());
-//	        		tenantBean.setDomain(tenantDomain);
-//	        		tenantBean.setActive(true);
-//	        		realmService.getTenantManager().addTenant(tenantBean);
-//	        		tenantId = realmService.getTenantManager().getTenantId(tenantDomain);
-//	                realmService.getTenantManager().getTenant(tenantId).getRealmConfig().setAdminPassword(tenantBean.getAdminPassword());
-//	                //Here when get the user realm it create admin user and group.
-//	                realmService.getTenantUserRealm(tenantId);	        		
-//	        		AACAuthenticatorServiceComponent.getRegistryLoader().loadTenantRegistry(tenantId);
-	            	
-	            	TenantInfoBean tenantInfoBean = new TenantInfoBean();
-    	    		tenantInfoBean.setAdmin("admin");
-    	            tenantInfoBean.setFirstname("firstname");
-    	            tenantInfoBean.setLastname("lastname");
-    	            tenantInfoBean.setAdminPassword(generatePassword());
-    	            tenantInfoBean.setTenantDomain(tenantDomain);
-    	            tenantInfoBean.setEmail(username);
-    	            tenantInfoBean.setCreatedDate(Calendar.getInstance());
-    	            tenantInfoBean.setActive(true);
-    	            tenantMgt.addTenant(tenantInfoBean);
-    	            tenantId = tenantMgt.getTenant(tenantDomain).getTenantId();
-    	            //Here when get the user realm it create admin user and group.
-	                realmService.getTenantUserRealm(tenantId);	        		
-	        		AACAuthenticatorServiceComponent.getRegistryLoader().loadTenantRegistry(tenantId);
-	            }
-        		log.info("tenantId: " + tenantId);
-        		// activate tenant if not yet activated
-        		boolean isTenantActive = realmService.getTenantManager().isTenantActive(tenantId);
-        		log.info("isTenantActive : ");log.info(isTenantActive);
-        		if(!isTenantActive)
-        			realmService.getTenantManager().activateTenant(tenantId);
-        		
+	        	int tenantId = provisionTenant(subject, tenantDomain, password);
 	            UserRealm realm = AnonymousSessionUtil.getRealmByTenantDomain(registryService, realmService, tenantDomain);
 	            String userStoreDomain;
 	            UserStoreManager userStoreManager;
@@ -149,6 +126,7 @@ public class AACProvisioningHandler implements ProvisioningHandler{
 
 	            // If internal roles exists convert internal role domain names to pre defined camel case domain names.
 	            List<String> rolesToAdd  = convertInternalRoleDomainsToCamelCase(roles);
+	            log.info(rolesToAdd.toString());
 
 	            String idp = attributes.remove(FrameworkConstants.IDP_ID);
 	            String subjectVal = attributes.remove(FrameworkConstants.ASSOCIATED_ID);
@@ -168,7 +146,6 @@ public class AACProvisioningHandler implements ProvisioningHandler{
 //	                    associateUser(username, userStoreDomain, tenantDomain, subjectVal, idp);
 //	                }
 	            } else {
-	                String password = generatePassword();
 	                String passwordFromUser = userClaims.get(FrameworkConstants.PASSWORD);
 	                if (StringUtils.isNotEmpty(passwordFromUser)) {
 	                    password = passwordFromUser;
@@ -192,7 +169,8 @@ public class AACProvisioningHandler implements ProvisioningHandler{
 	            }
 
 	            if (roles != null && !roles.isEmpty()) {
-	                // Update user with roles
+	            	roleProvisioning(userStoreManager, tenantDomain);
+	            	// Update user with roles
 	                List<String> currentRolesList = Arrays.asList(userStoreManager.getRoleListOfUser(username));
 	                Collection<String> deletingRoles = retrieveRolesToBeDeleted(realm, currentRolesList, rolesToAdd);
 	                rolesToAdd.removeAll(currentRolesList);
@@ -201,16 +179,13 @@ public class AACProvisioningHandler implements ProvisioningHandler{
 	                // Check for case whether superadmin login
 	                handleFederatedUserNameEqualsToSuperAdminUserName(realm, username, userStoreManager, deletingRoles);
 
-	                updateUserWithNewRoleSet(username, userStoreManager, rolesToAdd, deletingRoles);
+	                updateUserWithNewRoleSet(username, userStoreManager, rolesToAdd, deletingRoles, tenantDomain, password);
 	            }
-
 	            PermissionUpdateUtil.updatePermissionTree(tenantId);
 
 	        } catch (org.wso2.carbon.user.api.UserStoreException | CarbonException e) {
 	            throw new FrameworkException("Error while provisioning user : " + subject, e);
-	        } catch (RegistryException e) {
-	        	 throw new FrameworkException("Error performing post tenant creation actions.", e);
-			} catch (Exception e) {
+	        } catch (Exception e) {
 				throw new FrameworkException("Error during tenant creation", e);
 			} finally {
 	            IdentityUtil.clearIdentityErrorMsg();
@@ -270,16 +245,17 @@ public class AACProvisioningHandler implements ProvisioningHandler{
 	    }
 
 	    private void updateUserWithNewRoleSet(String username, UserStoreManager userStoreManager, List<String> rolesToAdd,
-	                                          Collection<String> deletingRoles) throws UserStoreException {
+	                                          Collection<String> deletingRoles, String tenantDomain, String password) throws UserStoreException {
 
 	        if (log.isDebugEnabled()) {
-	            log.debug("Deleting roles : " + Arrays.toString(deletingRoles.toArray(new String[0]))
+	            log.info("Deleting roles : " + Arrays.toString(deletingRoles.toArray(new String[0]))
 	                    + " and Adding roles : " + Arrays.toString(rolesToAdd.toArray(new String[0])));
 	        }
+	        login2Publisher(tenantDomain, password);
 	        userStoreManager.updateRoleListOfUser(username, deletingRoles.toArray(new String[0]),
 	                rolesToAdd.toArray(new String[0]));
 	        if (log.isDebugEnabled()) {
-	            log.debug("Federated user: " + username + " is updated by authentication framework with roles : "
+	            log.info("Federated user: " + username + " is updated by authentication framework with roles : "
 	                    + rolesToAdd);
 	        }
 	    }
@@ -399,8 +375,11 @@ public class AACProvisioningHandler implements ProvisioningHandler{
 	        if (roles != null) {
 	            // If internal roles exist, convert internal role domain names to case sensitive predefined domain names.
 	            for (String role : roles) {
+	            	log.info(role+" moj");
 	                if (StringUtils.equalsIgnoreCase(role, UserCoreConstants.INTERNAL_DOMAIN + CarbonConstants
 	                        .DOMAIN_SEPARATOR)) {
+	                	log.info(UserCoreConstants.INTERNAL_DOMAIN + CarbonConstants.DOMAIN_SEPARATOR +
+	                            UserCoreUtil.removeDomainFromName(role));
 	                    updatedRoles.add(UserCoreConstants.INTERNAL_DOMAIN + CarbonConstants.DOMAIN_SEPARATOR +
 	                            UserCoreUtil.removeDomainFromName(role));
 	                } else if (StringUtils.equalsIgnoreCase(role, APPLICATION_DOMAIN + CarbonConstants.DOMAIN_SEPARATOR)) {
@@ -441,6 +420,196 @@ public class AACProvisioningHandler implements ProvisioningHandler{
 
 	        return deletingRoles;
 	    }
+	    
+	    private void login2Publisher(String tenantDomain, String password) {
+	    	String command = "curl -v -k -X POST -c cookies https://localhost:9443/publisher/services/login/idp.jag -d 'action=login&username=admin@" + tenantDomain + "&password=" + password + "'";
+	    	//publisher/services/login/idp.jag
+	    	try {
+				Runtime.getRuntime().exec(command);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+	    }
+	    
+	    private int provisionTenant(String subject, String tenantDomain, String password) throws FrameworkException {
+	        RealmService realmService = AACAuthenticatorServiceComponent.getRealmService();
+	        RegistryService registryService = AACAuthenticatorServiceComponent.getRegistryService();
+	        TenantMgtAdminService tenantMgt = new TenantMgtAdminService();
+	        int tenantId = -1;
+	        try {
+	        	tenantId = realmService.getTenantManager().getTenantId(tenantDomain);
+	            String username = MultitenantUtils.getTenantAwareUsername(subject);
+	            if(tenantId == -1){        		
+	            	log.info("TenantAwareUsername: " + username);
+	            	TenantInfoBean tenantInfoBean = new TenantInfoBean();
+    	    		tenantInfoBean.setAdmin("admin");
+    	            tenantInfoBean.setFirstname("firstname");
+    	            tenantInfoBean.setLastname("lastname");
+    	            tenantInfoBean.setAdminPassword(password);
+    	            tenantInfoBean.setTenantDomain(tenantDomain);
+    	            tenantInfoBean.setEmail(username);
+    	            tenantInfoBean.setCreatedDate(Calendar.getInstance());
+    	            tenantInfoBean.setActive(true);
+    	            tenantMgt.addTenant(tenantInfoBean);
+    	            tenantMgt.activateTenant(tenantDomain);
+    	            tenantId = tenantMgt.getTenant(tenantDomain).getTenantId();
+    	            tenantInfoBean.setTenantId(tenantId);
+    	            
+//	        		TenantMgtUtil.initializeTenant(tenantInfoBean);
+//	        		TenantMgtUtil.triggerTenantInitialActivation(tenantInfoBean);
+//	        		TenantAxisUtils.loadTenantAxisConfiguration();
+//	        		boolean auth = userRealm.getUserStoreManager().authenticate(subject, password);
+//	        		log.info("authenticate user: " + auth);
+	            }
+	            
+	            //Here when get the user realm it create admin user and group.
+	            AnonymousSessionUtil.getRealmByTenantDomain(registryService, realmService, tenantDomain);//realmService.getTenantUserRealm(tenantId);	        		
+        		AACAuthenticatorServiceComponent.getRegistryLoader().loadTenantRegistry(tenantId);
+        		IdentityTenantUtil.initializeRegistry(tenantId, tenantDomain);
+        		initializeRegistry(tenantId, tenantDomain);
+        		ConfigurationContext ctx = AACAuthenticatorServiceComponent.getConfigurationContextService().getServerConfigContext();  
+        		TenantAxisUtils.getTenantAxisConfiguration(tenantDomain, ctx);
+        		
+        		org.wso2.carbon.caching.impl.CachingAxisConfigurationObserver tenantAxisConfig = (org.wso2.carbon.caching.impl.CachingAxisConfigurationObserver) AACAuthenticatorServiceComponent.getTenantAxisConfigLoader();
+        		tenantAxisConfig.terminatingConfigurationContext(ctx);
+        		tenantAxisConfig.terminatedConfigurationContext(ctx);
+        		tenantAxisConfig.creatingConfigurationContext(tenantId);
+        		        			
+        		TenantRegistryLoader tenantRegistryLoader = AACAuthenticatorServiceComponent.getRegistryLoader();
+        		AACAuthenticatorServiceComponent.getIndexLoader().loadTenantIndex(tenantId);
+        		tenantRegistryLoader.loadTenantRegistry(tenantId);
+//        		try {
+//                    tenantId = AACAuthenticatorServiceComponent.getRealmService().
+//                            getTenantManager().getTenantId(tenantDomain);
+//                    AppManagerUtil.loadTenantRegistry(tenantId);
+//                } catch (org.wso2.carbon.user.api.UserStoreException e) {
+//                    log.error(
+//                            "Could not load tenant registry. Error while getting tenant id from tenant domain "
+//                                    + tenantDomain);
+//                }
+        		
+//        		loginService = new LoginAdminService("https://localhost:9443");
+//        		loginService.authenticate(subject, password);
+        		
+     		
+//        		APIUtil.createDefaultRoles(tenantId);
+//        		CommonConfigDeployer      		 
+        		log.info("tenantId: " + tenantId);
+        		// activate tenant if not yet activated
+        		boolean isTenantActive = realmService.getTenantManager().isTenantActive(tenantId);
+        		log.info("isTenantActive : ");log.info(isTenantActive);
+        		if(!isTenantActive)
+        			realmService.getTenantManager().activateTenant(tenantId);
+	        } catch (Exception e) {
+				throw new FrameworkException("Error during tenant creation", e);
+			} 
+	        return tenantId;
+	    }
+	    
+	    public static void initializeRegistry(int tenantId, String tenantDomain) throws Exception {
 
+	        if (tenantId != org.wso2.carbon.utils.multitenancy.MultitenantConstants.SUPER_TENANT_ID) {
+	            try {
+	                PrivilegedCarbonContext.startTenantFlow();
+	                PrivilegedCarbonContext carbonContext = PrivilegedCarbonContext.getThreadLocalCarbonContext();
+	                carbonContext.setTenantDomain(tenantDomain, true);
+	                BundleContext bundleContext = AACAuthenticatorServiceComponent.getBundleContext();
+	                if (bundleContext != null) {
+//	                    ServiceTracker tracker = new ServiceTracker(bundleContext, AuthenticationObserver.class.getName(), null);
+//	                    tracker.open();
+//	                    Object[] services = tracker.getServices();
+//	                    log.info("Services for authentication Observer " + services.length);
+//	                    if (services != null) {
+//	                        for (Object service : services) {
+//	                            ((AuthenticationObserver) service).startedAuthentication(tenantId);
+//	                        }
+//	                    }
+//	                    tracker.close();
+	                    ServiceTracker tracker2 = new ServiceTracker(bundleContext, Axis2ConfigurationContextObserver.class.getName(), null);
+	                    tracker2.open();
+	                    Object[] services2 = tracker2.getServices();
+	                    log.info("Services for tenant Observer " + services2.length);
+	                    if (services2 != null) {
+	                        for (Object service : services2) {
+	                        	log.info(service.getClass().getName());
+	                        	if(service.getClass().getName().equals("org.wso2.carbon.identity.tenant.resource.manager.TenantAwareAxis2ConfigurationContextObserver")) {
+		                        	log.info("entering hereeeeeeeeeeeeeeeeeeeee");
+	                        		ConfigurationContext ctx = AACAuthenticatorServiceComponent.getConfigurationContextService().getServerConfigContext();
+		                        	((TenantAwareAxis2ConfigurationContextObserver) service).terminatedConfigurationContext(ctx);
+		                        	((TenantAwareAxis2ConfigurationContextObserver) service).terminatingConfigurationContext(ctx);
+		                        	((TenantAwareAxis2ConfigurationContextObserver) service).creatingConfigurationContext(tenantId);
+	                        	}
+	                        }
+	                    }
+	                    tracker2.close();
+	                    try {
+	                    	log.info("loading tenant registryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy");
+	                    	AACAuthenticatorServiceComponent.getRegistryLoader().loadTenantRegistry(tenantId);
+	                    } catch (Exception e) {
+	                        throw new Exception("Error loading tenant registry for tenant domain " + tenantDomain, e);
+	                    }
+	                    try {
+	                        RegistryService registryService = AACAuthenticatorServiceComponent.getRegistryService();
+	                        registryService.getGovernanceSystemRegistry(tenantId);
+	                    } catch (Exception e) {
+	                        throw new Exception("Error obtaining governance system registry for tenant domain " +
+	                                tenantDomain, e);
+	                    }
+	                }
+	            } finally {
+	                PrivilegedCarbonContext.endTenantFlow();
+	            }
+	        }
+	    }
+	    
+	    private void roleProvisioning(UserStoreManager userStoreManager, String tenantDomain) throws FrameworkException{
+	    	try {
+	    		Permission permissionsLogin = new Permission("/permission/admin/login","ui.execute");
+	        	Permission permissionsPublish = new Permission("/permission/admin/manage/api/publish","ui.execute");
+	        	Permission permissionsCreate = new Permission("/permission/admin/manage/api/create","ui.execute");
+	        	Permission permissionsSubscribe = new Permission("/permission/admin/manage/api/subscribe","ui.execute");
+	    		
+	        	Permission permissions1 = new Permission("/permission/admin/configure/governance","ui.execute");
+	        	Permission permissions2 = new Permission("/_system/governance/trunk","http://www.wso2.org/projects/registry/actions/get");
+	        	Permission permissions3 = new Permission("/_system/governance/trunk","http://www.wso2.org/projects/registry/actions/add");
+	        	Permission permissions4 = new Permission("/_system/governance/trunk","http://www.wso2.org/projects/registry/actions/delete");
+	        	Permission permissions5 = new Permission("/_system/governance/apimgt/applicationdata","http://www.wso2.org/projects/registry/actions/get");
+	        	Permission permissions6 = new Permission("/_system/governance/apimgt/applicationdata","http://www.wso2.org/projects/registry/actions/add");
+	        	Permission permissions7 = new Permission("/_system/governance/apimgt/applicationdata","http://www.wso2.org/projects/registry/actions/delete");
+	    		Permission permissions8 = new Permission("/permission/admin/manage/resources/govern","ui.execute");
+	    		Permission permissions9 = new Permission("/permission/admin/manage/resources/govern/api/add","ui.execute");
+	    		Permission permissions10 = new Permission("/permission/admin/manage/resources/govern/api/list","ui.execute");
+	    		Permission permissions11 = new Permission("/permission/admin/manage/resources/govern/document","ui.execute");
+	    		Permission permissions12 = new Permission("/permission/admin/manage/resources/govern/generic","ui.execute");
+	    		Permission permissions13 = new Permission("/permission/admin/manage/resources/govern/lifecycles","ui.execute");
+	    		Permission permissions14 = new Permission("/permission/admin/manage/resources/govern/metadata","ui.execute");
+	    		Permission permissions15 = new Permission("/permission/admin/manage/resources/govern/provider","ui.execute");
+	    		Permission permissions16 = new Permission("/permission/admin/manage/resources/govern/reply","ui.execute");
+	    		Permission permissions17 = new Permission("/permission/admin/manage/resources/govern/topic","ui.execute");
+	        	boolean rolePublisherExists = userStoreManager.isExistingRole("Internal/publisher", false);
+	        	boolean roleCreatorExists = userStoreManager.isExistingRole("Internal/creator", false);
+	        	boolean roleSubscriberExists;
+				
+					roleSubscriberExists = userStoreManager.isExistingRole("Internal/subscriber", false);
+				
+	        	if(!rolePublisherExists)
+	        		userStoreManager.addRole("Internal/publisher",new String[] {},new Permission[] {permissionsLogin, permissionsPublish},false);
+	        	if(!roleSubscriberExists){
+	    			log.info("creating role subscr");
+	    			userStoreManager.addRole("Internal/subscriber",new String[] {}, new Permission[] {permissionsLogin,permissionsSubscribe},false);
+	    		}
+	        	if(!roleCreatorExists){
+	    			log.info("creating role creator");
+	    			userStoreManager.addRole("Internal/creator",new String[] {}, new Permission[] {permissionsLogin,permissionsCreate,permissionsPublish,permissionsSubscribe,
+																	permissions1,permissions2,permissions3,permissions4,
+																	permissions5,permissions6,permissions7,permissions8,
+																	permissions9,permissions10,permissions11,permissions12,
+																	permissions13,permissions14,permissions15,permissions16,
+																	permissions17},false);
+	    		}
+	    	} catch (org.wso2.carbon.user.api.UserStoreException e) {
+	    		throw new FrameworkException("Error during roles creation", e);
+			}
+	    }
 
 }

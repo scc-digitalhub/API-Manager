@@ -2,8 +2,11 @@ package org.wso2.carbon.identity.authenticator.aac.internal;
 
 import org.wso2.carbon.registry.core.service.RegistryService;
 import org.wso2.carbon.registry.core.service.TenantRegistryLoader;
+import org.wso2.carbon.registry.indexing.service.TenantIndexingLoader;
 import org.wso2.carbon.tenant.mgt.services.TenantMgtAdminService;
 import org.wso2.carbon.user.core.service.RealmService;
+import org.wso2.carbon.utils.Axis2ConfigurationContextObserver;
+import org.wso2.carbon.utils.ConfigurationContextService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.osgi.framework.BundleContext;
@@ -20,6 +23,9 @@ public class AACProvisionServiceDataHolder {
     private RegistryService registryService = null;
     private TenantRegistryLoader registryLoader = null;
     private TenantMgtAdminService tenantMgt = null;
+    private Axis2ConfigurationContextObserver tenantAxis = null;
+    private ConfigurationContextService contextService = null;
+    private TenantIndexingLoader indexLoader = null;
     private static final Log log = LogFactory.getLog(AACProvisionServiceDataHolder.class);
     private BundleContext bundleContext = null;
     private List<ApplicationAuthenticator> authenticators = new ArrayList<>();
@@ -54,6 +60,30 @@ public class AACProvisionServiceDataHolder {
         this.registryLoader = registryLoader;
     }
     
+    public TenantIndexingLoader getIndexLoader() {
+        return indexLoader;
+    }
+
+    public void setIndexLoader(TenantIndexingLoader indexLoader) {
+        this.indexLoader = indexLoader;
+    }
+    
+    public Axis2ConfigurationContextObserver getTenantAxisLoader() {
+        return tenantAxis;
+    }
+
+    public void setTenantAxisLoader(Axis2ConfigurationContextObserver tenantAxis) {
+        this.tenantAxis = tenantAxis;
+    }
+    
+    public ConfigurationContextService getContextService() {
+        return contextService;
+    }
+
+    public void setContextService(ConfigurationContextService contextService1) {
+        this.contextService = contextService1;
+    }
+    
     public TenantMgtAdminService getTenantMgt() {
         return tenantMgt;
     }
@@ -68,7 +98,6 @@ public class AACProvisionServiceDataHolder {
      * @Deprecated The usage of bundle context outside of the component should never be needed. Component should
      * provide necessary wiring for any place which require the BundleContext.
      */
-    @Deprecated
     public BundleContext getBundleContext() {
 
         return bundleContext;

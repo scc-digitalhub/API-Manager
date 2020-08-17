@@ -22,13 +22,9 @@ package org.wso2.carbon.identity.authenticator.aac;
 public class AACAuthenticatorConstants {
     public static final String AUTHENTICATOR_NAME = "AACAuthenticator";
     public static final String AUTHENTICATOR_FRIENDLY_NAME = "AAC";
-    //AAC authorize endpoint URL
-    public static final String AAC_OAUTH_ENDPOINT = "http://localhost:8080/aac/eauth/authorize";
-    //AAC token  endpoint URL
-    public static final String AAC_TOKEN_ENDPOINT = "http://localhost:8080/aac/oauth/token";
-    //AAC user info endpoint URL
-    public static final String AAC_USER_INFO_ENDPOINT = "http://localhost:8080/aac/userinfo";
     public static final String SCOPE = "scope";
+    public static final String ROLE_ENDPOINT = "OAuth2RolesEPUrl";
+    public static final String CONTEXT_VALUE = "Context";
     public static final String USER_SCOPE= "openid profile email user_name";
     public static final String ACCEPT_HEADER = "Accept";
     public static final String USER_ID = "email";

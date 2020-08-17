@@ -33,8 +33,12 @@ import org.wso2.carbon.identity.application.authentication.framework.exception.F
 import org.wso2.carbon.identity.authenticator.aac.AACAuthenticator;
 import org.wso2.carbon.registry.core.service.RegistryService;
 import org.wso2.carbon.registry.core.service.TenantRegistryLoader;
-import org.wso2.carbon.tenant.mgt.services.TenantMgtAdminService;
+import org.wso2.carbon.registry.indexing.service.TenantIndexingLoader;
 import org.wso2.carbon.user.core.service.RealmService;
+import org.wso2.carbon.utils.Axis2ConfigurationContextObserver;
+import org.wso2.carbon.utils.ConfigurationContextService;
+
+import java.io.IOException;
 import java.util.Hashtable;
 
 @Component(
@@ -55,8 +59,6 @@ import java.util.Hashtable;
 public class AACAuthenticatorServiceComponent {
 
     private static final Log log = LogFactory.getLog(AACAuthenticatorServiceComponent.class);
-    private BundleContext bundleContext = null;
-
 	
 	@Reference(
 			name = "user.realmservice.default",
@@ -101,7 +103,8 @@ public class AACAuthenticatorServiceComponent {
         }
         AACProvisionServiceDataHolder.getInstance().setRegistryService(null);
     }
-    
+    //tenant.registryloader
+    //registry.loader.default
     @Reference(
             name = "tenant.registryloader",
             service = org.wso2.carbon.registry.core.service.TenantRegistryLoader.class,
@@ -123,6 +126,63 @@ public class AACAuthenticatorServiceComponent {
         return AACProvisionServiceDataHolder.getInstance().getTenantRegistryLoader();
     }
     
+    @Reference(
+            name = "tenant.indexloader",
+            service = org.wso2.carbon.registry.indexing.service.TenantIndexingLoader.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetIndexLoader")
+    protected void setIndexLoader(TenantIndexingLoader indexLoader) {
+
+        AACProvisionServiceDataHolder.getInstance().setIndexLoader(indexLoader);
+    }
+
+    protected void unsetIndexLoader(TenantIndexingLoader indexLoader) {
+
+    	 AACProvisionServiceDataHolder.getInstance().setIndexLoader(null);
+    }
+
+    public static TenantIndexingLoader getIndexLoader() {
+
+        return AACProvisionServiceDataHolder.getInstance().getIndexLoader();
+    }
+    
+    @Reference(
+            name = "org.wso2.carbon.identity.tenant.resource.manager.internal.TenantResourceManagerServiceDS",
+            service = org.wso2.carbon.utils.Axis2ConfigurationContextObserver.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetTenantAxisConfigLoader")
+    protected void setTenantAxisConfigLoader(Axis2ConfigurationContextObserver tenantAxisLoader) {
+        AACProvisionServiceDataHolder.getInstance().setTenantAxisLoader(tenantAxisLoader);
+    }
+
+    protected void unsetTenantAxisConfigLoader(Axis2ConfigurationContextObserver tenantAxisLoader) {
+    	 AACProvisionServiceDataHolder.getInstance().setTenantAxisLoader(null);
+    }
+
+    public static Axis2ConfigurationContextObserver getTenantAxisConfigLoader() {
+        return AACProvisionServiceDataHolder.getInstance().getTenantAxisLoader();
+    }
+    
+    @Reference(
+            name = "config.context.service",
+            service = org.wso2.carbon.utils.ConfigurationContextService.class,
+            cardinality = ReferenceCardinality.MANDATORY,
+            policy = ReferencePolicy.DYNAMIC,
+            unbind = "unsetConfigurationContextService")
+   protected void setConfigurationContextService(ConfigurationContextService contextService) {
+    	AACProvisionServiceDataHolder.getInstance().setContextService(contextService);
+   }
+
+   protected void unsetConfigurationContextService(ConfigurationContextService contextService) {
+	   AACProvisionServiceDataHolder.getInstance().setContextService(null);
+   }
+   
+   public static ConfigurationContextService getConfigurationContextService() {
+       return AACProvisionServiceDataHolder.getInstance().getContextService();
+   }
+
 //    @Reference(
 //            name = "org.wso2.carbon.tenant.mgt",
 //            service = org.wso2.carbon.tenant.mgt.services.TenantMgtAdminService.class,
@@ -146,6 +206,7 @@ public class AACAuthenticatorServiceComponent {
     @Activate
     protected void activate(ComponentContext ctxt) {
         try {
+        	setBundleContext(ctxt.getBundleContext());
             AACAuthenticator authenticator = new AACAuthenticator();
             Hashtable<String, String> props = new Hashtable<String, String>();
             ctxt.getBundleContext().registerService(ApplicationAuthenticator.class.getName(),
@@ -158,6 +219,15 @@ public class AACAuthenticatorServiceComponent {
         }
     }
 
+    private void login2Publisher() {
+    	String command = "curl -v -k -X POST -c cookies https://localhost:9443/publisher/services/login/idp.jag";
+    	//publisher/services/login/idp.jag
+    	try {
+			Runtime.getRuntime().exec(command);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+    }
     protected void deactivate(ComponentContext ctxt) {
         if (log.isDebugEnabled()) {
             log.debug("AAC authenticator is deactivated");
@@ -170,14 +240,11 @@ public class AACAuthenticatorServiceComponent {
      * @Deprecated The usage of bundle context outside of the component should never be needed. Component should
      * provide necessary wiring for any place which require the BundleContext.
      */
-    @Deprecated
-    public BundleContext getBundleContext() {
-
-        return bundleContext;
+    public static BundleContext getBundleContext() {
+        return AACProvisionServiceDataHolder.getInstance().getBundleContext();
     }
 
     public void setBundleContext(BundleContext bundleContext) {
-
-        this.bundleContext = bundleContext;
+    	AACProvisionServiceDataHolder.getInstance().setBundleContext(bundleContext);
     }
 }

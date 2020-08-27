@@ -15,14 +15,15 @@ import org.wso2.carbon.core.multitenancy.utils.TenantAxisUtils;
 import org.wso2.carbon.core.util.AnonymousSessionUtil;
 import org.wso2.carbon.core.util.PermissionUpdateUtil;
 import org.wso2.carbon.identity.application.authentication.framework.exception.FrameworkException;
+import org.wso2.carbon.identity.application.authentication.framework.exception.session.mgt.SessionManagementException;
 import org.wso2.carbon.identity.application.authentication.framework.handler.provisioning.ProvisioningHandler;
+import org.wso2.carbon.identity.application.authentication.framework.internal.impl.UserSessionManagementServiceImpl;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants;
 import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
 import org.wso2.carbon.identity.application.common.model.User;
 import org.wso2.carbon.identity.application.mgt.cache.IdentityServiceProviderCache;
 import org.wso2.carbon.identity.application.mgt.cache.IdentityServiceProviderCacheKey;
 import org.wso2.carbon.identity.authenticator.aac.internal.AACAuthenticatorServiceComponent;
-import org.wso2.carbon.identity.authenticator.aac.service.LoginAdminService;
 import org.wso2.carbon.identity.core.util.IdentityTenantUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.tenant.resource.manager.TenantAwareAxis2ConfigurationContextObserver;
@@ -68,13 +69,12 @@ import static org.wso2.carbon.identity.application.authentication.framework.util
 import static org.wso2.carbon.identity.application.authentication.framework.util.FrameworkConstants.USERNAME_CLAIM;
 
 
-public class AACProvisioningHandler implements ProvisioningHandler{
+public class AACProvisioningHandler{
 
 	    private static final Log log = LogFactory.getLog(AACProvisioningHandler.class);
 	    private static final String ALREADY_ASSOCIATED_MESSAGE = "UserAlreadyAssociated";
 	    private static volatile AACProvisioningHandler instance;
 	    private SecureRandom random = new SecureRandom();
-	    private LoginAdminService loginService;
 	    private static TenantRegistryLoader tenantRegistryLoader;
 
 	    public static AACProvisioningHandler getInstance() {
@@ -88,7 +88,6 @@ public class AACProvisioningHandler implements ProvisioningHandler{
 	        return instance;
 	    }
 
-	    @Override
 	    public void handle(List<String> roles, String subject, Map<String, String> attributes,
 	                       String provisioningUserStoreId, String tenantDomain) throws FrameworkException {
 
@@ -97,27 +96,24 @@ public class AACProvisioningHandler implements ProvisioningHandler{
 	        RealmService realmService = AACAuthenticatorServiceComponent.getRealmService();
 	        String username = MultitenantUtils.getTenantAwareUsername(subject);
 	        String password = generatePassword();
+	        int userId;
 	        try {
 	        	int tenantId = provisionTenant(subject, tenantDomain, password);
 	            UserRealm realm = AnonymousSessionUtil.getRealmByTenantDomain(registryService, realmService, tenantDomain);
 	            String userStoreDomain;
 	            UserStoreManager userStoreManager;
-	            if ("As in username".equalsIgnoreCase(provisioningUserStoreId)) {
-	                String userStoreDomainFromSubject = UserCoreUtil.extractDomainFromName(subject);
-	                try {
-	                    userStoreManager = getUserStoreManager(realm, userStoreDomainFromSubject);
-	                    userStoreDomain = userStoreDomainFromSubject;
-	                } catch (FrameworkException e) {
-	                    log.error("User store domain " + userStoreDomainFromSubject + " does not exist for the tenant "
-	                            + tenantDomain + ", hence provisioning user to "
-	                            + UserCoreConstants.PRIMARY_DEFAULT_DOMAIN_NAME);
-	                    userStoreDomain = UserCoreConstants.PRIMARY_DEFAULT_DOMAIN_NAME;
-	                    userStoreManager = getUserStoreManager(realm, userStoreDomain);
-	                }
-	            } else {
-	                userStoreDomain = getUserStoreDomain(provisioningUserStoreId, realm);
-	                userStoreManager = getUserStoreManager(realm, userStoreDomain);
-	            }
+                String userStoreDomainFromSubject = UserCoreUtil.extractDomainFromName(subject);
+                try {
+                    userStoreManager = getUserStoreManager(realm, userStoreDomainFromSubject);
+                    userStoreDomain = userStoreDomainFromSubject;
+                } catch (FrameworkException e) {
+                    log.error("User store domain " + userStoreDomainFromSubject + " does not exist for the tenant "
+                            + tenantDomain + ", hence provisioning user to "
+                            + UserCoreConstants.PRIMARY_DEFAULT_DOMAIN_NAME);
+                    userStoreDomain = UserCoreConstants.PRIMARY_DEFAULT_DOMAIN_NAME;
+                    userStoreManager = getUserStoreManager(realm, userStoreDomain);
+                }
+	            
 	            username = UserCoreUtil.removeDomainFromName(username);
 
 	            if (log.isDebugEnabled()) {
@@ -139,6 +135,9 @@ public class AACProvisioningHandler implements ProvisioningHandler{
 	                    userClaims.remove(USERNAME_CLAIM);
 	                    userStoreManager.setUserClaimValues(UserCoreUtil.removeDomainFromName(username), userClaims, null);
 	                }
+	                log.error("existing user:    para user id");
+//	                userId = userStoreManager.getUserId(UserCoreUtil.removeDomainFromName(username));
+	                log.error("existing user:  pas user id");
 //	                String associatedUserName = FrameworkUtils.getFederatedAssociationManager()
 //	                        .getUserForFederatedAssociation(tenantDomain, idp, subjectVal);
 //	                if (StringUtils.isEmpty(associatedUserName)) {
@@ -159,6 +158,9 @@ public class AACProvisioningHandler implements ProvisioningHandler{
 
 	                userClaims.remove(FrameworkConstants.PASSWORD);
 	                userStoreManager.addUser(username, password, null, userClaims, null);
+	                log.error("new user:  para user id");
+//	                userId = userStoreManager.getUserId(username);
+	                log.error("new user:  pas user id");
 
 	                // Associate User
 //	                associateUser(username, userStoreDomain, tenantDomain, subjectVal, idp);
@@ -168,6 +170,14 @@ public class AACProvisioningHandler implements ProvisioningHandler{
 	                }
 	            }
 
+//	            log.error(userId + username);
+//	            UserSessionManagementServiceImpl userMngService = new UserSessionManagementServiceImpl();
+//	            try {
+//					userMngService.terminateSessionsByUserId(Integer.toString(userId));
+//				} catch (SessionManagementException e) {
+//					log.error("Error during session termination of user: " + username);
+//					e.printStackTrace();
+//				}
 	            if (roles != null && !roles.isEmpty()) {
 	            	roleProvisioning(userStoreManager, tenantDomain);
 	            	// Update user with roles
@@ -251,7 +261,6 @@ public class AACProvisioningHandler implements ProvisioningHandler{
 	            log.info("Deleting roles : " + Arrays.toString(deletingRoles.toArray(new String[0]))
 	                    + " and Adding roles : " + Arrays.toString(rolesToAdd.toArray(new String[0])));
 	        }
-	        login2Publisher(tenantDomain, password);
 	        userStoreManager.updateRoleListOfUser(username, deletingRoles.toArray(new String[0]),
 	                rolesToAdd.toArray(new String[0]));
 	        if (log.isDebugEnabled()) {
@@ -375,7 +384,6 @@ public class AACProvisioningHandler implements ProvisioningHandler{
 	        if (roles != null) {
 	            // If internal roles exist, convert internal role domain names to case sensitive predefined domain names.
 	            for (String role : roles) {
-	            	log.info(role+" moj");
 	                if (StringUtils.equalsIgnoreCase(role, UserCoreConstants.INTERNAL_DOMAIN + CarbonConstants
 	                        .DOMAIN_SEPARATOR)) {
 	                	log.info(UserCoreConstants.INTERNAL_DOMAIN + CarbonConstants.DOMAIN_SEPARATOR +
@@ -420,17 +428,7 @@ public class AACProvisioningHandler implements ProvisioningHandler{
 
 	        return deletingRoles;
 	    }
-	    
-	    private void login2Publisher(String tenantDomain, String password) {
-	    	String command = "curl -v -k -X POST -c cookies https://localhost:9443/publisher/services/login/idp.jag -d 'action=login&username=admin@" + tenantDomain + "&password=" + password + "'";
-	    	//publisher/services/login/idp.jag
-	    	try {
-				Runtime.getRuntime().exec(command);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-	    }
-	    
+	    	    
 	    private int provisionTenant(String subject, String tenantDomain, String password) throws FrameworkException {
 	        RealmService realmService = AACAuthenticatorServiceComponent.getRealmService();
 	        RegistryService registryService = AACAuthenticatorServiceComponent.getRegistryService();
@@ -466,7 +464,7 @@ public class AACProvisioningHandler implements ProvisioningHandler{
 	            AnonymousSessionUtil.getRealmByTenantDomain(registryService, realmService, tenantDomain);//realmService.getTenantUserRealm(tenantId);	        		
         		AACAuthenticatorServiceComponent.getRegistryLoader().loadTenantRegistry(tenantId);
         		IdentityTenantUtil.initializeRegistry(tenantId, tenantDomain);
-        		initializeRegistry(tenantId, tenantDomain);
+//        		initializeRegistry(tenantId, tenantDomain);
         		ConfigurationContext ctx = AACAuthenticatorServiceComponent.getConfigurationContextService().getServerConfigContext();  
         		TenantAxisUtils.getTenantAxisConfiguration(tenantDomain, ctx);
         		
@@ -478,22 +476,6 @@ public class AACProvisioningHandler implements ProvisioningHandler{
         		TenantRegistryLoader tenantRegistryLoader = AACAuthenticatorServiceComponent.getRegistryLoader();
         		AACAuthenticatorServiceComponent.getIndexLoader().loadTenantIndex(tenantId);
         		tenantRegistryLoader.loadTenantRegistry(tenantId);
-//        		try {
-//                    tenantId = AACAuthenticatorServiceComponent.getRealmService().
-//                            getTenantManager().getTenantId(tenantDomain);
-//                    AppManagerUtil.loadTenantRegistry(tenantId);
-//                } catch (org.wso2.carbon.user.api.UserStoreException e) {
-//                    log.error(
-//                            "Could not load tenant registry. Error while getting tenant id from tenant domain "
-//                                    + tenantDomain);
-//                }
-        		
-//        		loginService = new LoginAdminService("https://localhost:9443");
-//        		loginService.authenticate(subject, password);
-        		
-     		
-//        		APIUtil.createDefaultRoles(tenantId);
-//        		CommonConfigDeployer      		 
         		log.info("tenantId: " + tenantId);
         		// activate tenant if not yet activated
         		boolean isTenantActive = realmService.getTenantManager().isTenantActive(tenantId);
@@ -533,7 +515,6 @@ public class AACProvisioningHandler implements ProvisioningHandler{
 	                        for (Object service : services2) {
 	                        	log.info(service.getClass().getName());
 	                        	if(service.getClass().getName().equals("org.wso2.carbon.identity.tenant.resource.manager.TenantAwareAxis2ConfigurationContextObserver")) {
-		                        	log.info("entering hereeeeeeeeeeeeeeeeeeeee");
 	                        		ConfigurationContext ctx = AACAuthenticatorServiceComponent.getConfigurationContextService().getServerConfigContext();
 		                        	((TenantAwareAxis2ConfigurationContextObserver) service).terminatedConfigurationContext(ctx);
 		                        	((TenantAwareAxis2ConfigurationContextObserver) service).terminatingConfigurationContext(ctx);
@@ -543,7 +524,6 @@ public class AACProvisioningHandler implements ProvisioningHandler{
 	                    }
 	                    tracker2.close();
 	                    try {
-	                    	log.info("loading tenant registryyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy");
 	                    	AACAuthenticatorServiceComponent.getRegistryLoader().loadTenantRegistry(tenantId);
 	                    } catch (Exception e) {
 	                        throw new Exception("Error loading tenant registry for tenant domain " + tenantDomain, e);

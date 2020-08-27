@@ -93,7 +93,6 @@ import com.google.common.collect.Sets;
 import it.smartcommunitylab.wso2aac.keymanager.model.AACResource;
 import it.smartcommunitylab.wso2aac.keymanager.model.AACService;
 import it.smartcommunitylab.wso2aac.keymanager.model.ClientAppBasic;
-import it.smartcommunitylab.wso2aac.keymanager.service.SPAdminService;
 
 public class AACOAuthClient extends AbstractKeyManager {
 
@@ -172,12 +171,6 @@ public class AACOAuthClient extends AbstractKeyManager {
 				
 				storeApplication(respOAuthApplicationInfo);
 				
-				if(app.getName().equals("apim_publisher") || app.getName().equals("apim_devportal")) {
-					log.info("Starting to update SP of " + app.getName());
-		            SPAdminService spAdminService = new SPAdminService("https://localhost:9443");
-		            spAdminService.updateApplication(app.getName());
-				}
-	            
 				return respOAuthApplicationInfo;
 			} else {
 				handleException("Some thing wrong here while registering the new client. Check out the scopes of the APIM client.  " + "HTTP Error response code is " + responseCode);

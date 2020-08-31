@@ -32,11 +32,9 @@ import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.apache.oltu.oauth2.common.message.types.GrantType;
 import org.wso2.carbon.identity.application.authentication.framework.FederatedApplicationAuthenticator;
 import org.wso2.carbon.identity.application.authentication.framework.context.AuthenticationContext;
-import org.wso2.carbon.identity.application.authentication.framework.context.SessionContext;
 import org.wso2.carbon.identity.application.authentication.framework.exception.AuthenticationFailedException;
 import org.wso2.carbon.identity.application.authentication.framework.exception.FrameworkException;
 import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
-import org.wso2.carbon.identity.application.authentication.framework.util.FrameworkUtils;
 import org.wso2.carbon.identity.application.authenticator.oidc.OIDCAuthenticatorConstants;
 import org.wso2.carbon.identity.application.authenticator.oidc.OpenIDConnectAuthenticator;
 import org.wso2.carbon.identity.application.common.model.ClaimMapping;
@@ -44,12 +42,9 @@ import org.wso2.carbon.identity.application.common.model.Property;
 import org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants;
 import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 import org.wso2.carbon.identity.oauth2.validators.jwt.JWKSBasedJWTValidator;
-
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
-
 import net.minidev.json.JSONArray;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.text.ParseException;
@@ -141,25 +136,6 @@ public class AACAuthenticator extends OpenIDConnectAuthenticator implements Fede
                 throw new AuthenticationFailedException("JWT is empty or null");
             }
             Map<String, Object> userInfo = claimSet.getClaims();
-
-//            SessionContext sessionContext = FrameworkUtils.getSessionContextFromCache(context.getSessionIdentifier());
-//            FrameworkUtils.removeSessionContextFromCache(context.getSessionIdentifier());
-//            // Remove federated authentication session details from the database.
-//            if (sessionContext != null && StringUtils.isNotBlank(context.getSessionIdentifier()) &&
-//                    sessionContext.getSessionAuthHistory().getHistory() != null) {
-//                for (AuthHistory authHistory : sessionContext.getSessionAuthHistory().getHistory()) {
-//                	log.error("iiiiiiiiiiiiiiiiiiiii: " + authHistory.getAuthenticatorName());
-//                    if ("AACAuthenticator".equals(authHistory.getAuthenticatorName())) {
-//                        try {
-//                            UserSessionStore.getInstance().removeFederatedAuthSessionInfo(context.getSessionIdentifier());
-//                            break;
-//                        } catch (UserSessionException e) {
-//                            throw new FrameworkException("Error while deleting federated authentication session details for"
-//                                    + " the session context key :" + context.getSessionIdentifier(), e);
-//                        }
-//                    }
-//                }
-//            }
             
             AuthenticatedUser authenticatedUserObj;
             Map<ClaimMapping, String> claims;
@@ -177,6 +153,8 @@ public class AACAuthenticator extends OpenIDConnectAuthenticator implements Fede
             context.setSubject(authenticatedUserObj);
             context.setTenantDomain(tenantDomain);
             context.setProperty("postAuthenticationRedirectionTriggered", false);
+            context.setForceAuthenticate(true);
+            
             AACProvisioningHandler provHandler = AACProvisioningHandler.getInstance();
             List<String> roles = new ArrayList<>();
             roles.add("Internal/publisher");
@@ -187,7 +165,50 @@ public class AACAuthenticator extends OpenIDConnectAuthenticator implements Fede
 	            roles.add("admin");
             }
             Map<String, String> claimMap = getSubjectAttr(userInfo);
-            String subject = userInfo.get(AACAuthenticatorConstants.USER_ID).toString() + "@" + tenantDomain;
+            String subject = userInfo.get(AACAuthenticatorConstants.USER_ID).toString() + "@" + tenantDomain;         
+
+            // Retrieve session information from cache.
+//            SessionContext sessionContext = FrameworkUtils.getSessionContextFromCache(context.getCallerSessionKey());
+//            // Remove federated authentication session details from the database.
+//            if (sessionContext != null && StringUtils.isNotBlank(context.getSessionIdentifier()) &&
+//                    sessionContext.getSessionAuthHistory().getHistory() != null) {
+//                for (AuthHistory authHistory : sessionContext.getSessionAuthHistory().getHistory()) {
+//                    if ("AACAuthenticator".equals(authHistory.getAuthenticatorName())) {
+//                        try {
+//                            UserSessionStore.getInstance().removeFederatedAuthSessionInfo(context.getSessionIdentifier());
+//                            break;
+//                        } catch (UserSessionException e) {
+//                            throw new FrameworkException("Error while deleting federated authentication session details for"
+//                                    + " the session context key :" + context.getSessionIdentifier(), e);
+//                        }
+//                    }
+//                }
+//            }
+//
+//            AuthenticationContextCache authCache = AuthenticationContextCache.getInstance();
+//            sessionContext = FrameworkUtils.getSessionContextFromCache(context.getCallerSessionKey());
+//            
+//            // Remove federated authentication session details from the database.
+//            if (sessionContext != null && StringUtils.isNotBlank(context.getSessionIdentifier()) &&
+//                    sessionContext.getSessionAuthHistory().getHistory() != null) {
+//                for (AuthHistory authHistory : sessionContext.getSessionAuthHistory().getHistory()) {
+//                	log.error("iiiiiiiiiiiiiiiiiiiii: " + authHistory.getAuthenticatorName());
+//                    if ("AACAuthenticator".equals(authHistory.getAuthenticatorName())) {
+//                        try {
+//                            UserSessionStore.getInstance().removeFederatedAuthSessionInfo(context.getSessionIdentifier());
+//                            break;
+//                        } catch (UserSessionException e) {
+//                            throw new FrameworkException("Error while deleting federated authentication session details for"
+//                                    + " the session context key :" + context.getSessionIdentifier(), e);
+//                        }
+//                    }
+//                }
+//            }
+//            FrameworkUtils.removeSessionContextFromCache(context.getCallerSessionKey());
+//            FrameworkUtils.removeAuthenticationContextFromCache(context.getCallerSessionKey());
+//            FrameworkUtils.removeAuthenticationRequestFromCache(context.getCallerSessionKey());
+            
+            
             provHandler.handle(roles, subject, claimMap, "As in username", tenantDomain);
         } catch (OAuthProblemException e) {
         	throw new AuthenticationFailedException("Authentication process failed ", e);
@@ -325,12 +346,13 @@ public class AACAuthenticator extends OpenIDConnectAuthenticator implements Fede
     		roleItem = jsonArray.get(i).toString();
     		if(roleItem.contains(":")) {
     			roleName = roleItem.split(":")[1];
-    			break;
+    			if(roleName.equals("ROLE_PROVIDER")) {
+    	    		isProvider = true;
+    	    		break;
+    	    	}
     		}
     	}
-    	if(roleName.equals("ROLE_PROVIDER")) {
-    		isProvider = true;
-    	}
+    	log.info("isProvider? " + isProvider);
     	return isProvider;
     }
     

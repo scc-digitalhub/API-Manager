@@ -92,11 +92,12 @@ public class AACProvisioningHandler{
 	                       String provisioningUserStoreId, String tenantDomain) throws FrameworkException {
 
 	        log.info(subject + " " + tenantDomain);
+	        if(subject.equals("admin@carbon.super"))
+	        	return;
 	        RegistryService registryService = AACAuthenticatorServiceComponent.getRegistryService();
 	        RealmService realmService = AACAuthenticatorServiceComponent.getRealmService();
 	        String username = MultitenantUtils.getTenantAwareUsername(subject);
 	        String password = generatePassword();
-	        int userId;
 	        try {
 	        	int tenantId = provisionTenant(subject, tenantDomain, password);
 	            UserRealm realm = AnonymousSessionUtil.getRealmByTenantDomain(registryService, realmService, tenantDomain);
@@ -135,9 +136,6 @@ public class AACProvisioningHandler{
 	                    userClaims.remove(USERNAME_CLAIM);
 	                    userStoreManager.setUserClaimValues(UserCoreUtil.removeDomainFromName(username), userClaims, null);
 	                }
-	                log.error("existing user:    para user id");
-//	                userId = userStoreManager.getUserId(UserCoreUtil.removeDomainFromName(username));
-	                log.error("existing user:  pas user id");
 //	                String associatedUserName = FrameworkUtils.getFederatedAssociationManager()
 //	                        .getUserForFederatedAssociation(tenantDomain, idp, subjectVal);
 //	                if (StringUtils.isEmpty(associatedUserName)) {
@@ -158,10 +156,7 @@ public class AACProvisioningHandler{
 
 	                userClaims.remove(FrameworkConstants.PASSWORD);
 	                userStoreManager.addUser(username, password, null, userClaims, null);
-	                log.error("new user:  para user id");
-//	                userId = userStoreManager.getUserId(username);
-	                log.error("new user:  pas user id");
-
+	                
 	                // Associate User
 //	                associateUser(username, userStoreDomain, tenantDomain, subjectVal, idp);
 
@@ -170,16 +165,9 @@ public class AACProvisioningHandler{
 	                }
 	            }
 
-//	            log.error(userId + username);
-//	            UserSessionManagementServiceImpl userMngService = new UserSessionManagementServiceImpl();
-//	            try {
-//					userMngService.terminateSessionsByUserId(Integer.toString(userId));
-//				} catch (SessionManagementException e) {
-//					log.error("Error during session termination of user: " + username);
-//					e.printStackTrace();
-//				}
 	            if (roles != null && !roles.isEmpty()) {
-	            	roleProvisioning(userStoreManager, tenantDomain);
+	            	if(!tenantDomain.equals("carbon.super"))
+	            		roleProvisioning(userStoreManager, tenantDomain);
 	            	// Update user with roles
 	                List<String> currentRolesList = Arrays.asList(userStoreManager.getRoleListOfUser(username));
 	                Collection<String> deletingRoles = retrieveRolesToBeDeleted(realm, currentRolesList, rolesToAdd);
@@ -445,21 +433,23 @@ public class AACProvisioningHandler{
     	            tenantInfoBean.setLastname("lastname");
     	            tenantInfoBean.setAdminPassword(password);
     	            tenantInfoBean.setTenantDomain(tenantDomain);
-    	            tenantInfoBean.setEmail(username);
+    	            tenantInfoBean.setEmail(username.contains("@") ? username : username+"@"+tenantDomain);
     	            tenantInfoBean.setCreatedDate(Calendar.getInstance());
     	            tenantInfoBean.setActive(true);
     	            tenantMgt.addTenant(tenantInfoBean);
     	            tenantMgt.activateTenant(tenantDomain);
     	            tenantId = tenantMgt.getTenant(tenantDomain).getTenantId();
     	            tenantInfoBean.setTenantId(tenantId);
-    	            
-//	        		TenantMgtUtil.initializeTenant(tenantInfoBean);
-//	        		TenantMgtUtil.triggerTenantInitialActivation(tenantInfoBean);
-//	        		TenantAxisUtils.loadTenantAxisConfiguration();
-//	        		boolean auth = userRealm.getUserStoreManager().authenticate(subject, password);
-//	        		log.info("authenticate user: " + auth);
 	            }
-	            
+	            log.info("tenantId: " + tenantId);
+        		// activate tenant if not yet activated
+        		boolean isTenantActive = realmService.getTenantManager().isTenantActive(tenantId);
+        		log.info("isTenantActive : ");log.info(isTenantActive);
+        		if(!isTenantActive)
+        			realmService.getTenantManager().activateTenant(tenantId);
+        		if(tenantDomain.equals("carbon.super"))
+        			return tenantId;
+        		
 	            //Here when get the user realm it create admin user and group.
 	            AnonymousSessionUtil.getRealmByTenantDomain(registryService, realmService, tenantDomain);//realmService.getTenantUserRealm(tenantId);	        		
         		AACAuthenticatorServiceComponent.getRegistryLoader().loadTenantRegistry(tenantId);
@@ -476,12 +466,7 @@ public class AACProvisioningHandler{
         		TenantRegistryLoader tenantRegistryLoader = AACAuthenticatorServiceComponent.getRegistryLoader();
         		AACAuthenticatorServiceComponent.getIndexLoader().loadTenantIndex(tenantId);
         		tenantRegistryLoader.loadTenantRegistry(tenantId);
-        		log.info("tenantId: " + tenantId);
-        		// activate tenant if not yet activated
-        		boolean isTenantActive = realmService.getTenantManager().isTenantActive(tenantId);
-        		log.info("isTenantActive : ");log.info(isTenantActive);
-        		if(!isTenantActive)
-        			realmService.getTenantManager().activateTenant(tenantId);
+        		
 	        } catch (Exception e) {
 				throw new FrameworkException("Error during tenant creation", e);
 			} 

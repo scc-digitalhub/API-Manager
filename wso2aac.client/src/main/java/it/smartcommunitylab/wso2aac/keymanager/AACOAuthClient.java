@@ -95,1065 +95,1169 @@ import it.smartcommunitylab.wso2aac.keymanager.model.ClientAppBasic;
 
 public class AACOAuthClient extends AbstractKeyManager {
 
-    private static final Log log = LogFactory.getLog(AACOAuthClient.class);
-    
-    private KeyManagerConfiguration configuration;
-
     @Override
-    public void loadConfiguration(KeyManagerConfiguration configuration) throws APIManagementException {
-        this.configuration = configuration;
-        SubscriberKeyMgtClientPool.getInstance().setConfiguration(this.configuration);
-    }
-    
-    /**
-     * This method will Register the client in Authorization Server.
-     *
-     * @param oauthAppRequest this object holds all parameters required to register an OAuth Client.
-     */
-    @Override
-	public OAuthApplicationInfo createApplication(OAuthAppRequest oauthAppRequest) throws APIManagementException {
-
-		BufferedReader reader = null;
-		HttpClient httpClient = getHttpClient();
-		ApiMgtDAO dao = ApiMgtDAO.getInstance();
-
-		ObjectMapper mapper = objectMapper();
-		mapper.setVisibility(mapper.getSerializationConfig().getDefaultVisibilityChecker()
-                .withFieldVisibility(JsonAutoDetect.Visibility.ANY)
-                .withGetterVisibility(JsonAutoDetect.Visibility.ANY)
-                .withSetterVisibility(JsonAutoDetect.Visibility.ANY)
-                .withCreatorVisibility(JsonAutoDetect.Visibility.ANY));
-
-		try {
-			OAuthApplicationInfo oAuthApplicationInfo = oauthAppRequest.getOAuthApplicationInfo();
-			
-			log.debug("Creating a new oAuthApp in Authorization Server");
-
-			KeyManagerConfiguration config = KeyManagerHolder.getKeyManagerInstance().getKeyManagerConfiguration();
-
-			String registrationEndpoint = config.getParameter(ClientConstants.CLIENT_REG_ENDPOINT);
-			String registrationToken = getOauthToken();
-
-			ClientAppBasic app = convertRequest(oAuthApplicationInfo);
-			
-			HttpPost httpPost = new HttpPost(registrationEndpoint.trim() + "/wso2/client/" + app.getUserName());
-
-			String jsonPayload = mapper.writeValueAsString(app);
-
-			httpPost.setEntity(new StringEntity(jsonPayload, ClientConstants.UTF_8));
-			httpPost.setHeader(ClientConstants.CONTENT_TYPE, ClientConstants.APPLICATION_JSON_CONTENT_TYPE);
-			httpPost.setHeader(ClientConstants.AUTHORIZATION, ClientConstants.BEARER + registrationToken);
-
-			HttpResponse response = httpClient.execute(httpPost);
-			int responseCode = response.getStatusLine().getStatusCode();
-
-			HttpEntity entity = response.getEntity();
-			reader = new BufferedReader(new InputStreamReader(entity.getContent(), ClientConstants.UTF_8));
-
-			if (HttpStatus.SC_OK == responseCode) {
-
-				app = mapper.readValue(reader, ClientAppBasic.class);
-
-            	Map infoMap = mapper.convertValue(oAuthApplicationInfo, Map.class);
-            	Map pars = (Map)infoMap.get("parameters");
-				
-                String tokenScope = (String) oAuthApplicationInfo.getParameter("tokenScope");
-		        String tokenScopes[] = new String[1];
-		        tokenScopes[0] = tokenScope;                
-            	
-				OAuthApplicationInfo respOAuthApplicationInfo = convertResponse(app);
-				respOAuthApplicationInfo.addParameter("tokenScope", "" + Lists.newArrayList(tokenScope));
-				
-				respOAuthApplicationInfo.setClientId(app.getClientId());
-				respOAuthApplicationInfo.setClientSecret(app.getClientSecret());
-				
-				oauthAppRequest.setOAuthApplicationInfo(respOAuthApplicationInfo);
-				
-				storeApplication(respOAuthApplicationInfo);
-				
-				return respOAuthApplicationInfo;
-			} else {
-				handleException("Some thing wrong here while registering the new client " + "HTTP Error response code is " + responseCode);
-			}
-
-		} catch (Exception e) {
-			cleanupRegistrationByAppName(oauthAppRequest.getOAuthApplicationInfo().getClientName(), (String)oauthAppRequest.getOAuthApplicationInfo().getParameter("username"), (String)oauthAppRequest.getOAuthApplicationInfo().getParameter("key_type"));
-			handleException("Error registering client app.", e);
-		} finally {
-			if (reader != null) {
-				IOUtils.closeQuietly(reader);
-			}
-			httpClient.getConnectionManager().shutdown();
-		}
-		return null;
-	}
-
-	protected ObjectMapper objectMapper() {
-		ObjectMapper mapper = new ObjectMapper();
-		mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-		return mapper;
-	}
-    
-    private void storeApplication(OAuthApplicationInfo oauthApplicationInfo) throws Exception {
-    	OAuthAppDO app = new OAuthAppDO();
-    	
-    	app.setApplicationName(oauthApplicationInfo.getClientName());
-    	app.setCallbackUrl(oauthApplicationInfo.getCallBackURL());
-    	app.setGrantTypes((String)oauthApplicationInfo.getParameter("grant_types"));
-    	app.setOauthConsumerKey(oauthApplicationInfo.getClientId());
-    	app.setOauthConsumerSecret(oauthApplicationInfo.getClientSecret());
-    	app.setPkceMandatory(false);
-    	app.setPkceSupportPlain(false);
-    	app.setOauthVersion("OAuth-2.0");
-    	
-    	AuthenticatedUser user = AuthenticatedUser.createLocalAuthenticatedUserFromSubjectIdentifier((String)oauthApplicationInfo.getParameter("username"));
-    	app.setUser(user);
-    	
-    	OAuthAppDAO dao = new OAuthAppDAO();
-    	
-    	dao.addOAuthApplication(app);
-    }    
-    
-
-    private org.wso2.carbon.apimgt.api.model.xsd.OAuthApplicationInfo convertAppInfo(OAuthApplicationInfo oAuthApplicationInfo) {
-        org.wso2.carbon.apimgt.api.model.xsd.OAuthApplicationInfo applicationToCreate = new org.wso2.carbon.apimgt.api.model.xsd.OAuthApplicationInfo();
-        applicationToCreate.setIsSaasApplication(oAuthApplicationInfo.getIsSaasApplication());
-        applicationToCreate.setCallBackURL(oAuthApplicationInfo.getCallBackURL());
-        applicationToCreate.setClientName(oAuthApplicationInfo.getClientName());
-        applicationToCreate.setAppOwner((String)oAuthApplicationInfo.getParameter("username"));
-        applicationToCreate.setJsonString(oAuthApplicationInfo.getJsonString());
-    	
-    	return applicationToCreate;
-    }
-    
-    private OAuthApplicationInfo convertAppInfo(org.wso2.carbon.apimgt.api.model.xsd.OAuthApplicationInfo oAuthApplicationInfo) throws Exception {
-    	OAuthApplicationInfo info = new OAuthApplicationInfo();
-    	info.setIsSaasApplication(oAuthApplicationInfo.getIsSaasApplication());
-    	info.setCallBackURL(oAuthApplicationInfo.getCallBackURL());
-    	info.setClientName(oAuthApplicationInfo.getClientName());
-    	info.setAppOwner(oAuthApplicationInfo.getAppOwner());
-    	info.setJsonString(oAuthApplicationInfo.getJsonString());
-    	
-    	ObjectMapper mapper = objectMapper();
-    	Map pars = mapper.readValue(info.getJsonString(), Map.class);
-    	info.putAll(pars);
-    	
-    	return info;
-    }    
-    
-    
-    private ClientAppBasic convertRequest(OAuthApplicationInfo oAuthApplicationInfo) throws Exception {
-        ObjectMapper mapper = objectMapper();
-        
-        Map parametersMap = mapper.readValue(oAuthApplicationInfo.getJsonString(), Map.class);
-        
-        String userName = (String)parametersMap.get("username");
-        String keyType = (String)parametersMap.get("key_type");
-        String clientName = oAuthApplicationInfo.getClientName();
-        
-        ClientAppBasic client = new ClientAppBasic();
-        
-        client.setClientId(oAuthApplicationInfo.getClientId());
-        client.setName(userName + "_" + clientName + "_" + keyType);
-
-        String grants = (String)parametersMap.get("grant_types");
-        Set<String> grantsSet = Sets.newHashSet(grants.split(","));
-        client.setGrantedTypes(grantsSet);
-        
-        client.setRedirectUris(oAuthApplicationInfo.getCallBackURL());
-        client.setUserName(userName);
-        client.setScope(((String)parametersMap.get("tokenScope")).replace(" ", ","));
-        
-        client.setParameters(oAuthApplicationInfo.getJsonString());
-        
-        return client;
-    }
-    
-    private OAuthApplicationInfo convertResponse(ClientAppBasic app) throws Exception {
-    	ObjectMapper mapper = objectMapper();
-    	
-        OAuthApplicationInfo oAuthApplicationInfo = new OAuthApplicationInfo();
-        
-        oAuthApplicationInfo.setClientName(app.getName());
-        oAuthApplicationInfo.setCallBackURL(app.getRedirectUris());
-        oAuthApplicationInfo.setClientId(app.getClientId());
-        oAuthApplicationInfo.setClientSecret(app.getClientSecret());
-        
-        oAuthApplicationInfo.setClientName(app.getName());
-        
-        Map pars = mapper.readValue(app.getParameters(), Map.class);
-        
-        if (pars.containsKey("grant_types")) {
-        	pars.put("grant_types", ((String)pars.get("grant_types")).replace(",", " "));
-        }
-        
-        pars.put("redirect_uris", app.getRedirectUris());
-        pars.put("client_name", app.getName());
-        
-        oAuthApplicationInfo.putAll(pars);
-        
-        return oAuthApplicationInfo;
-    }    
-
-    /**
-     * This method will update an existing OAuth Client.
-     *
-     * @param oauthAppRequest Parameters to be passed to Authorization Server,
-     *                        encapsulated as an {@code OAuthAppRequest}
-     * @return Details of updated OAuth Client.
-     * @throws APIManagementException
-     */
-    @Override
-    public OAuthApplicationInfo updateApplication(OAuthAppRequest oauthAppRequest) throws APIManagementException {
-
-    	BufferedReader reader = null;
-		HttpClient httpClient = getHttpClient();
-		ObjectMapper mapper = objectMapper();
-
-		try {
-
-			OAuthApplicationInfo oAuthApplicationInfo = oauthAppRequest.getOAuthApplicationInfo();
-
-			log.debug("Updating an oAuthApp in Authorization Server");
-
-			KeyManagerConfiguration config = KeyManagerHolder.getKeyManagerInstance().getKeyManagerConfiguration();
-
-			String registrationEndpoint = config.getParameter(ClientConstants.CLIENT_REG_ENDPOINT);
-			String registrationToken = getOauthToken();
-
-			ClientAppBasic app = convertRequest(oAuthApplicationInfo);
-			
-			HttpPut httpPost = new HttpPut(registrationEndpoint.trim() + "/wso2/client/" + app.getClientId());
-
-			String jsonPayload = mapper.writeValueAsString(app);
-
-			httpPost.setEntity(new StringEntity(jsonPayload, ClientConstants.UTF_8));
-			httpPost.setHeader(ClientConstants.CONTENT_TYPE, ClientConstants.APPLICATION_JSON_CONTENT_TYPE);
-			httpPost.setHeader(ClientConstants.AUTHORIZATION, ClientConstants.BEARER + registrationToken);
-
-			HttpResponse response = httpClient.execute(httpPost);
-			int responseCode = response.getStatusLine().getStatusCode();
-
-			HttpEntity entity = response.getEntity();
-			reader = new BufferedReader(new InputStreamReader(entity.getContent(), ClientConstants.UTF_8));
-
-			if (HttpStatus.SC_OK == responseCode) {
-
-				app = mapper.readValue(reader, ClientAppBasic.class);
-
-				oAuthApplicationInfo = convertResponse(app);
-
-				return oAuthApplicationInfo;
-			} else {
-				handleException("Some thing wrong here while updating the client " + "HTTP Error response code is " + responseCode);
-			}
-
-		} catch (Exception e) {
-			cleanupRegistrationByAppName(oauthAppRequest.getOAuthApplicationInfo().getClientName(), (String)oauthAppRequest.getOAuthApplicationInfo().getParameter("username"), (String)oauthAppRequest.getOAuthApplicationInfo().getParameter("key_type"));
-			handleException("Error updating client app.", e);
-		} finally {
-			if (reader != null) {
-				IOUtils.closeQuietly(reader);
-			}
-			httpClient.getConnectionManager().shutdown();
-		}
-		return null;
-	}
-
-    /**
-     * Deletes OAuth Client from Authorization Server.
-     *
-     * @param consumerKey consumer key of the OAuth Client.
-     * @throws APIManagementException
-     */
-    @Override
-    public void deleteApplication(String clientId) throws APIManagementException {
-    	OAuthAppDAO dao = new OAuthAppDAO();
-    	
-        HttpClient client = getHttpClient();
-   	
-        BufferedReader reader = null;
-    	
-        log.info("Deleting a new OAuth Client in Authorization Server..");
-
-        String registrationUrl = configuration.getParameter(ClientConstants.CLIENT_REG_ENDPOINT);
-        String accessToken = getOauthToken();
-
-        try {
-            HttpDelete request = new HttpDelete(registrationUrl.trim() + "/wso2/client/" + clientId);
-            //set authorization header.
-            request.addHeader(ClientConstants.AUTHORIZATION, ClientConstants.BEARER + accessToken);
-            HttpResponse response = client.execute(request);
-
-            int responseCode = response.getStatusLine().getStatusCode();
-
-            HttpEntity entity = response.getEntity();
-
-            reader = new BufferedReader(new InputStreamReader(entity.getContent(), "UTF-8"));
-
-            if (responseCode != HttpStatus.SC_NOT_FOUND && responseCode != HttpStatus.SC_OK) {
-            	handleException("Something went wrong while deleting client " + clientId);
-            }
-            
-            dao.removeConsumerApplication(clientId);
-            
-//            SubscriberKeyMgtClient keyMgtClient = null;
-//            keyMgtClient = SubscriberKeyMgtClientPool.getInstance().get();
-//            keyMgtClient.deleteOAuthApplication(clientId);
-//            cleanupRegistrationByClientId(clientId);
-            
-        } catch (Exception e) {
-			handleException("Error deleting client app.", e);
-		} finally {
-			if (reader != null) {
-				IOUtils.closeQuietly(reader);
-			}
-			client.getConnectionManager().shutdown();
-		}
+    public OAuthApplicationInfo createApplication(OAuthAppRequest oauthAppRequest) throws APIManagementException {
+        // TODO Auto-generated method stub
+        return null;
     }
 
-    /**
-     * This method retrieves OAuth application details by given consumer key.
-     *
-     * @param consumerKey consumer key of the OAuth Client.
-     * @return an {@code OAuthApplicationInfo} having all the details of an OAuth Client.
-     * @throws APIManagementException
-     */
+    @Override
+    public OAuthApplicationInfo updateApplication(OAuthAppRequest appInfoDTO) throws APIManagementException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void deleteApplication(String consumerKey) throws APIManagementException {
+        // TODO Auto-generated method stub
+        
+    }
+
     @Override
     public OAuthApplicationInfo retrieveApplication(String consumerKey) throws APIManagementException {
-
-        HttpClient client = getHttpClient();
-        ObjectMapper mapper = objectMapper();
-
-        String registrationURL = configuration.getParameter(ClientConstants.CLIENT_REG_ENDPOINT);
-        String accessToken = getOauthToken();
-        BufferedReader reader = null;
-
-        try {
-            HttpGet request = new HttpGet(registrationURL.trim() + "/wso2/client/" + consumerKey);
-            //set authorization header.
-            request.addHeader(ClientConstants.AUTHORIZATION, ClientConstants.BEARER + accessToken);
-            HttpResponse response = client.execute(request);
-
-            int responseCode = response.getStatusLine().getStatusCode();
-
-            HttpEntity entity = response.getEntity();
-
-            reader = new BufferedReader(new InputStreamReader(entity.getContent(), "UTF-8"));
-
-            if (responseCode == HttpStatus.SC_OK) {
-
-            	ClientAppBasic app = mapper.readValue(reader, ClientAppBasic.class);
-            	
-            	OAuthApplicationInfo oAuthApplicationInfo = convertResponse(app);
-            	
-            	oAuthApplicationInfo.addParameter("client_name", app.getName());
-            	
-				return oAuthApplicationInfo;
-            } else {
-                handleException("Something went wrong while retrieving clients for consumer key " + consumerKey);
-            }
-
-        } catch (Exception e) {
-			handleException("Error retrieving client app.", e);
-		} finally {
-			if (reader != null) {
-				IOUtils.closeQuietly(reader);
-			}
-			client.getConnectionManager().shutdown();
-		}
-		return null;
+        // TODO Auto-generated method stub
+        return null;
     }
-
-	@Override
-	public AccessTokenRequest buildAccessTokenRequestFromOAuthApp(OAuthApplicationInfo oAuthApplication, AccessTokenRequest tokenRequest) throws APIManagementException {
-		ObjectMapper mapper = objectMapper(); 
-		mapper.setVisibility(mapper.getSerializationConfig().getDefaultVisibilityChecker()
-                .withFieldVisibility(JsonAutoDetect.Visibility.ANY)
-                .withGetterVisibility(JsonAutoDetect.Visibility.ANY)
-                .withSetterVisibility(JsonAutoDetect.Visibility.ANY)
-                .withCreatorVisibility(JsonAutoDetect.Visibility.ANY));		
-		
-		AccessTokenRequest req = new AccessTokenRequest();
-		req.setClientId(oAuthApplication.getClientId());
-		req.setClientSecret(oAuthApplication.getClientSecret());
-		req.setCallbackURI(oAuthApplication.getCallBackURL());
-		req.setScope(tokenRequest.getScope());
-		req.setGrantType("client_credentials");
-		req.setValidityPeriod(Long.parseLong((String)oAuthApplication.getParameter("validityPeriod")));
-		
-		return req;
-	}
 
     @Override
     public AccessTokenInfo getNewApplicationAccessToken(AccessTokenRequest tokenRequest) throws APIManagementException {
-
-    	BufferedReader reader = null;
-		HttpClient httpClient = getHttpClient();
-		ObjectMapper mapper = objectMapper();    	
-		mapper.setVisibility(mapper.getSerializationConfig().getDefaultVisibilityChecker()
-                .withFieldVisibility(JsonAutoDetect.Visibility.ANY)
-                .withGetterVisibility(JsonAutoDetect.Visibility.ANY)
-                .withSetterVisibility(JsonAutoDetect.Visibility.ANY)
-                .withCreatorVisibility(JsonAutoDetect.Visibility.ANY));			
-    	
-		try {
-			revokeTokenLocally(tokenRequest);
-
-			log.debug("Creating a new oAuthApp in Authorization Server");
-
-			KeyManagerConfiguration config = KeyManagerHolder.getKeyManagerInstance().getKeyManagerConfiguration();
-			
-			String registrationEndpoint = config.getParameter(ClientConstants.CLIENT_REG_ENDPOINT);
-			String registrationToken = getOauthToken();
-
-			
-			if (tokenRequest.getTokenToRevoke() != null && !"".equals(tokenRequest.getTokenToRevoke())) {
-				HttpPost httpPost = new HttpPost(registrationEndpoint.trim() + "/wso2/client/token_revoke/" + tokenRequest.getTokenToRevoke());
-
-				httpPost.setHeader(ClientConstants.CONTENT_TYPE, ClientConstants.APPLICATION_JSON_CONTENT_TYPE);
-				httpPost.setHeader(ClientConstants.AUTHORIZATION, ClientConstants.BEARER + registrationToken);
-
-				HttpResponse response = httpClient.execute(httpPost);
-				int responseCode = response.getStatusLine().getStatusCode();
-
-				HttpEntity entity = response.getEntity();
-				reader = new BufferedReader(new InputStreamReader(entity.getContent(), ClientConstants.UTF_8));
-
-				if (HttpStatus.SC_OK != responseCode) {
-					handleException("Some thing wrong here while revoking the token " + "HTTP Error response code is " + responseCode);
-				}
-				
-				EntityUtils.consume(entity);
-			}			
-			
-			if (tokenRequest.getScope() != null) {
-				{
-					String url = registrationEndpoint.trim() + "/wso2/client/scope/" + tokenRequest.getClientId() + "?scope="
-							+ Joiner.on(",").join(tokenRequest.getScope()).replace(" ", ",");					
-					
-					HttpPost httpPost = new HttpPost(url);
-
-					httpPost.setHeader(ClientConstants.CONTENT_TYPE, ClientConstants.APPLICATION_JSON_CONTENT_TYPE);
-					httpPost.setHeader(ClientConstants.AUTHORIZATION, ClientConstants.BEARER + registrationToken);
-
-					HttpResponse response = httpClient.execute(httpPost);
-					int responseCode = response.getStatusLine().getStatusCode();
-
-					HttpEntity entity = response.getEntity();
-					reader = new BufferedReader(new InputStreamReader(entity.getContent(), ClientConstants.UTF_8));
-
-					if (HttpStatus.SC_OK != responseCode) {
-						handleException("Some thing wrong here while updating scope " + "HTTP Error response code is " + responseCode);
-					}
-
-					EntityUtils.consume(entity);
-				}
-			}
-			{
-				String url = registrationEndpoint.trim() + "/wso2/client/validity/" + tokenRequest.getClientId() + "/" + tokenRequest.getValidityPeriod();
-				
-				HttpPatch httpPatch = new HttpPatch(url);
-				
-				httpPatch.setHeader(ClientConstants.AUTHORIZATION, ClientConstants.BEARER + registrationToken);
-				
-				
-				HttpResponse response = httpClient.execute(httpPatch);
-				int responseCode = response.getStatusLine().getStatusCode();
-				
-				HttpEntity entity = response.getEntity();
-				EntityUtils.consume(entity);
-
-				if (HttpStatus.SC_OK != responseCode) {
-					handleException("Some thing wrong here while updating token validity time " + "HTTP Error response code is " + responseCode);
-				}				
-			}
-			
-			{
-				// validity_period doesn't work in oauth
-				
-				String url = registrationEndpoint.trim() + "/oauth/token?" + "client_id=" + tokenRequest.getClientId() + "&client_secret=" + tokenRequest.getClientSecret()
-						+ "&grant_type=" + (tokenRequest.getGrantType() != null ? tokenRequest.getGrantType() : "client_credentials") + "&validity_period=" + tokenRequest.getValidityPeriod()
-						+ (tokenRequest.getScope() != null ? ("&scope=" + Joiner.on(" ").join(tokenRequest.getScope())).replace(" ", "%20") : "");
-				
-				HttpPost httpPost = new HttpPost(url);
-
-				httpPost.setHeader(ClientConstants.CONTENT_TYPE, ClientConstants.APPLICATION_JSON_CONTENT_TYPE);
-				httpPost.setHeader(ClientConstants.AUTHORIZATION, ClientConstants.BEARER + registrationToken);
-
-				HttpResponse response = httpClient.execute(httpPost);
-				int responseCode = response.getStatusLine().getStatusCode();
-
-				HttpEntity entity = response.getEntity();
-				reader = new BufferedReader(new InputStreamReader(entity.getContent(), ClientConstants.UTF_8));
-
-				if (HttpStatus.SC_OK == responseCode) {
-
-					Map token = mapper.readValue(reader, Map.class);
-
-					AccessTokenInfo tokenInfo = new AccessTokenInfo();
-					tokenInfo.setAccessToken((String) token.get("access_token"));
-					
-					if (token.containsKey("expires_in")) {
-						tokenInfo.setValidityPeriod(((Number) token.get("expires_in")).longValue() * 1000L);
-					}
-					tokenInfo.setIssuedTime(System.currentTimeMillis());
-
-//					String[] scopes = new String[1];
-//					scopes[0] = (String) token.get("scope");
-
-					String[] scopes = ((String) token.get("scope")).split(" ");
-					
-					tokenInfo.setScope(scopes);
-
-					tokenInfo.setConsumerKey(tokenRequest.getClientId());
-					tokenInfo.setConsumerSecret(tokenRequest.getClientSecret());
-					tokenInfo.setApplicationToken(true);
-
-					storeTokenLocally(tokenInfo, tokenRequest.getGrantType() != null ? tokenRequest.getGrantType() : "client_credentials");
-
-					// for console
-					tokenInfo.setValidityPeriod(tokenInfo.getValidityPeriod() / 1000L);
-					
-					return tokenInfo;
-				} else {
-					handleException("Some thing wrong here while retrieving the token " + "HTTP Error response code is " + responseCode);
-				}
-			}
-
-		} catch (Exception e) {
-			cleanupRegistrationByClientId(tokenRequest.getClientId());
-			handleException("Error getting the token.", e);
-		} finally {
-			if (reader != null) {
-				IOUtils.closeQuietly(reader);
-			}
-			httpClient.getConnectionManager().shutdown();
-		}
-		return null;
-	}
-
-	private void revokeTokenLocally(AccessTokenRequest tokenRequest) throws Exception {
-		String revokeEndpoint = configuration.getParameter(APIConstants.REVOKE_URL);
-
-		// Call the /revoke only if there's a token to be revoked.
-		if (tokenRequest.getTokenToRevoke() != null && !"".equals(tokenRequest.getTokenToRevoke())) {
-			URL revokeEndpointURL = new URL(revokeEndpoint);
-			String revokeEndpointProtocol = revokeEndpointURL.getProtocol();
-			int revokeEndpointPort = revokeEndpointURL.getPort();
-
-			HttpClient revokeEPClient = APIUtil.getHttpClient(revokeEndpointPort, revokeEndpointProtocol);
-
-			HttpPost httpRevokePost = new HttpPost(revokeEndpoint);
-
-			// Request parameters.
-			List<NameValuePair> revokeParams = new ArrayList<NameValuePair>(3);
-			revokeParams.add(new BasicNameValuePair(OAuth.OAUTH_CLIENT_ID, tokenRequest.getClientId()));
-			revokeParams.add(new BasicNameValuePair(OAuth.OAUTH_CLIENT_SECRET, tokenRequest.getClientSecret()));
-			revokeParams.add(new BasicNameValuePair("token", tokenRequest.getTokenToRevoke()));
-
-			// Revoke the Old Access Token
-			httpRevokePost.setEntity(new UrlEncodedFormEntity(revokeParams, "UTF-8"));
-			int statusCode;
-			try {
-				HttpResponse revokeResponse = revokeEPClient.execute(httpRevokePost);
-				statusCode = revokeResponse.getStatusLine().getStatusCode();
-			} finally {
-			}
-
-			if (statusCode != 200) {
-				throw new RuntimeException("Token revoke failed : HTTP error code : " + statusCode);
-			} else {
-				if (log.isDebugEnabled()) {
-					log.debug("Successfully submitted revoke request for old application token. HTTP status : 200");
-				}
-			}
-		}
-	}
-    
-    private void storeTokenLocally(AccessTokenInfo tokenInfo, String grantType) throws Exception {
-    	registerAdminClient();
-    	
-    	    	
-    	Connection connection = IdentityDatabaseUtil.getDBConnection();
-    	
-    	TokenMgtDAO tokenDAO = new TokenMgtDAO();
-    	if (tokenDAO.getTokenIdByToken(tokenInfo.getAccessToken()) != null) {
-    		log.info("Not storing already existing token: " + tokenInfo.getAccessToken());
-    		return;
-    	}  
-    	
-    	log.info("Storing token: " + tokenInfo.getAccessToken());
-    	
-    	try {
-    	AccessTokenDO token = new AccessTokenDO();
-    	
-        OAuthAppDO oAuthAppDO = OAuth2Util.getAppInformationByClientId(tokenInfo.getConsumerKey());
-        
-        String tenantDomain = OAuth2Util.getTenantDomainOfOauthApp(oAuthAppDO);
-        token.setTenantID(OAuth2Util.getTenantId(tenantDomain));    	
-    	
-    	token.setAccessToken(tokenInfo.getAccessToken());
-    	token.setTokenState(OAuthConstants.TokenStates.TOKEN_STATE_ACTIVE);
-    	token.setConsumerKey(tokenInfo.getConsumerKey());
-    	token.setGrantType(grantType);
-    	token.setScope(tokenInfo.getScopes());
-    	token.setValidityPeriod(tokenInfo.getValidityPeriod());
-    	token.setIssuedTime(new Timestamp(tokenInfo.getIssuedTime()));
-    	token.setValidityPeriod(tokenInfo.getValidityPeriod() / 1000L);
-    	token.setValidityPeriodInMillis(tokenInfo.getValidityPeriod());
-    	token.setRefreshTokenIssuedTime(new Timestamp(tokenInfo.getIssuedTime()));
-    	token.setTokenId(UUID.randomUUID().toString());
-    	token.setTokenType(tokenInfo.isApplicationToken() ? "APPLICATION" : "APPLICATION USER");
-
-    	OAuthIssuer oAuthIssuerImpl = OAuthServerConfiguration.getInstance().getOAuthTokenGenerator();
-    	token.setRefreshToken(oAuthIssuerImpl.refreshToken());
-        
-//    	AuthenticatedUser user = AuthenticatedUser.createLocalAuthenticatedUserFromSubjectIdentifier(tokenInfo.getEndUserName());
-    	AuthenticatedUser user = oAuthAppDO.getUser();
-    	token.setAuthzUser(user);
-    	
-    	try {
-    	log.info("Begin store token: " + tokenInfo.getAccessToken());
-    	tokenDAO.storeAccessToken(tokenInfo.getAccessToken(), tokenInfo.getConsumerKey(), token, connection, user.getUserStoreDomain());
-    	log.info("End store token: " + tokenInfo.getAccessToken());
-    	connection.commit();
-    	log.info("Commit store token: " + tokenInfo.getAccessToken());
-    	} catch (Exception e) {
-    		log.error("Error storing token: " + tokenInfo.getAccessToken());
-    		e.printStackTrace();
-    	}
-        } finally {
-            IdentityDatabaseUtil.closeConnection(connection);
-        }
+        // TODO Auto-generated method stub
+        return null;
     }
-    
-    private void registerAdminClient() throws APIManagementException {
-		try {
-			KeyManagerConfiguration config = KeyManagerHolder.getKeyManagerInstance().getKeyManagerConfiguration();
-			OAuthAppDAO dao = new OAuthAppDAO();
 
-			try {
-				OAuthAppDO old = dao.getAppInformation(config.getParameter(ClientConstants.INTROSPECTION_CK));
-			} catch (InvalidOAuthClientException e0) {
-				OAuthAppDO app = new OAuthAppDO();
-
-				app.setApplicationName(config.getParameter(ClientConstants.INTROSPECTION_CK));
-				app.setCallbackUrl(config.getParameter(ClientConstants.CLIENT_REG_ENDPOINT));
-				app.setGrantTypes("password client_credentials implicit");
-				app.setOauthConsumerKey(config.getParameter(ClientConstants.INTROSPECTION_CK));
-				app.setOauthConsumerSecret(config.getParameter(ClientConstants.INTROSPECTION_CS));
-				app.setPkceMandatory(false);
-				app.setPkceSupportPlain(false);
-				app.setOauthVersion("OAuth-2.0");
-
-				AuthenticatedUser user = AuthenticatedUser.createLocalAuthenticatedUserFromSubjectIdentifier("admin");
-				app.setUser(user);
-
-				dao.addOAuthApplication(app);
-			}
-		} catch (Exception e) {
-			throw new APIManagementException(e);
-		}
-	}    
-    
-    @SuppressWarnings("unchecked")
-	@Override
-    public AccessTokenInfo getTokenMetaData(String token) throws APIManagementException {
-    	AccessTokenInfo tokenInfo = new AccessTokenInfo();
-    	tokenInfo.setAccessToken(token);
-    	
-    	HttpClient client = getHttpClient();
-        ObjectMapper mapper = objectMapper();
-
-        String registrationURL 		= configuration.getParameter(ClientConstants.CLIENT_REG_ENDPOINT);
-        String client_id 			= configuration.getParameter(ClientConstants.INTROSPECTION_CK);
-        String client_secret 		= configuration.getParameter(ClientConstants.INTROSPECTION_CS);
-        String introspectionURL 	= configuration.getParameter(ClientConstants.INTROSPECTION_URL);
-//        String accessToken = getOauthToken();
-        BufferedReader reader = null;
-
-        try {
-        	log.debug("Checking token " + token);
-            HttpPost request = new HttpPost(registrationURL.trim() + introspectionURL + "?token="+token);
-            //set authorization header.
-            request.addHeader(ClientConstants.AUTHORIZATION, "Basic "+ Base64.getEncoder().encodeToString(new String(client_id+":"+client_secret).getBytes()));
-            HttpResponse response = client.execute(request);
-
-            int responseCode = response.getStatusLine().getStatusCode();
-
-            HttpEntity entity = response.getEntity();
-
-            reader = new BufferedReader(new InputStreamReader(entity.getContent(), "UTF-8"));
-
-            if (responseCode == HttpStatus.SC_OK) {
-
-            	Map<String, Object> validation = mapper.readValue(reader, Map.class);
-            	log.debug("Got info " + validation);
-            	
-            	tokenInfo.setApplicationToken((boolean) validation.get("aac_applicationToken"));
-            	tokenInfo.setConsumerKey((String) validation.get("client_id"));
-            	tokenInfo.setScope(((String) validation.get("scope")).split(" "));
-            	tokenInfo.setTokenValid((boolean) validation.get("active"));
-            	tokenInfo.setIssuedTime(((int) validation.get("iat")) * 1000L);
-            	long exp = ((int) validation.get("exp")) * 1000L; 
-            	tokenInfo.setValidityPeriod(exp - tokenInfo.getIssuedTime());
-            	tokenInfo.setEndUserName(((String) validation.get("username")) + "@" + ((String) validation.get("aac_am_tenant")));
-            	
-            	
-            	
-//            	storeTokenLocally(tokenInfo, validation.getGrantType());
-            } else {
-            	log.error("ERROR: " + mapper.readValue(reader, Map.class));
-                handleException("Could not get token metadata for token " + token);
-            }
-
-        } catch (Exception e) {
-			handleException("Error checking authorization for token.", e);
-		} finally {
-			if (reader != null) {
-				IOUtils.closeQuietly(reader);
-			}
-			client.getConnectionManager().shutdown();
-		}    	
-    	
-    	
-    	return tokenInfo;
+    @Override
+    public AccessTokenInfo getTokenMetaData(String accessToken) throws APIManagementException {
+        // TODO Auto-generated method stub
+        return null;
     }
-    
 
     @Override
     public KeyManagerConfiguration getKeyManagerConfiguration() throws APIManagementException {
-        return configuration;
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
     public OAuthApplicationInfo buildFromJSON(String jsonInput) throws APIManagementException {
+        // TODO Auto-generated method stub
         return null;
     }
 
-    /**
-     * This method will be called when mapping existing OAuth Clients with Application in API Manager
-     *
-     * @param appInfoRequest Details of the OAuth Client to be mapped.
-     * @return {@code OAuthApplicationInfo} with the details of the mapped client.
-     * @throws APIManagementException
-     */
     @Override
-    public OAuthApplicationInfo mapOAuthApplication(OAuthAppRequest appInfoRequest)
-            throws APIManagementException {
-
-        OAuthApplicationInfo oAuthApplicationInfo = appInfoRequest.getOAuthApplicationInfo();
-        return oAuthApplicationInfo;
+    public OAuthApplicationInfo mapOAuthApplication(OAuthAppRequest appInfoRequest) throws APIManagementException {
+        // TODO Auto-generated method stub
+        return null;
     }
 
-	@Override
-	public boolean registerNewResource(API api, Map resourceAttributes) throws APIManagementException {
-		BufferedReader reader = null;
-		HttpClient httpClient = getHttpClient();
+    @Override
+    public void loadConfiguration(KeyManagerConfiguration configuration) throws APIManagementException {
+        // TODO Auto-generated method stub
+        
+    }
 
-		ObjectMapper mapper = objectMapper();
-
-		try {
-			AACService service = new AACService();
-
-			service.setDescription(api.getDescription());
-			
-			String name = extractDomainFromTenant(api.getId().getProviderName()) + "-" + api.getId().getApiName() + "-" + api.getId().getVersion(); 
-			String apiKey = api.getId().getProviderName() + "-" + api.getId().getApiName() + "-" + api.getId().getVersion();
-			
-			service.setServiceName(name);
-			service.setApiKey(apiKey);
-
-			for (Scope scope : api.getScopes()) {
-				AACResource resource = new AACResource();
-				resource.setDescription(scope.getDescription());
-				resource.setName(scope.getName());
-				resource.setResourceUri(scope.getKey());
-
-				List<String> roles = Lists.newArrayList(scope.getRoles().split(","));
-				resource.setRoles(roles);
-
-				service.getResources().add(resource);
-			}
-
-			KeyManagerConfiguration config = KeyManagerHolder.getKeyManagerInstance().getKeyManagerConfiguration();
-
-			String registrationEndpoint = config.getParameter(ClientConstants.CLIENT_REG_ENDPOINT);
-			String registrationToken = getOauthToken();
-
-			HttpPost httpPost = new HttpPost(registrationEndpoint.trim() + "/wso2/resources/" + api.getId().getProviderName());
-
-			String jsonPayload = mapper.writeValueAsString(service);
-
-			httpPost.setEntity(new StringEntity(jsonPayload, ClientConstants.UTF_8));
-			httpPost.setHeader(ClientConstants.CONTENT_TYPE, ClientConstants.APPLICATION_JSON_CONTENT_TYPE);
-			httpPost.setHeader(ClientConstants.AUTHORIZATION, ClientConstants.BEARER + registrationToken);
-
-			HttpResponse response = httpClient.execute(httpPost);
-			int responseCode = response.getStatusLine().getStatusCode();
-
-			HttpEntity entity = response.getEntity();
-			reader = new BufferedReader(new InputStreamReader(entity.getContent(), ClientConstants.UTF_8));
-
-			if (HttpStatus.SC_OK == responseCode) {
-
-				return true;
-			} else {
-				handleException("Some thing wrong here while registering the new API " + "HTTP Error response code is " + responseCode);
-			}
-
-		} catch (Exception e) {
-			handleException("Error registering API.", e);
-		}
-
-		// TODO false if fail?
-		return true;
-	}
-	
-	private String extractDomainFromTenant(String tenant) {
-		String un = tenant.replace("-AT-", "@");
-
-		int index = un.indexOf('@');
-		int lastIndex = un.lastIndexOf('@');
-		
-		if (index != lastIndex) {
-			un = un.substring(lastIndex + 1);
-		} else {
-			un = "carbon.super";
-		}
-		return un;
-	}	
+    @Override
+    public boolean registerNewResource(API api, Map resourceAttributes) throws APIManagementException {
+        // TODO Auto-generated method stub
+        return false;
+    }
 
     @Override
     public Map getResourceByApiId(String apiId) throws APIManagementException {
+        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
     public boolean updateRegisteredResource(API api, Map resourceAttributes) throws APIManagementException {
-        return true;
+        // TODO Auto-generated method stub
+        return false;
     }
 
     @Override
     public void deleteRegisteredResourceByAPIId(String apiID) throws APIManagementException {
-		HttpClient httpClient = getHttpClient();
-
-		try {
-			KeyManagerConfiguration config = KeyManagerHolder.getKeyManagerInstance().getKeyManagerConfiguration();
-
-			String registrationEndpoint = config.getParameter(ClientConstants.CLIENT_REG_ENDPOINT);
-			String registrationToken = getOauthToken();
-
-			HttpDelete httpDelete = new HttpDelete(registrationEndpoint.trim() + "/wso2/resources/" + URLEncoder.encode(apiID, "UTF-8"));
-
-			httpDelete.setHeader(ClientConstants.AUTHORIZATION, ClientConstants.BEARER + registrationToken);
-
-			HttpResponse response = httpClient.execute(httpDelete);
-			int responseCode = response.getStatusLine().getStatusCode();
-
-			if (HttpStatus.SC_OK != responseCode) {
-				handleException("Some thing wrong here while deleting the new API " + "HTTP Error response code is " + responseCode);
-			}
-
-		} catch (Exception e) {
-			handleException("Error deleting API.", e);
-		}
-
-	}
+        // TODO Auto-generated method stub
+        
+    }
 
     @Override
-    public void deleteMappedApplication(String s) throws APIManagementException {
+    public void deleteMappedApplication(String consumerKey) throws APIManagementException {
+        // TODO Auto-generated method stub
+        
     }
 
     @Override
     public Set<String> getActiveTokensByConsumerKey(String consumerKey) throws APIManagementException {
-    	ApiMgtDAO apiMgtDAO = ApiMgtDAO.getInstance();
-        return apiMgtDAO.getActiveTokensOfConsumerKey(consumerKey);
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
     public AccessTokenInfo getAccessTokenByConsumerKey(String consumerKey) throws APIManagementException {
-    	AccessTokenInfo tokenInfo = new AccessTokenInfo();
-        ApiMgtDAO apiMgtDAO = ApiMgtDAO.getInstance();
-
-        Set<String> tokens = getActiveTokensByConsumerKey(consumerKey);
-        
-        APIKey apiKey;
-        if (tokens != null && tokens.size() > 0) {
-        	String token = tokens.iterator().next();
-        	apiKey = apiMgtDAO.getAccessTokenData(token);
-            tokenInfo.setAccessToken(apiKey.getAccessToken());                
-            tokenInfo.setConsumerSecret(apiKey.getConsumerSecret());
-            tokenInfo.setValidityPeriod(apiKey.getValidityPeriod());
-            tokenInfo.setScope(apiKey.getTokenScope().split("\\s"));
-        } else {
-            tokenInfo.setAccessToken("");
-            //set default validity period
-            tokenInfo.setValidityPeriod(3600);
-        }
-        tokenInfo.setConsumerKey(consumerKey);
-        return tokenInfo;
+        // TODO Auto-generated method stub
+        return null;
     }
-    
-	private String getOauthToken() throws APIManagementException {
-		HttpClient httpClient = getHttpClient();
-		BufferedReader reader = null;
-		KeyManagerConfiguration config = KeyManagerHolder.getKeyManagerInstance().getKeyManagerConfiguration();
-		ObjectMapper mapper = objectMapper();
-		mapper.setVisibility(mapper.getSerializationConfig().getDefaultVisibilityChecker().withFieldVisibility(JsonAutoDetect.Visibility.ANY).withGetterVisibility(JsonAutoDetect.Visibility.ANY)
-				.withSetterVisibility(JsonAutoDetect.Visibility.ANY).withCreatorVisibility(JsonAutoDetect.Visibility.ANY));
-
-		try {
-			String registrationEndpoint = config.getParameter(ClientConstants.CLIENT_REG_ENDPOINT);
-			String clientId = config.getParameter(ClientConstants.INTROSPECTION_CK);
-			String clientSecret = config.getParameter(ClientConstants.INTROSPECTION_CS);
-
-			// validity_period doesn't work in oauth
-			HttpPost httpPost = new HttpPost(registrationEndpoint.trim() + "/oauth/token?" + "client_id=" + clientId + "&client_secret=" + clientSecret + "&grant_type=client_credentials");
-
-			httpPost.setHeader(ClientConstants.CONTENT_TYPE, ClientConstants.APPLICATION_JSON_CONTENT_TYPE);
-
-			HttpResponse response = httpClient.execute(httpPost);
-			int responseCode = response.getStatusLine().getStatusCode();
-
-			HttpEntity entity = response.getEntity();
-			reader = new BufferedReader(new InputStreamReader(entity.getContent(), ClientConstants.UTF_8));
-
-			if (HttpStatus.SC_OK == responseCode) {
-
-				Map tokenMap = mapper.readValue(reader, Map.class);
-
-				String token = (String) tokenMap.get("access_token");
-
-				return token;
-			} else {
-				handleException("Some thing wrong here while retrieving the token " + "HTTP Error response code is " + responseCode);
-			}
-		} catch (Exception e) {
-			handleException("Error registering client app.", e);
-		} finally {
-			if (reader != null) {
-				IOUtils.closeQuietly(reader);
-			}
-			httpClient.getConnectionManager().shutdown();
-		}
-		return null;
-	}
-	
-    public static final String DELETE_MAPPING = "DELETE FROM AM_APPLICATION_KEY_MAPPING WHERE APPLICATION_ID=? AND KEY_TYPE=?";
-    public static final String DELETE_REGISTRATION = "DELETE FROM AM_APPLICATION_REGISTRATION WHERE APP_ID=? AND TOKEN_TYPE=?";
-    public static final String DELETE_OAUTH = "DELETE FROM IDN_OAUTH_CONSUMER_APPS WHERE APP_NAME=?";
-    
-    private void cleanupRegistrationByClientId(String clientId) throws APIManagementException {
-    	ApiMgtDAO dao = ApiMgtDAO.getInstance();
-    	Map map = dao.getApplicationIdAndTokenTypeByConsumerKey(clientId);
-    	cleanupRegistration(Integer.parseInt((String)map.get("application_id")), (String)map.get("token_type"));
-    }    
-    
-    private void cleanupRegistrationByAppName(String appName, String userName, String tokenType) throws APIManagementException {
-    	ApiMgtDAO dao = ApiMgtDAO.getInstance();
-    	int id = dao.getApplicationId(appName, userName);
-    	cleanupRegistration(id, tokenType);
-    	cleanupOauthApp(appName);
-    }    
-    
-	private void cleanupRegistration(int id, String tokenType) throws APIManagementException {
-		Connection conn = null;
-		PreparedStatement ps1 = null;
-		PreparedStatement ps2 = null;
-
-		try {
-			conn = APIMgtDBUtil.getConnection();
-			conn.setAutoCommit(false);			
-			
-			ps1 = conn.prepareStatement(DELETE_MAPPING);
-			ps1.setInt(1, id);
-			ps1.setString(2, tokenType);
-			ps1.execute();
-			
-			ps2 = conn.prepareStatement(DELETE_REGISTRATION);
-			ps2.setInt(1, id);
-			ps2.setString(2, tokenType);
-			ps2.execute();			
-
-			conn.commit();
-		} catch (SQLException e) {
-			try {
-				if (conn != null) {
-					conn.rollback();
-				}
-			} catch (SQLException e1) {
-				handleException("Error occurred while Rolling back changes done on Application Registration", e1);
-			}
-			handleException("Error occurred while cleaning up : " + id, e);
-		} finally {
-			APIMgtDBUtil.closeStatement(ps1);
-			APIMgtDBUtil.closeStatement(ps2);
-			APIMgtDBUtil.closeAllConnections(ps1, conn, null);
-		}
-	}
-	
-	private void cleanupOauthApp(String appName) throws APIManagementException {
-		Connection conn = null;
-		PreparedStatement ps1 = null;
-
-		try {
-			conn = APIMgtDBUtil.getConnection();
-			conn.setAutoCommit(false);			
-			
-			ps1 = conn.prepareStatement(DELETE_OAUTH);
-			ps1.setString(1, appName);
-			ps1.execute();
-			
-			conn.commit();
-		} catch (SQLException e) {
-			try {
-				if (conn != null) {
-					conn.rollback();
-				}
-			} catch (SQLException e1) {
-				handleException("Error occurred while Rolling back changes done on Application Registration", e1);
-			}
-			handleException("Error occurred while cleaning up : " + appName, e);
-		} finally {
-			APIMgtDBUtil.closeStatement(ps1);
-			APIMgtDBUtil.closeAllConnections(ps1, conn, null);
-		}
-	}	
-    
-
-    /**
-     * common method to throw exceptions.
-     *
-     * @param msg this parameter contain error message that we need to throw.
-     * @param e   Exception object.
-     * @throws APIManagementException
-     */
-    private void handleException(String msg, Exception e) throws APIManagementException {
-        log.error(msg, e);
-        throw new APIManagementException(msg, e);
-    }
-
-    /**
-     * common method to throw exceptions. This will only expect one parameter.
-     *
-     * @param msg error message as a string.
-     * @throws APIManagementException
-     */
-    private void handleException(String msg) throws APIManagementException {
-        log.error(msg);
-        throw new APIManagementException(msg);
-    }
-
-    /**
-     * This method will return HttpClient object.
-     *
-     * @return HttpClient object.
-     */
-    private HttpClient getHttpClient() {
-        HttpClient httpClient = new DefaultHttpClient();
-        return httpClient;
-    }
-    
+//
+//    private static final Log log = LogFactory.getLog(AACOAuthClient.class);
+//    
+//    private KeyManagerConfiguration configuration;
+//
+//    @Override
+//    public void loadConfiguration(KeyManagerConfiguration configuration) throws APIManagementException {
+//        this.configuration = configuration;
+//        SubscriberKeyMgtClientPool.getInstance().setConfiguration(this.configuration);
+//    }
+//    
+//    /**
+//     * This method will Register the client in Authorization Server.
+//     *
+//     * @param oauthAppRequest this object holds all parameters required to register an OAuth Client.
+//     */
+//    @Override
+//	public OAuthApplicationInfo createApplication(OAuthAppRequest oauthAppRequest) throws APIManagementException {
+//
+//		BufferedReader reader = null;
+//		HttpClient httpClient = getHttpClient();
+//		ApiMgtDAO dao = ApiMgtDAO.getInstance();
+//
+//		ObjectMapper mapper = objectMapper();
+//		mapper.setVisibility(mapper.getSerializationConfig().getDefaultVisibilityChecker()
+//                .withFieldVisibility(JsonAutoDetect.Visibility.ANY)
+//                .withGetterVisibility(JsonAutoDetect.Visibility.ANY)
+//                .withSetterVisibility(JsonAutoDetect.Visibility.ANY)
+//                .withCreatorVisibility(JsonAutoDetect.Visibility.ANY));
+//
+//		try {
+//			OAuthApplicationInfo oAuthApplicationInfo = oauthAppRequest.getOAuthApplicationInfo();
+//			
+//			log.debug("Creating a new oAuthApp in Authorization Server");
+//
+//			KeyManagerConfiguration config = KeyManagerHolder.getKeyManagerInstance().getKeyManagerConfiguration();
+//
+//			String registrationEndpoint = config.getParameter(ClientConstants.CLIENT_REG_ENDPOINT);
+//			String registrationToken = getOauthToken();
+//
+//			ClientAppBasic app = convertRequest(oAuthApplicationInfo);
+//			
+//			HttpPost httpPost = new HttpPost(registrationEndpoint.trim() + "/wso2/client/" + app.getUserName());
+//
+//			String jsonPayload = mapper.writeValueAsString(app);
+//
+//			httpPost.setEntity(new StringEntity(jsonPayload, ClientConstants.UTF_8));
+//			httpPost.setHeader(ClientConstants.CONTENT_TYPE, ClientConstants.APPLICATION_JSON_CONTENT_TYPE);
+//			httpPost.setHeader(ClientConstants.AUTHORIZATION, ClientConstants.BEARER + registrationToken);
+//
+//			log.debug("call createApp for "+jsonPayload);
+//			
+//			HttpResponse response = httpClient.execute(httpPost);
+//			int responseCode = response.getStatusLine().getStatusCode();
+//
+//			HttpEntity entity = response.getEntity();
+//			reader = new BufferedReader(new InputStreamReader(entity.getContent(), ClientConstants.UTF_8));
+//
+//			if (HttpStatus.SC_OK == responseCode) {
+//
+//				app = mapper.readValue(reader, ClientAppBasic.class);
+//
+//            	Map infoMap = mapper.convertValue(oAuthApplicationInfo, Map.class);
+//            	Map pars = (Map)infoMap.get("parameters");
+//				
+//                String tokenScope = (String) oAuthApplicationInfo.getParameter("tokenScope");
+//		        String tokenScopes[] = new String[1];
+//		        tokenScopes[0] = tokenScope;                
+//            	
+//				OAuthApplicationInfo respOAuthApplicationInfo = convertResponse(app);
+//				respOAuthApplicationInfo.addParameter("tokenScope", "" + Lists.newArrayList(tokenScope));
+//				
+//				respOAuthApplicationInfo.setClientId(app.getClientId());
+//				respOAuthApplicationInfo.setClientSecret(app.getClientSecret());
+//				
+//				oauthAppRequest.setOAuthApplicationInfo(respOAuthApplicationInfo);
+//				
+//				storeApplication(respOAuthApplicationInfo);
+//				
+//				return respOAuthApplicationInfo;
+//			} else {
+//				handleException("Some thing wrong here while registering the new client " + "HTTP Error response code is " + responseCode);
+//			}
+//
+//		} catch (Exception e) {
+//			cleanupRegistrationByAppName(oauthAppRequest.getOAuthApplicationInfo().getClientName(), (String)oauthAppRequest.getOAuthApplicationInfo().getParameter("username"), (String)oauthAppRequest.getOAuthApplicationInfo().getParameter("key_type"));
+//			handleException("Error registering client app.", e);
+//		} finally {
+//			if (reader != null) {
+//				IOUtils.closeQuietly(reader);
+//			}
+//			httpClient.getConnectionManager().shutdown();
+//		}
+//		return null;
+//	}
+//
+//	protected ObjectMapper objectMapper() {
+//		ObjectMapper mapper = new ObjectMapper();
+//		mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+//		return mapper;
+//	}
+//    
+//    private void storeApplication(OAuthApplicationInfo oauthApplicationInfo) throws Exception {
+//    	OAuthAppDO app = new OAuthAppDO();
+//    	
+//    	app.setApplicationName(oauthApplicationInfo.getClientName());
+//    	app.setCallbackUrl(oauthApplicationInfo.getCallBackURL());
+//    	app.setGrantTypes((String)oauthApplicationInfo.getParameter("grant_types"));
+//    	app.setOauthConsumerKey(oauthApplicationInfo.getClientId());
+//    	app.setOauthConsumerSecret(oauthApplicationInfo.getClientSecret());
+//    	app.setPkceMandatory(false);
+//    	app.setPkceSupportPlain(false);
+//    	app.setOauthVersion("OAuth-2.0");
+//    	
+//    	AuthenticatedUser user = AuthenticatedUser.createLocalAuthenticatedUserFromSubjectIdentifier((String)oauthApplicationInfo.getParameter("username"));
+//    	app.setUser(user);
+//    	
+//    	OAuthAppDAO dao = new OAuthAppDAO();
+//    	
+//    	dao.addOAuthApplication(app);
+//    }    
+//    
+//
+//    private org.wso2.carbon.apimgt.api.model.xsd.OAuthApplicationInfo convertAppInfo(OAuthApplicationInfo oAuthApplicationInfo) {
+//        org.wso2.carbon.apimgt.api.model.xsd.OAuthApplicationInfo applicationToCreate = new org.wso2.carbon.apimgt.api.model.xsd.OAuthApplicationInfo();
+//        applicationToCreate.setIsSaasApplication(oAuthApplicationInfo.getIsSaasApplication());
+//        applicationToCreate.setCallBackURL(oAuthApplicationInfo.getCallBackURL());
+//        applicationToCreate.setClientName(oAuthApplicationInfo.getClientName());
+//        applicationToCreate.setAppOwner((String)oAuthApplicationInfo.getParameter("username"));
+//        applicationToCreate.setJsonString(oAuthApplicationInfo.getJsonString());
+//    	
+//    	return applicationToCreate;
+//    }
+//    
+//    private OAuthApplicationInfo convertAppInfo(org.wso2.carbon.apimgt.api.model.xsd.OAuthApplicationInfo oAuthApplicationInfo) throws Exception {
+//    	OAuthApplicationInfo info = new OAuthApplicationInfo();
+//    	info.setIsSaasApplication(oAuthApplicationInfo.getIsSaasApplication());
+//    	info.setCallBackURL(oAuthApplicationInfo.getCallBackURL());
+//    	info.setClientName(oAuthApplicationInfo.getClientName());
+//    	info.setAppOwner(oAuthApplicationInfo.getAppOwner());
+//    	info.setJsonString(oAuthApplicationInfo.getJsonString());
+//    	
+//    	ObjectMapper mapper = objectMapper();
+//    	Map pars = mapper.readValue(info.getJsonString(), Map.class);
+//    	info.putAll(pars);
+//    	
+//    	return info;
+//    }    
+//    
+//    
+//    private ClientAppBasic convertRequest(OAuthApplicationInfo oAuthApplicationInfo) throws Exception {
+//        ObjectMapper mapper = objectMapper();
+//        
+//        Map parametersMap = mapper.readValue(oAuthApplicationInfo.getJsonString(), Map.class);
+//        
+//        String userName = (String)parametersMap.get("username");
+//        String keyType = (String)parametersMap.get("key_type");
+//        String clientName = oAuthApplicationInfo.getClientName();
+//        
+//        ClientAppBasic client = new ClientAppBasic();
+//        
+//        client.setClientId(oAuthApplicationInfo.getClientId());
+//        client.setName(userName + "_" + clientName + "_" + keyType);
+//
+//        String grants = (String)parametersMap.get("grant_types");
+//        Set<String> grantsSet = Sets.newHashSet(grants.split(","));
+//        client.setGrantedTypes(grantsSet);
+//        
+//        client.setRedirectUris(oAuthApplicationInfo.getCallBackURL());
+//        client.setUserName(userName);
+//        client.setScope(((String)parametersMap.get("tokenScope")).replace(" ", ","));
+//        
+//        client.setParameters(oAuthApplicationInfo.getJsonString());
+//        
+//        return client;
+//    }
+//    
+//    private OAuthApplicationInfo convertResponse(ClientAppBasic app) throws Exception {
+//    	ObjectMapper mapper = objectMapper();
+//    	
+//        OAuthApplicationInfo oAuthApplicationInfo = new OAuthApplicationInfo();
+//        
+//        oAuthApplicationInfo.setClientName(app.getName());
+//        oAuthApplicationInfo.setCallBackURL(app.getRedirectUris());
+//        oAuthApplicationInfo.setClientId(app.getClientId());
+//        oAuthApplicationInfo.setClientSecret(app.getClientSecret());
+//        
+//        oAuthApplicationInfo.setClientName(app.getName());
+//        
+//        Map pars = mapper.readValue(app.getParameters(), Map.class);
+//        
+//        if (pars.containsKey("grant_types")) {
+//        	pars.put("grant_types", ((String)pars.get("grant_types")).replace(",", " "));
+//        }
+//        
+//        pars.put("redirect_uris", app.getRedirectUris());
+//        pars.put("client_name", app.getName());
+//        
+//        oAuthApplicationInfo.putAll(pars);
+//        
+//        return oAuthApplicationInfo;
+//    }    
+//
+//    /**
+//     * This method will update an existing OAuth Client.
+//     *
+//     * @param oauthAppRequest Parameters to be passed to Authorization Server,
+//     *                        encapsulated as an {@code OAuthAppRequest}
+//     * @return Details of updated OAuth Client.
+//     * @throws APIManagementException
+//     */
+//    @Override
+//    public OAuthApplicationInfo updateApplication(OAuthAppRequest oauthAppRequest) throws APIManagementException {
+//
+//    	BufferedReader reader = null;
+//		HttpClient httpClient = getHttpClient();
+//		ObjectMapper mapper = objectMapper();
+//
+//		try {
+//
+//			OAuthApplicationInfo oAuthApplicationInfo = oauthAppRequest.getOAuthApplicationInfo();
+//
+//			log.debug("Updating an oAuthApp in Authorization Server");
+//
+//			KeyManagerConfiguration config = KeyManagerHolder.getKeyManagerInstance().getKeyManagerConfiguration();
+//
+//			String registrationEndpoint = config.getParameter(ClientConstants.CLIENT_REG_ENDPOINT);
+//			String registrationToken = getOauthToken();
+//
+//			ClientAppBasic app = convertRequest(oAuthApplicationInfo);
+//			
+//			HttpPut httpPost = new HttpPut(registrationEndpoint.trim() + "/wso2/client/" + app.getClientId());
+//
+//			String jsonPayload = mapper.writeValueAsString(app);
+//
+//			httpPost.setEntity(new StringEntity(jsonPayload, ClientConstants.UTF_8));
+//			httpPost.setHeader(ClientConstants.CONTENT_TYPE, ClientConstants.APPLICATION_JSON_CONTENT_TYPE);
+//			httpPost.setHeader(ClientConstants.AUTHORIZATION, ClientConstants.BEARER + registrationToken);
+//
+//			HttpResponse response = httpClient.execute(httpPost);
+//			int responseCode = response.getStatusLine().getStatusCode();
+//
+//			HttpEntity entity = response.getEntity();
+//			reader = new BufferedReader(new InputStreamReader(entity.getContent(), ClientConstants.UTF_8));
+//
+//			if (HttpStatus.SC_OK == responseCode) {
+//
+//				app = mapper.readValue(reader, ClientAppBasic.class);
+//
+//				oAuthApplicationInfo = convertResponse(app);
+//
+//				return oAuthApplicationInfo;
+//			} else {
+//				handleException("Some thing wrong here while updating the client " + "HTTP Error response code is " + responseCode);
+//			}
+//
+//		} catch (Exception e) {
+//			cleanupRegistrationByAppName(oauthAppRequest.getOAuthApplicationInfo().getClientName(), (String)oauthAppRequest.getOAuthApplicationInfo().getParameter("username"), (String)oauthAppRequest.getOAuthApplicationInfo().getParameter("key_type"));
+//			handleException("Error updating client app.", e);
+//		} finally {
+//			if (reader != null) {
+//				IOUtils.closeQuietly(reader);
+//			}
+//			httpClient.getConnectionManager().shutdown();
+//		}
+//		return null;
+//	}
+//
+//    /**
+//     * Deletes OAuth Client from Authorization Server.
+//     *
+//     * @param consumerKey consumer key of the OAuth Client.
+//     * @throws APIManagementException
+//     */
+//    @Override
+//    public void deleteApplication(String clientId) throws APIManagementException {
+//    	OAuthAppDAO dao = new OAuthAppDAO();
+//    	
+//        HttpClient client = getHttpClient();
+//   	
+//        BufferedReader reader = null;
+//    	
+//        log.info("Deleting a new OAuth Client in Authorization Server..");
+//
+//        String registrationUrl = configuration.getParameter(ClientConstants.CLIENT_REG_ENDPOINT);
+//        String accessToken = getOauthToken();
+//
+//        try {
+//            HttpDelete request = new HttpDelete(registrationUrl.trim() + "/wso2/client/" + clientId);
+//            //set authorization header.
+//            request.addHeader(ClientConstants.AUTHORIZATION, ClientConstants.BEARER + accessToken);
+//            HttpResponse response = client.execute(request);
+//
+//            int responseCode = response.getStatusLine().getStatusCode();
+//
+//            HttpEntity entity = response.getEntity();
+//
+//            reader = new BufferedReader(new InputStreamReader(entity.getContent(), "UTF-8"));
+//
+//            if (responseCode != HttpStatus.SC_NOT_FOUND && responseCode != HttpStatus.SC_OK) {
+//            	handleException("Something went wrong while deleting client " + clientId);
+//            }
+//            
+//            dao.removeConsumerApplication(clientId);
+//            
+////            SubscriberKeyMgtClient keyMgtClient = null;
+////            keyMgtClient = SubscriberKeyMgtClientPool.getInstance().get();
+////            keyMgtClient.deleteOAuthApplication(clientId);
+////            cleanupRegistrationByClientId(clientId);
+//            
+//        } catch (Exception e) {
+//			handleException("Error deleting client app.", e);
+//		} finally {
+//			if (reader != null) {
+//				IOUtils.closeQuietly(reader);
+//			}
+//			client.getConnectionManager().shutdown();
+//		}
+//    }
+//
+//    /**
+//     * This method retrieves OAuth application details by given consumer key.
+//     *
+//     * @param consumerKey consumer key of the OAuth Client.
+//     * @return an {@code OAuthApplicationInfo} having all the details of an OAuth Client.
+//     * @throws APIManagementException
+//     */
+//    @Override
+//    public OAuthApplicationInfo retrieveApplication(String consumerKey) throws APIManagementException {
+//
+//        HttpClient client = getHttpClient();
+//        ObjectMapper mapper = objectMapper();
+//
+//        String registrationURL = configuration.getParameter(ClientConstants.CLIENT_REG_ENDPOINT);
+//        String accessToken = getOauthToken();
+//        BufferedReader reader = null;
+//
+//        try {
+//            HttpGet request = new HttpGet(registrationURL.trim() + "/wso2/client/" + consumerKey);
+//            //set authorization header.
+//            request.addHeader(ClientConstants.AUTHORIZATION, ClientConstants.BEARER + accessToken);
+//            HttpResponse response = client.execute(request);
+//
+//            int responseCode = response.getStatusLine().getStatusCode();
+//
+//            HttpEntity entity = response.getEntity();
+//
+//            reader = new BufferedReader(new InputStreamReader(entity.getContent(), "UTF-8"));
+//
+//            if (responseCode == HttpStatus.SC_OK) {
+//
+//            	ClientAppBasic app = mapper.readValue(reader, ClientAppBasic.class);
+//            	
+//            	OAuthApplicationInfo oAuthApplicationInfo = convertResponse(app);
+//            	
+//            	oAuthApplicationInfo.addParameter("client_name", app.getName());
+//            	
+//				return oAuthApplicationInfo;
+//            } else {
+//                handleException("Something went wrong while retrieving clients for consumer key " + consumerKey);
+//            }
+//
+//        } catch (Exception e) {
+//			handleException("Error retrieving client app.", e);
+//		} finally {
+//			if (reader != null) {
+//				IOUtils.closeQuietly(reader);
+//			}
+//			client.getConnectionManager().shutdown();
+//		}
+//		return null;
+//    }
+//
+//	@Override
+//	public AccessTokenRequest buildAccessTokenRequestFromOAuthApp(OAuthApplicationInfo oAuthApplication, AccessTokenRequest tokenRequest) throws APIManagementException {
+//		ObjectMapper mapper = objectMapper(); 
+//		mapper.setVisibility(mapper.getSerializationConfig().getDefaultVisibilityChecker()
+//                .withFieldVisibility(JsonAutoDetect.Visibility.ANY)
+//                .withGetterVisibility(JsonAutoDetect.Visibility.ANY)
+//                .withSetterVisibility(JsonAutoDetect.Visibility.ANY)
+//                .withCreatorVisibility(JsonAutoDetect.Visibility.ANY));		
+//		
+//		AccessTokenRequest req = new AccessTokenRequest();
+//		req.setClientId(oAuthApplication.getClientId());
+//		req.setClientSecret(oAuthApplication.getClientSecret());
+//		req.setCallbackURI(oAuthApplication.getCallBackURL());
+//		req.setScope(tokenRequest.getScope());
+//		req.setGrantType("client_credentials");
+//		req.setValidityPeriod(Long.parseLong((String)oAuthApplication.getParameter("validityPeriod")));
+//		
+//		return req;
+//	}
+//
+//    @Override
+//    public AccessTokenInfo getNewApplicationAccessToken(AccessTokenRequest tokenRequest) throws APIManagementException {
+//
+//    	BufferedReader reader = null;
+//		HttpClient httpClient = getHttpClient();
+//		ObjectMapper mapper = objectMapper();    	
+//		mapper.setVisibility(mapper.getSerializationConfig().getDefaultVisibilityChecker()
+//                .withFieldVisibility(JsonAutoDetect.Visibility.ANY)
+//                .withGetterVisibility(JsonAutoDetect.Visibility.ANY)
+//                .withSetterVisibility(JsonAutoDetect.Visibility.ANY)
+//                .withCreatorVisibility(JsonAutoDetect.Visibility.ANY));			
+//    	
+//		try {
+//			revokeTokenLocally(tokenRequest);
+//
+//			log.debug("Creating a new oAuthApp in Authorization Server");
+//
+//			KeyManagerConfiguration config = KeyManagerHolder.getKeyManagerInstance().getKeyManagerConfiguration();
+//			
+//			String registrationEndpoint = config.getParameter(ClientConstants.CLIENT_REG_ENDPOINT);
+//			String registrationToken = getOauthToken();
+//
+//			
+//			if (tokenRequest.getTokenToRevoke() != null && !"".equals(tokenRequest.getTokenToRevoke())) {
+//				HttpPost httpPost = new HttpPost(registrationEndpoint.trim() + "/wso2/client/token_revoke/" + tokenRequest.getTokenToRevoke());
+//
+//				httpPost.setHeader(ClientConstants.CONTENT_TYPE, ClientConstants.APPLICATION_JSON_CONTENT_TYPE);
+//				httpPost.setHeader(ClientConstants.AUTHORIZATION, ClientConstants.BEARER + registrationToken);
+//
+//				HttpResponse response = httpClient.execute(httpPost);
+//				int responseCode = response.getStatusLine().getStatusCode();
+//
+//				HttpEntity entity = response.getEntity();
+//				reader = new BufferedReader(new InputStreamReader(entity.getContent(), ClientConstants.UTF_8));
+//
+//				if (HttpStatus.SC_OK != responseCode) {
+//					handleException("Some thing wrong here while revoking the token " + "HTTP Error response code is " + responseCode);
+//				}
+//				
+//				EntityUtils.consume(entity);
+//			}			
+//			
+//			if (tokenRequest.getScope() != null) {
+//				{
+//					String url = registrationEndpoint.trim() + "/wso2/client/scope/" + tokenRequest.getClientId() + "?scope="
+//							+ Joiner.on(",").join(tokenRequest.getScope()).replace(" ", ",");					
+//					
+//					HttpPost httpPost = new HttpPost(url);
+//
+//					httpPost.setHeader(ClientConstants.CONTENT_TYPE, ClientConstants.APPLICATION_JSON_CONTENT_TYPE);
+//					httpPost.setHeader(ClientConstants.AUTHORIZATION, ClientConstants.BEARER + registrationToken);
+//
+//					HttpResponse response = httpClient.execute(httpPost);
+//					int responseCode = response.getStatusLine().getStatusCode();
+//
+//					HttpEntity entity = response.getEntity();
+//					reader = new BufferedReader(new InputStreamReader(entity.getContent(), ClientConstants.UTF_8));
+//
+//					if (HttpStatus.SC_OK != responseCode) {
+//						handleException("Some thing wrong here while updating scope " + "HTTP Error response code is " + responseCode);
+//					}
+//
+//					EntityUtils.consume(entity);
+//				}
+//			}
+//			{
+//				String url = registrationEndpoint.trim() + "/wso2/client/validity/" + tokenRequest.getClientId() + "/" + tokenRequest.getValidityPeriod();
+//				
+//				HttpPatch httpPatch = new HttpPatch(url);
+//				
+//				httpPatch.setHeader(ClientConstants.AUTHORIZATION, ClientConstants.BEARER + registrationToken);
+//				
+//				
+//				HttpResponse response = httpClient.execute(httpPatch);
+//				int responseCode = response.getStatusLine().getStatusCode();
+//				
+//				HttpEntity entity = response.getEntity();
+//				EntityUtils.consume(entity);
+//
+//				if (HttpStatus.SC_OK != responseCode) {
+//					handleException("Some thing wrong here while updating token validity time " + "HTTP Error response code is " + responseCode);
+//				}				
+//			}
+//			
+//			{
+//				// validity_period doesn't work in oauth
+//				
+//				String url = registrationEndpoint.trim() + "/oauth/token?" + "client_id=" + tokenRequest.getClientId() + "&client_secret=" + tokenRequest.getClientSecret()
+//						+ "&grant_type=" + (tokenRequest.getGrantType() != null ? tokenRequest.getGrantType() : "client_credentials") + "&validity_period=" + tokenRequest.getValidityPeriod()
+//						+ (tokenRequest.getScope() != null ? ("&scope=" + Joiner.on(" ").join(tokenRequest.getScope())).replace(" ", "%20") : "");
+//				
+//				HttpPost httpPost = new HttpPost(url);
+//
+//				httpPost.setHeader(ClientConstants.CONTENT_TYPE, ClientConstants.APPLICATION_JSON_CONTENT_TYPE);
+//				httpPost.setHeader(ClientConstants.AUTHORIZATION, ClientConstants.BEARER + registrationToken);
+//
+//				HttpResponse response = httpClient.execute(httpPost);
+//				int responseCode = response.getStatusLine().getStatusCode();
+//
+//				HttpEntity entity = response.getEntity();
+//				reader = new BufferedReader(new InputStreamReader(entity.getContent(), ClientConstants.UTF_8));
+//
+//				if (HttpStatus.SC_OK == responseCode) {
+//
+//					Map token = mapper.readValue(reader, Map.class);
+//
+//					AccessTokenInfo tokenInfo = new AccessTokenInfo();
+//					tokenInfo.setAccessToken((String) token.get("access_token"));
+//					
+//					if (token.containsKey("expires_in")) {
+//						tokenInfo.setValidityPeriod(((Number) token.get("expires_in")).longValue() * 1000L);
+//					}
+//					tokenInfo.setIssuedTime(System.currentTimeMillis());
+//
+////					String[] scopes = new String[1];
+////					scopes[0] = (String) token.get("scope");
+//
+//					String[] scopes = ((String) token.get("scope")).split(" ");
+//					
+//					tokenInfo.setScope(scopes);
+//
+//					tokenInfo.setConsumerKey(tokenRequest.getClientId());
+//					tokenInfo.setConsumerSecret(tokenRequest.getClientSecret());
+//					tokenInfo.setApplicationToken(true);
+//
+//					storeTokenLocally(tokenInfo, tokenRequest.getGrantType() != null ? tokenRequest.getGrantType() : "client_credentials");
+//
+//					// for console
+//					tokenInfo.setValidityPeriod(tokenInfo.getValidityPeriod() / 1000L);
+//					
+//					return tokenInfo;
+//				} else {
+//					handleException("Some thing wrong here while retrieving the token " + "HTTP Error response code is " + responseCode);
+//				}
+//			}
+//
+//		} catch (Exception e) {
+//			cleanupRegistrationByClientId(tokenRequest.getClientId());
+//			handleException("Error getting the token.", e);
+//		} finally {
+//			if (reader != null) {
+//				IOUtils.closeQuietly(reader);
+//			}
+//			httpClient.getConnectionManager().shutdown();
+//		}
+//		return null;
+//	}
+//
+//	private void revokeTokenLocally(AccessTokenRequest tokenRequest) throws Exception {
+//		String revokeEndpoint = configuration.getParameter(APIConstants.REVOKE_URL);
+//
+//		// Call the /revoke only if there's a token to be revoked.
+//		if (tokenRequest.getTokenToRevoke() != null && !"".equals(tokenRequest.getTokenToRevoke())) {
+//			URL revokeEndpointURL = new URL(revokeEndpoint);
+//			String revokeEndpointProtocol = revokeEndpointURL.getProtocol();
+//			int revokeEndpointPort = revokeEndpointURL.getPort();
+//
+//			HttpClient revokeEPClient = APIUtil.getHttpClient(revokeEndpointPort, revokeEndpointProtocol);
+//
+//			HttpPost httpRevokePost = new HttpPost(revokeEndpoint);
+//
+//			// Request parameters.
+//			List<NameValuePair> revokeParams = new ArrayList<NameValuePair>(3);
+//			revokeParams.add(new BasicNameValuePair(OAuth.OAUTH_CLIENT_ID, tokenRequest.getClientId()));
+//			revokeParams.add(new BasicNameValuePair(OAuth.OAUTH_CLIENT_SECRET, tokenRequest.getClientSecret()));
+//			revokeParams.add(new BasicNameValuePair("token", tokenRequest.getTokenToRevoke()));
+//
+//			// Revoke the Old Access Token
+//			httpRevokePost.setEntity(new UrlEncodedFormEntity(revokeParams, "UTF-8"));
+//			int statusCode;
+//			try {
+//				HttpResponse revokeResponse = revokeEPClient.execute(httpRevokePost);
+//				statusCode = revokeResponse.getStatusLine().getStatusCode();
+//			} finally {
+//			}
+//
+//			if (statusCode != 200) {
+//				throw new RuntimeException("Token revoke failed : HTTP error code : " + statusCode);
+//			} else {
+//				if (log.isDebugEnabled()) {
+//					log.debug("Successfully submitted revoke request for old application token. HTTP status : 200");
+//				}
+//			}
+//		}
+//	}
+//    
+//    private void storeTokenLocally(AccessTokenInfo tokenInfo, String grantType) throws Exception {
+//    	registerAdminClient();
+//    	
+//    	    	
+//    	Connection connection = IdentityDatabaseUtil.getDBConnection();
+//    	
+//    	TokenMgtDAO tokenDAO = new TokenMgtDAO();
+//    	if (tokenDAO.getTokenIdByToken(tokenInfo.getAccessToken()) != null) {
+//    		log.info("Not storing already existing token: " + tokenInfo.getAccessToken());
+//    		return;
+//    	}  
+//    	
+//    	log.info("Storing token: " + tokenInfo.getAccessToken());
+//    	
+//    	try {
+//    	AccessTokenDO token = new AccessTokenDO();
+//    	
+//        OAuthAppDO oAuthAppDO = OAuth2Util.getAppInformationByClientId(tokenInfo.getConsumerKey());
+//        
+//        String tenantDomain = OAuth2Util.getTenantDomainOfOauthApp(oAuthAppDO);
+//        token.setTenantID(OAuth2Util.getTenantId(tenantDomain));    	
+//    	
+//    	token.setAccessToken(tokenInfo.getAccessToken());
+//    	token.setTokenState(OAuthConstants.TokenStates.TOKEN_STATE_ACTIVE);
+//    	token.setConsumerKey(tokenInfo.getConsumerKey());
+//    	token.setGrantType(grantType);
+//    	token.setScope(tokenInfo.getScopes());
+//    	token.setValidityPeriod(tokenInfo.getValidityPeriod());
+//    	token.setIssuedTime(new Timestamp(tokenInfo.getIssuedTime()));
+//    	token.setValidityPeriod(tokenInfo.getValidityPeriod() / 1000L);
+//    	token.setValidityPeriodInMillis(tokenInfo.getValidityPeriod());
+//    	token.setRefreshTokenIssuedTime(new Timestamp(tokenInfo.getIssuedTime()));
+//    	token.setTokenId(UUID.randomUUID().toString());
+//    	token.setTokenType(tokenInfo.isApplicationToken() ? "APPLICATION" : "APPLICATION USER");
+//
+//    	OAuthIssuer oAuthIssuerImpl = OAuthServerConfiguration.getInstance().getOAuthTokenGenerator();
+//    	token.setRefreshToken(oAuthIssuerImpl.refreshToken());
+//        
+////    	AuthenticatedUser user = AuthenticatedUser.createLocalAuthenticatedUserFromSubjectIdentifier(tokenInfo.getEndUserName());
+//    	AuthenticatedUser user = oAuthAppDO.getUser();
+//    	token.setAuthzUser(user);
+//    	
+//    	try {
+//    	log.info("Begin store token: " + tokenInfo.getAccessToken());
+//    	tokenDAO.storeAccessToken(tokenInfo.getAccessToken(), tokenInfo.getConsumerKey(), token, connection, user.getUserStoreDomain());
+//    	log.info("End store token: " + tokenInfo.getAccessToken());
+//    	connection.commit();
+//    	log.info("Commit store token: " + tokenInfo.getAccessToken());
+//    	} catch (Exception e) {
+//    		log.error("Error storing token: " + tokenInfo.getAccessToken());
+//    		e.printStackTrace();
+//    	}
+//        } finally {
+//            IdentityDatabaseUtil.closeConnection(connection);
+//        }
+//    }
+//    
+//    private void registerAdminClient() throws APIManagementException {
+//		try {
+//			KeyManagerConfiguration config = KeyManagerHolder.getKeyManagerInstance().getKeyManagerConfiguration();
+//			OAuthAppDAO dao = new OAuthAppDAO();
+//
+//			try {
+//				OAuthAppDO old = dao.getAppInformation(config.getParameter(ClientConstants.INTROSPECTION_CK));
+//			} catch (InvalidOAuthClientException e0) {
+//				OAuthAppDO app = new OAuthAppDO();
+//
+//				app.setApplicationName(config.getParameter(ClientConstants.INTROSPECTION_CK));
+//				app.setCallbackUrl(config.getParameter(ClientConstants.CLIENT_REG_ENDPOINT));
+//				app.setGrantTypes("password client_credentials implicit");
+//				app.setOauthConsumerKey(config.getParameter(ClientConstants.INTROSPECTION_CK));
+//				app.setOauthConsumerSecret(config.getParameter(ClientConstants.INTROSPECTION_CS));
+//				app.setPkceMandatory(false);
+//				app.setPkceSupportPlain(false);
+//				app.setOauthVersion("OAuth-2.0");
+//
+//				AuthenticatedUser user = AuthenticatedUser.createLocalAuthenticatedUserFromSubjectIdentifier("admin");
+//				app.setUser(user);
+//
+//				dao.addOAuthApplication(app);
+//			}
+//		} catch (Exception e) {
+//			throw new APIManagementException(e);
+//		}
+//	}    
+//    
+//    @SuppressWarnings("unchecked")
+//	@Override
+//    public AccessTokenInfo getTokenMetaData(String token) throws APIManagementException {
+//    	AccessTokenInfo tokenInfo = new AccessTokenInfo();
+//    	tokenInfo.setAccessToken(token);
+//    	
+//    	HttpClient client = getHttpClient();
+//        ObjectMapper mapper = objectMapper();
+//
+//        String registrationURL 		= configuration.getParameter(ClientConstants.CLIENT_REG_ENDPOINT);
+//        String client_id 			= configuration.getParameter(ClientConstants.INTROSPECTION_CK);
+//        String client_secret 		= configuration.getParameter(ClientConstants.INTROSPECTION_CS);
+//        String introspectionURL 	= configuration.getParameter(ClientConstants.INTROSPECTION_URL);
+////        String accessToken = getOauthToken();
+//        BufferedReader reader = null;
+//
+//        try {
+//        	log.debug("Checking token " + token);
+//            HttpPost request = new HttpPost(registrationURL.trim() + introspectionURL + "?token="+token);
+//            //set authorization header.
+//            request.addHeader(ClientConstants.AUTHORIZATION, "Basic "+ Base64.getEncoder().encodeToString(new String(client_id+":"+client_secret).getBytes()));
+//            HttpResponse response = client.execute(request);
+//
+//            int responseCode = response.getStatusLine().getStatusCode();
+//
+//            HttpEntity entity = response.getEntity();
+//
+//            reader = new BufferedReader(new InputStreamReader(entity.getContent(), "UTF-8"));
+//
+//            if (responseCode == HttpStatus.SC_OK) {
+//
+//            	Map<String, Object> validation = mapper.readValue(reader, Map.class);
+//            	log.debug("Got info " + validation);
+//            	
+//            	tokenInfo.setApplicationToken((boolean) validation.get("aac_applicationToken"));
+//            	tokenInfo.setConsumerKey((String) validation.get("client_id"));
+//            	tokenInfo.setScope(((String) validation.get("scope")).split(" "));
+//            	tokenInfo.setTokenValid((boolean) validation.get("active"));
+//            	tokenInfo.setIssuedTime(((int) validation.get("iat")) * 1000L);
+//            	long exp = ((int) validation.get("exp")) * 1000L; 
+//            	tokenInfo.setValidityPeriod(exp - tokenInfo.getIssuedTime());
+//            	tokenInfo.setEndUserName(((String) validation.get("username")) + "@" + ((String) validation.get("aac_am_tenant")));
+//            	
+//            	
+//            	
+////            	storeTokenLocally(tokenInfo, validation.getGrantType());
+//            } else {
+//            	log.error("ERROR: " + mapper.readValue(reader, Map.class));
+//                handleException("Could not get token metadata for token " + token);
+//            }
+//
+//        } catch (Exception e) {
+//			handleException("Error checking authorization for token.", e);
+//		} finally {
+//			if (reader != null) {
+//				IOUtils.closeQuietly(reader);
+//			}
+//			client.getConnectionManager().shutdown();
+//		}    	
+//    	
+//    	
+//    	return tokenInfo;
+//    }
+//    
+//
+//    @Override
+//    public KeyManagerConfiguration getKeyManagerConfiguration() throws APIManagementException {
+//        return configuration;
+//    }
+//
+//    @Override
+//    public OAuthApplicationInfo buildFromJSON(String jsonInput) throws APIManagementException {
+//        return null;
+//    }
+//
+//    /**
+//     * This method will be called when mapping existing OAuth Clients with Application in API Manager
+//     *
+//     * @param appInfoRequest Details of the OAuth Client to be mapped.
+//     * @return {@code OAuthApplicationInfo} with the details of the mapped client.
+//     * @throws APIManagementException
+//     */
+//    @Override
+//    public OAuthApplicationInfo mapOAuthApplication(OAuthAppRequest appInfoRequest)
+//            throws APIManagementException {
+//
+//        OAuthApplicationInfo oAuthApplicationInfo = appInfoRequest.getOAuthApplicationInfo();
+//        return oAuthApplicationInfo;
+//    }
+//
+//	@Override
+//	public boolean registerNewResource(API api, Map resourceAttributes) throws APIManagementException {
+//		BufferedReader reader = null;
+//		HttpClient httpClient = getHttpClient();
+//
+//		ObjectMapper mapper = objectMapper();
+//
+//		try {
+//			AACService service = new AACService();
+//
+//			service.setDescription(api.getDescription());
+//			
+//			String name = extractDomainFromTenant(api.getId().getProviderName()) + "-" + api.getId().getApiName() + "-" + api.getId().getVersion(); 
+//			String apiKey = api.getId().getProviderName() + "-" + api.getId().getApiName() + "-" + api.getId().getVersion();
+//			
+//			service.setServiceName(name);
+//			service.setApiKey(apiKey);
+//
+//			for (Scope scope : api.getScopes()) {
+//				AACResource resource = new AACResource();
+//				resource.setDescription(scope.getDescription());
+//				resource.setName(scope.getName());
+//				resource.setResourceUri(scope.getKey());
+//
+//				List<String> roles = Lists.newArrayList(scope.getRoles().split(","));
+//				resource.setRoles(roles);
+//
+//				service.getResources().add(resource);
+//			}
+//
+//			KeyManagerConfiguration config = KeyManagerHolder.getKeyManagerInstance().getKeyManagerConfiguration();
+//
+//			String registrationEndpoint = config.getParameter(ClientConstants.CLIENT_REG_ENDPOINT);
+//			String registrationToken = getOauthToken();
+//
+//			HttpPost httpPost = new HttpPost(registrationEndpoint.trim() + "/wso2/resources/" + api.getId().getProviderName());
+//
+//			String jsonPayload = mapper.writeValueAsString(service);
+//
+//			httpPost.setEntity(new StringEntity(jsonPayload, ClientConstants.UTF_8));
+//			httpPost.setHeader(ClientConstants.CONTENT_TYPE, ClientConstants.APPLICATION_JSON_CONTENT_TYPE);
+//			httpPost.setHeader(ClientConstants.AUTHORIZATION, ClientConstants.BEARER + registrationToken);
+//
+//			HttpResponse response = httpClient.execute(httpPost);
+//			int responseCode = response.getStatusLine().getStatusCode();
+//
+//			HttpEntity entity = response.getEntity();
+//			reader = new BufferedReader(new InputStreamReader(entity.getContent(), ClientConstants.UTF_8));
+//
+//			if (HttpStatus.SC_OK == responseCode) {
+//
+//				return true;
+//			} else {
+//				handleException("Some thing wrong here while registering the new API " + "HTTP Error response code is " + responseCode);
+//			}
+//
+//		} catch (Exception e) {
+//			handleException("Error registering API.", e);
+//		}
+//
+//		// TODO false if fail?
+//		return true;
+//	}
+//	
+//	private String extractDomainFromTenant(String tenant) {
+//		String un = tenant.replace("-AT-", "@");
+//
+//		int index = un.indexOf('@');
+//		int lastIndex = un.lastIndexOf('@');
+//		
+//		if (index != lastIndex) {
+//			un = un.substring(lastIndex + 1);
+//		} else {
+//			un = "carbon.super";
+//		}
+//		return un;
+//	}	
+//
+//    @Override
+//    public Map getResourceByApiId(String apiId) throws APIManagementException {
+//        return null;
+//    }
+//
+//    @Override
+//    public boolean updateRegisteredResource(API api, Map resourceAttributes) throws APIManagementException {
+//        return true;
+//    }
+//
+//    @Override
+//    public void deleteRegisteredResourceByAPIId(String apiID) throws APIManagementException {
+//		HttpClient httpClient = getHttpClient();
+//
+//		try {
+//			KeyManagerConfiguration config = KeyManagerHolder.getKeyManagerInstance().getKeyManagerConfiguration();
+//
+//			String registrationEndpoint = config.getParameter(ClientConstants.CLIENT_REG_ENDPOINT);
+//			String registrationToken = getOauthToken();
+//
+//			HttpDelete httpDelete = new HttpDelete(registrationEndpoint.trim() + "/wso2/resources/" + URLEncoder.encode(apiID, "UTF-8"));
+//
+//			httpDelete.setHeader(ClientConstants.AUTHORIZATION, ClientConstants.BEARER + registrationToken);
+//
+//			HttpResponse response = httpClient.execute(httpDelete);
+//			int responseCode = response.getStatusLine().getStatusCode();
+//
+//			if (HttpStatus.SC_OK != responseCode) {
+//				handleException("Some thing wrong here while deleting the new API " + "HTTP Error response code is " + responseCode);
+//			}
+//
+//		} catch (Exception e) {
+//			handleException("Error deleting API.", e);
+//		}
+//
+//	}
+//
+//    @Override
+//    public void deleteMappedApplication(String s) throws APIManagementException {
+//    }
+//
+//    @Override
+//    public Set<String> getActiveTokensByConsumerKey(String consumerKey) throws APIManagementException {
+//    	ApiMgtDAO apiMgtDAO = ApiMgtDAO.getInstance();
+//        return apiMgtDAO.getActiveTokensOfConsumerKey(consumerKey);
+//    }
+//
+//    @Override
+//    public AccessTokenInfo getAccessTokenByConsumerKey(String consumerKey) throws APIManagementException {
+//    	AccessTokenInfo tokenInfo = new AccessTokenInfo();
+//        ApiMgtDAO apiMgtDAO = ApiMgtDAO.getInstance();
+//
+//        Set<String> tokens = getActiveTokensByConsumerKey(consumerKey);
+//        
+//        APIKey apiKey;
+//        if (tokens != null && tokens.size() > 0) {
+//        	String token = tokens.iterator().next();
+//        	apiKey = apiMgtDAO.getAccessTokenData(token);
+//            tokenInfo.setAccessToken(apiKey.getAccessToken());                
+//            tokenInfo.setConsumerSecret(apiKey.getConsumerSecret());
+//            tokenInfo.setValidityPeriod(apiKey.getValidityPeriod());
+//            tokenInfo.setScope(apiKey.getTokenScope().split("\\s"));
+//        } else {
+//            tokenInfo.setAccessToken("");
+//            //set default validity period
+//            tokenInfo.setValidityPeriod(3600);
+//        }
+//        tokenInfo.setConsumerKey(consumerKey);
+//        return tokenInfo;
+//    }
+//    
+//	private String getOauthToken() throws APIManagementException {
+//		HttpClient httpClient = getHttpClient();
+//		BufferedReader reader = null;
+//		KeyManagerConfiguration config = KeyManagerHolder.getKeyManagerInstance().getKeyManagerConfiguration();
+//		ObjectMapper mapper = objectMapper();
+//		mapper.setVisibility(mapper.getSerializationConfig().getDefaultVisibilityChecker().withFieldVisibility(JsonAutoDetect.Visibility.ANY).withGetterVisibility(JsonAutoDetect.Visibility.ANY)
+//				.withSetterVisibility(JsonAutoDetect.Visibility.ANY).withCreatorVisibility(JsonAutoDetect.Visibility.ANY));
+//
+//		try {
+//			String registrationEndpoint = config.getParameter(ClientConstants.CLIENT_REG_ENDPOINT);
+//			String clientId = config.getParameter(ClientConstants.INTROSPECTION_CK);
+//			String clientSecret = config.getParameter(ClientConstants.INTROSPECTION_CS);
+//
+//			// validity_period doesn't work in oauth
+//			HttpPost httpPost = new HttpPost(registrationEndpoint.trim() + "/oauth/token?" + "client_id=" + clientId + "&client_secret=" + clientSecret + "&grant_type=client_credentials");
+//
+//			httpPost.setHeader(ClientConstants.CONTENT_TYPE, ClientConstants.APPLICATION_JSON_CONTENT_TYPE);
+//
+//			HttpResponse response = httpClient.execute(httpPost);
+//			int responseCode = response.getStatusLine().getStatusCode();
+//
+//			HttpEntity entity = response.getEntity();
+//			reader = new BufferedReader(new InputStreamReader(entity.getContent(), ClientConstants.UTF_8));
+//
+//			if (HttpStatus.SC_OK == responseCode) {
+//
+//				Map tokenMap = mapper.readValue(reader, Map.class);
+//
+//				String token = (String) tokenMap.get("access_token");
+//
+//				return token;
+//			} else {
+//				handleException("Some thing wrong here while retrieving the token " + "HTTP Error response code is " + responseCode);
+//			}
+//		} catch (Exception e) {
+//			handleException("Error registering client app.", e);
+//		} finally {
+//			if (reader != null) {
+//				IOUtils.closeQuietly(reader);
+//			}
+//			httpClient.getConnectionManager().shutdown();
+//		}
+//		return null;
+//	}
+//	
+//    public static final String DELETE_MAPPING = "DELETE FROM AM_APPLICATION_KEY_MAPPING WHERE APPLICATION_ID=? AND KEY_TYPE=?";
+//    public static final String DELETE_REGISTRATION = "DELETE FROM AM_APPLICATION_REGISTRATION WHERE APP_ID=? AND TOKEN_TYPE=?";
+//    public static final String DELETE_OAUTH = "DELETE FROM IDN_OAUTH_CONSUMER_APPS WHERE APP_NAME=?";
+//    
+//    private void cleanupRegistrationByClientId(String clientId) throws APIManagementException {
+//    	ApiMgtDAO dao = ApiMgtDAO.getInstance();
+//    	Map map = dao.getApplicationIdAndTokenTypeByConsumerKey(clientId);
+//    	cleanupRegistration(Integer.parseInt((String)map.get("application_id")), (String)map.get("token_type"));
+//    }    
+//    
+//    private void cleanupRegistrationByAppName(String appName, String userName, String tokenType) throws APIManagementException {
+//    	ApiMgtDAO dao = ApiMgtDAO.getInstance();
+//    	int id = dao.getApplicationId(appName, userName);
+//    	cleanupRegistration(id, tokenType);
+//    	cleanupOauthApp(appName);
+//    }    
+//    
+//	private void cleanupRegistration(int id, String tokenType) throws APIManagementException {
+//		Connection conn = null;
+//		PreparedStatement ps1 = null;
+//		PreparedStatement ps2 = null;
+//
+//		try {
+//			conn = APIMgtDBUtil.getConnection();
+//			conn.setAutoCommit(false);			
+//			
+//			ps1 = conn.prepareStatement(DELETE_MAPPING);
+//			ps1.setInt(1, id);
+//			ps1.setString(2, tokenType);
+//			ps1.execute();
+//			
+//			ps2 = conn.prepareStatement(DELETE_REGISTRATION);
+//			ps2.setInt(1, id);
+//			ps2.setString(2, tokenType);
+//			ps2.execute();			
+//
+//			conn.commit();
+//		} catch (SQLException e) {
+//			try {
+//				if (conn != null) {
+//					conn.rollback();
+//				}
+//			} catch (SQLException e1) {
+//				handleException("Error occurred while Rolling back changes done on Application Registration", e1);
+//			}
+//			handleException("Error occurred while cleaning up : " + id, e);
+//		} finally {
+//			APIMgtDBUtil.closeStatement(ps1);
+//			APIMgtDBUtil.closeStatement(ps2);
+//			APIMgtDBUtil.closeAllConnections(ps1, conn, null);
+//		}
+//	}
+//	
+//	private void cleanupOauthApp(String appName) throws APIManagementException {
+//		Connection conn = null;
+//		PreparedStatement ps1 = null;
+//
+//		try {
+//			conn = APIMgtDBUtil.getConnection();
+//			conn.setAutoCommit(false);			
+//			
+//			ps1 = conn.prepareStatement(DELETE_OAUTH);
+//			ps1.setString(1, appName);
+//			ps1.execute();
+//			
+//			conn.commit();
+//		} catch (SQLException e) {
+//			try {
+//				if (conn != null) {
+//					conn.rollback();
+//				}
+//			} catch (SQLException e1) {
+//				handleException("Error occurred while Rolling back changes done on Application Registration", e1);
+//			}
+//			handleException("Error occurred while cleaning up : " + appName, e);
+//		} finally {
+//			APIMgtDBUtil.closeStatement(ps1);
+//			APIMgtDBUtil.closeAllConnections(ps1, conn, null);
+//		}
+//	}	
+//    
+//
+//    /**
+//     * common method to throw exceptions.
+//     *
+//     * @param msg this parameter contain error message that we need to throw.
+//     * @param e   Exception object.
+//     * @throws APIManagementException
+//     */
+//    private void handleException(String msg, Exception e) throws APIManagementException {
+//        log.error(msg, e);
+//        throw new APIManagementException(msg, e);
+//    }
+//
+//    /**
+//     * common method to throw exceptions. This will only expect one parameter.
+//     *
+//     * @param msg error message as a string.
+//     * @throws APIManagementException
+//     */
+//    private void handleException(String msg) throws APIManagementException {
+//        log.error(msg);
+//        throw new APIManagementException(msg);
+//    }
+//
+//    /**
+//     * This method will return HttpClient object.
+//     *
+//     * @return HttpClient object.
+//     */
+//    private HttpClient getHttpClient() {
+//        HttpClient httpClient = new DefaultHttpClient();
+//        return httpClient;
+//    }
+//    
 }

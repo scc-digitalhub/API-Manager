@@ -43,7 +43,40 @@ API Manager tools and themes
 			mysql -u regadmin -p -Dregdb < dbscripts/mysql.sql
 			mysql -u regadmin -p -Dregdb < dbscripts/apimgt/mysql.sql
 
-### 2. WSO2 Configuration
+### 2. WSO2 Configuration - KeyManager only
+
+**2.1. WSO2-AAC connector**
+
+- build **wso2aac.client** project with Maven.
+
+- copy *wso2aac.client-1.0.jar* from the project *API-Manager/wso2aac.client* to the WSO2 directory *repository/components/lib*
+
+**2.2. WSO2 configurations**
+
+- in *repository/conf/api-manager.xml*, change APIKeyManager and set **ConsumerSecret** with the value found in AAC for the client with clientId API_MGT_CLIENT_ID
+
+
+Sample config
+
+```
+  <APIKeyManager>
+    <KeyManagerClientImpl>it.smartcommunitylab.wso2aac.keymanager.AACKeymanager</KeyManagerClientImpl>
+    <Configuration>
+            <ServerURL>https://localhost:${mgt.transport.https.port}${carbon.context}services/</ServerURL>
+        <Username>${admin.username}</Username>
+            <Password>${admin.password}</Password>
+      <TokenEndpoint>http://localhost:9090/oauth/token</TokenEndpoint>
+      <RevokeEndpoint>https://localhost:8243/revoke</RevokeEndpoint>
+      <AACEndpoint>http://localhost:9090</AACEndpoint>
+      <ClientId>API_MGT_CLIENT_ID</ClientId>
+      <ClientSecret>YOUR_MNGMT_CLIENT_SECRET</ClientSecret>
+      <IntrospectionEndpoint>http://localhost:9090/oauth/introspect</IntrospectionEndpoint>
+    </Configuration>
+  </APIKeyManager>
+```
+
+
+### 2. WSO2 Configuration - complete
 
 Clone API Manager project
 

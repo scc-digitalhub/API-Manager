@@ -20,6 +20,14 @@ xml_uncomment() {
   sed -i -e "s|</$1-->|</$1>|" ${target_file}
 }
 
+#edit .xml config file
+xml_comment() {
+  target_file=${2}
+  echo "Commenting ${target_file}"
+  sed -i -e "s|<$1>|<!--$1>|" ${target_file}
+  sed -i -e "s|</$1>|</$1-->|" ${target_file}
+}
+
 xml_replace() {
   property_name=$1
   property_value=$2

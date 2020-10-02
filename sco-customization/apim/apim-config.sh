@@ -42,7 +42,7 @@ xml_replace 'StreamProcessorRestApiUsername' ${APIM_USER} '/APIManager/Analytics
 xml_replace 'StreamProcessorRestApiPassword' ${APIM_PASS} '/APIManager/Analytics' "${conf_path}/${conf_file}"
 if [ ! -z ${AAC_HOSTNAME} ]; then
   xml_uncomment 'APIKeyManager' "${conf_path}/${conf_file}"
-  xml_replace 'KeyManagerClientImpl' 'it.smartcommunitylab.wso2aac.keymanager.AACOAuthClient' '/APIManager/APIKeyManager' "${conf_path}/${conf_file}"
+  xml_replace 'KeyManagerClientImpl' 'it.smartcommunitylab.wso2aac.keymanager.AACKeymanager' '/APIManager/APIKeyManager' "${conf_path}/${conf_file}"
   xml_add 'RegistrationEndpoint' "${AAC_HOSTNAME}" '/APIManager/APIKeyManager/Configuration' "${conf_path}/${conf_file}"
   xml_add 'ConsumerKey' ${AAC_CONSUMERKEY} '/APIManager/APIKeyManager/Configuration' "${conf_path}/${conf_file}"
   xml_add 'ConsumerSecret' ${AAC_CONSUMERSECRET} '/APIManager/APIKeyManager/Configuration' "${conf_path}/${conf_file}"

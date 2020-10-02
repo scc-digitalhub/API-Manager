@@ -674,9 +674,10 @@ public class AACKeymanager extends AbstractKeyManager {
                         tokenInfo.setTokenValid(active);
                         tokenInfo.setConsumerKey(clientId);
                         tokenInfo.setScope(scopes);
-                        tokenInfo.setValidityPeriod(expires - iat);
-//                        tokenInfo.setValidityPeriod(expiresIn);
-                        tokenInfo.setIssuedTime(iat);
+//                        tokenInfo.setValidityPeriod(expires - iat);
+                        // apim MAYBE expects validity as expire time in ms?
+                        tokenInfo.setValidityPeriod((expires - iat) * 1000);
+                        tokenInfo.setIssuedTime(iat * 1000);
                         tokenInfo.setApplicationToken(applicationToken);
 
                         // HARDCODED tenant, TODO implement a method for getting the tenant from token
@@ -967,7 +968,8 @@ public class AACKeymanager extends AbstractKeyManager {
 
                         accessTokenInfo = new AccessTokenInfo();
                         accessTokenInfo.setAccessToken(accessToken);
-                        accessTokenInfo.setValidityPeriod(expiresIn);
+                        // don't really know what apim expects here, seconds or millis
+                        accessTokenInfo.setValidityPeriod(expiresIn*1000);
                         accessTokenInfo.setScope(tokenScopes);
                         accessTokenInfo.setConsumerKey(clientId);
                         accessTokenInfo.setTokenValid(true);
@@ -1050,7 +1052,8 @@ public class AACKeymanager extends AbstractKeyManager {
 
                         accessTokenInfo = new AccessTokenInfo();
                         accessTokenInfo.setAccessToken(accessToken);
-                        accessTokenInfo.setValidityPeriod(expiresIn);
+                        // don't really know what apim expects here, seconds or millis
+                        accessTokenInfo.setValidityPeriod(expiresIn*1000);
                         accessTokenInfo.setScope(tokenScopes);
                         accessTokenInfo.setConsumerKey(clientId);
                         accessTokenInfo.setTokenValid(true);

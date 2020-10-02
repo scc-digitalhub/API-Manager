@@ -309,8 +309,8 @@ public class AACKeymanager extends AbstractKeyManager {
         request.setHeader(ClientConstants.AUTHORIZATION,
                 ClientConstants.BEARER + " " + aacToken);
 
-        //TODO filter empty scopes
-        
+        // TODO filter empty scopes
+
         List<NameValuePair> params = new ArrayList<NameValuePair>();
         params.add(new BasicNameValuePair("scope", String.join(" ", scopes)));
 
@@ -600,7 +600,7 @@ public class AACKeymanager extends AbstractKeyManager {
         }
 
         // TODO persist token into store via custom methods
-        // optional, useful for gui to show existing tokens on reload   
+        // optional, useful for gui to show existing tokens on reload
 
         return token;
 
@@ -656,9 +656,15 @@ public class AACKeymanager extends AbstractKeyManager {
                         String clientId = json.getString(OAuth.OAUTH_CLIENT_ID);
                         String subject = json.getString(ClientConstants.OAUTH_SUBJECT);
                         String tokenType = json.getString(OAuth.OAUTH_TOKEN_TYPE);
-                        int expiresIn = json.getInt(ClientConstants.OAUTH_EXP);
+                        int expires = json.getInt(ClientConstants.OAUTH_EXP);
                         int iat = json.getInt(ClientConstants.OAUTH_ISSUED_AT);
                         String[] scopes = json.getString(OAuth.OAUTH_SCOPE).split(" ");
+                        String username = json.has(OAuth.OAUTH_USERNAME) ? json.getString(OAuth.OAUTH_USERNAME)
+                                : subject;
+                        // local check for applicationToken
+                        // TODO rework
+                        String grantType = json.getString("aac_grantType");
+                        boolean applicationToken = ClientConstants.OAUTH_GRANT_CLIENT_CREDENTIALS.equals(grantType);
 
                         if (!ClientConstants.BEARER.equals(tokenType)) {
                             throw new APIManagementException(
@@ -668,9 +674,16 @@ public class AACKeymanager extends AbstractKeyManager {
                         tokenInfo.setTokenValid(active);
                         tokenInfo.setConsumerKey(clientId);
                         tokenInfo.setScope(scopes);
-//                        tokenInfo.setValidityPeriod(iat - expiresIn);
-                        tokenInfo.setValidityPeriod(expiresIn);
+                        tokenInfo.setValidityPeriod(expires - iat);
+//                        tokenInfo.setValidityPeriod(expiresIn);
                         tokenInfo.setIssuedTime(iat);
+                        tokenInfo.setApplicationToken(applicationToken);
+
+                        // HARDCODED tenant, TODO implement a method for getting the tenant from token
+                        // or from response
+                        // need update from AAC
+                        String endUsername = username + "@carbon.super";
+                        tokenInfo.setEndUserName(endUsername);
 
                     } else {
                         log.warn("Access Token invalid or inactive");

@@ -39,6 +39,7 @@ public final class ClientConstants {
     public static final String OAUTH_ISSUED_AT = "iat";
     public static final String OAUTH_NOT_BEFORE = "nbf";
     public static final String OAUTH_AUDIENCE = "aud";
+    public static final String OAUTH_EXP = "exp";
 
     public static final String OAUTH_GRANT_CLIENT_CREDENTIALS = "client_credentials";
     public static final String OAUTH_GRANT_RESOURCE_OWNER = "password";

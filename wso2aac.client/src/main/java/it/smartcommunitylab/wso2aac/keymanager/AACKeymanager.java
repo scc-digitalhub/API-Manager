@@ -656,7 +656,7 @@ public class AACKeymanager extends AbstractKeyManager {
                         String clientId = json.getString(OAuth.OAUTH_CLIENT_ID);
                         String subject = json.getString(ClientConstants.OAUTH_SUBJECT);
                         String tokenType = json.getString(OAuth.OAUTH_TOKEN_TYPE);
-                        int expiresIn = json.getInt(OAuth.OAUTH_EXPIRES_IN);
+                        int expiresIn = json.getInt(ClientConstants.OAUTH_EXP);
                         int iat = json.getInt(ClientConstants.OAUTH_ISSUED_AT);
                         String[] scopes = json.getString(OAuth.OAUTH_SCOPE).split(" ");
 

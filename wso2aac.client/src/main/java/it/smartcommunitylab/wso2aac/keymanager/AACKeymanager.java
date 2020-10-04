@@ -1,34 +1,23 @@
 package it.smartcommunitylab.wso2aac.keymanager;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import javax.xml.namespace.QName;
-
-import org.apache.axiom.om.OMElement;
 import org.apache.axiom.om.util.Base64;
 import org.apache.axis2.util.URL;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpDelete;
@@ -50,31 +39,15 @@ import org.wso2.carbon.apimgt.api.model.ApplicationConstants;
 import org.wso2.carbon.apimgt.api.model.KeyManagerConfiguration;
 import org.wso2.carbon.apimgt.api.model.OAuthAppRequest;
 import org.wso2.carbon.apimgt.api.model.OAuthApplicationInfo;
-import org.wso2.carbon.apimgt.impl.AMDefaultKeyManagerImpl;
 import org.wso2.carbon.apimgt.impl.APIConstants;
-import org.wso2.carbon.apimgt.impl.APIManagerConfiguration;
 import org.wso2.carbon.apimgt.impl.AbstractKeyManager;
 import org.wso2.carbon.apimgt.impl.dao.ApiMgtDAO;
-import org.wso2.carbon.apimgt.impl.internal.ServiceReferenceHolder;
-import org.wso2.carbon.apimgt.impl.utils.APIMgtDBUtil;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
-import org.wso2.carbon.apimgt.keymgt.client.SubscriberKeyMgtClient;
-import org.wso2.carbon.apimgt.keymgt.client.SubscriberKeyMgtClientPool;
-import org.wso2.carbon.identity.core.util.IdentityConfigParser;
-import org.wso2.carbon.identity.core.util.IdentityCoreConstants;
-import org.wso2.carbon.identity.oauth.common.OAuthConstants;
-import org.wso2.carbon.identity.oauth2.OAuth2TokenValidationService;
-import org.wso2.carbon.identity.oauth2.dto.OAuth2ClientApplicationDTO;
-import org.wso2.carbon.identity.oauth2.dto.OAuth2TokenValidationRequestDTO;
-import org.wso2.carbon.identity.oauth2.dto.OAuth2TokenValidationResponseDTO;
-import org.wso2.carbon.identity.oauth2.dto.OAuth2TokenValidationRequestDTO.OAuth2AccessToken;
-import org.wso2.carbon.identity.oauth2.dto.OAuth2TokenValidationRequestDTO.TokenValidationContextParam;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Sets;
 
 import it.smartcommunitylab.wso2aac.keymanager.model.APIMClient;
 
@@ -204,6 +177,7 @@ public class AACKeymanager extends AbstractKeyManager {
      *         updated oAuth application
      */
     public OAuthApplicationInfo updateApplication(OAuthAppRequest appInfoDTO) throws APIManagementException {
+
         OAuthApplicationInfo requestInfo = appInfoDTO.getOAuthApplicationInfo();
         String consumerKey = requestInfo.getClientId();
         // we *always* need username and client name
@@ -213,11 +187,13 @@ public class AACKeymanager extends AbstractKeyManager {
                 "update application for " + username + ": " + applicationName + " key " + String.valueOf(consumerKey));
 
         // we call create to update if existing or create as new
-        return createApplication(appInfoDTO);
+        OAuthApplicationInfo res = createApplication(appInfoDTO);
+        
+    	return res;
 
     }
 
-    public OAuthApplicationInfo updateApplicationValidity(OAuthApplicationInfo requestInfo, int validitySeconds)
+    private OAuthApplicationInfo updateApplicationValidity(OAuthApplicationInfo requestInfo, long validitySeconds)
             throws APIManagementException {
 
         String clientId = requestInfo.getClientId();
@@ -240,7 +216,10 @@ public class AACKeymanager extends AbstractKeyManager {
         String endpointProtocol = endpointURL.getProtocol();
         int endpointPort = endpointURL.getPort();
 
-        String path = "/wso2/client/" + clientId + "/validity/" + String.valueOf(validitySeconds);
+        // may be larger then max int - convert
+        int intVal = (int) validitySeconds;
+        if (intVal < 0) intVal = Integer.MAX_VALUE;
+        String path = "/wso2/client/" + clientId + "/validity/" + String.valueOf(intVal);
 
         HttpClient client = APIUtil.getHttpClient(endpointPort, endpointProtocol);
         HttpPatch request = new HttpPatch(aacEndpoint + path);
@@ -277,7 +256,7 @@ public class AACKeymanager extends AbstractKeyManager {
         return applicationInfo;
     }
 
-    public OAuthApplicationInfo updateApplicationScopes(OAuthApplicationInfo requestInfo, String[] scopes)
+    private OAuthApplicationInfo updateApplicationScopes(OAuthApplicationInfo requestInfo, String[] scopes)
             throws APIManagementException {
 
         String clientId = requestInfo.getClientId();
@@ -309,10 +288,14 @@ public class AACKeymanager extends AbstractKeyManager {
         request.setHeader(ClientConstants.AUTHORIZATION,
                 ClientConstants.BEARER + " " + aacToken);
 
-        // TODO filter empty scopes
-
         List<NameValuePair> params = new ArrayList<NameValuePair>();
-        params.add(new BasicNameValuePair("scope", String.join(" ", scopes)));
+        Set<Object> scopeSet = new HashSet<>();
+        for (String s : scopes) {
+        	if (s != null) {
+        		scopeSet.add(s.trim());
+        	}
+        }
+        params.add(new BasicNameValuePair("scope", StringUtils.join(scopeSet, APIMClient.SEPARATOR)));
 
         try {
             request.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
@@ -489,6 +472,7 @@ public class AACKeymanager extends AbstractKeyManager {
         applicationInfo.addParameter("username", app.getUserName());
         applicationInfo.addParameter("grant_types", String.join(" ", app.getGrantedTypes()));
         applicationInfo.addParameter("tokenScope", app.getScope());
+        applicationInfo.addParameter("validityPeriod", app.getParameter("validityPeriod"));
 
         return applicationInfo;
     }
@@ -505,6 +489,7 @@ public class AACKeymanager extends AbstractKeyManager {
      * @throws APIManagementException
      */
     public AccessTokenInfo getNewApplicationAccessToken(AccessTokenRequest tokenRequest) throws APIManagementException {
+
         AccessTokenInfo token = null;
 
         if (tokenRequest == null) {
@@ -541,25 +526,28 @@ public class AACKeymanager extends AbstractKeyManager {
             return null;
         }
 
-        // is this in seconds or millis???
-        int validityPeriod = (int) tokenRequest.getValidityPeriod();
-        log.debug("requested token validity " + String.valueOf(validityPeriod));
+        // CURRENTLY DISABLED: DO NOT UPDATE VALIDITY OF AN APP. 
+        
+        // expect this to be in millis?
+//        long validityPeriod = tokenRequest.getValidityPeriod();
+//        log.debug("requested token validity " + String.valueOf(validityPeriod));
+//
+//        if (applicationInfo.getParameter("validityPeriod") != null) {
+//            // we support setting the validity, in seconds
+//            long curValidity = Long.parseLong((String) applicationInfo.getParameter("validityPeriod")) * 1000;
+//
+//            log.debug("token requested validity " + String.valueOf(validityPeriod) + " configured is "
+//                    + String.valueOf(curValidity));
+//
+//            if (curValidity != validityPeriod) {
+//                // update
+//                applicationInfo = updateApplicationValidity(applicationInfo, validityPeriod);
+//            }
+//
+//        }
 
-        if (applicationInfo.getParameter("validityPeriod") != null) {
-            // we support setting the validity
-            int curValidity = Integer.parseInt((String) applicationInfo.getParameter("validityPeriod"));
-
-            log.debug("token requested validity " + String.valueOf(validityPeriod) + " configured is "
-                    + String.valueOf(curValidity));
-
-            if (curValidity != validityPeriod) {
-                // update
-                applicationInfo = updateApplicationValidity(applicationInfo, validityPeriod);
-            }
-
-        }
-
-        String[] scopes = tokenRequest.getScope();
+        // input is incorrect: scope array is a singleton with space-separated scopes string: ["s1 s2"]
+        String[] scopes = String.join(" ", tokenRequest.getScope()).split(" ");
         log.debug("requested token scopes " + Arrays.toString(scopes));
 
         // check if current config supports all these scopes
@@ -601,7 +589,8 @@ public class AACKeymanager extends AbstractKeyManager {
 
         // TODO persist token into store via custom methods
         // optional, useful for gui to show existing tokens on reload
-
+        token.addParameter("validityPeriod", applicationInfo.getParameter("validityPeriod"));
+        
         return token;
 
     }
@@ -613,6 +602,8 @@ public class AACKeymanager extends AbstractKeyManager {
      * @return {@code AccessTokenInfo}
      */
     public AccessTokenInfo getTokenMetaData(String accessToken) throws APIManagementException {
+
+    	log.error("GET TOCKEN META START: " + accessToken);
 
         AccessTokenInfo tokenInfo = new AccessTokenInfo();
         tokenInfo.setTokenValid(false);
@@ -656,8 +647,8 @@ public class AACKeymanager extends AbstractKeyManager {
                         String clientId = json.getString(OAuth.OAUTH_CLIENT_ID);
                         String subject = json.getString(ClientConstants.OAUTH_SUBJECT);
                         String tokenType = json.getString(OAuth.OAUTH_TOKEN_TYPE);
-                        int expires = json.getInt(ClientConstants.OAUTH_EXP);
-                        int iat = json.getInt(ClientConstants.OAUTH_ISSUED_AT);
+                        long expires = json.getLong(ClientConstants.OAUTH_EXP);
+                        long iat = json.getLong(ClientConstants.OAUTH_ISSUED_AT);
                         String[] scopes = json.getString(OAuth.OAUTH_SCOPE).split(" ");
                         String username = json.has(OAuth.OAUTH_USERNAME) ? json.getString(OAuth.OAUTH_USERNAME)
                                 : subject;
@@ -785,7 +776,8 @@ public class AACKeymanager extends AbstractKeyManager {
      */
     public AccessTokenRequest buildAccessTokenRequestFromOAuthApp(OAuthApplicationInfo oAuthApplication,
             AccessTokenRequest tokenRequest) throws APIManagementException {
-        if (oAuthApplication == null) {
+
+    	if (oAuthApplication == null) {
             return tokenRequest;
         }
         if (tokenRequest == null) {
@@ -958,7 +950,7 @@ public class AACKeymanager extends AbstractKeyManager {
 
                         String accessToken = json.getString(OAuth.OAUTH_ACCESS_TOKEN);
                         String tokenType = json.getString(OAuth.OAUTH_TOKEN_TYPE);
-                        int expiresIn = json.getInt(OAuth.OAUTH_EXPIRES_IN);
+                        long expiresIn = json.getLong(OAuth.OAUTH_EXPIRES_IN);
                         String[] tokenScopes = json.getString(OAuth.OAUTH_SCOPE).split(" ");
 
                         if (!ClientConstants.BEARER.equals(tokenType)) {
@@ -968,12 +960,11 @@ public class AACKeymanager extends AbstractKeyManager {
 
                         accessTokenInfo = new AccessTokenInfo();
                         accessTokenInfo.setAccessToken(accessToken);
-                        // don't really know what apim expects here, seconds or millis
-                        accessTokenInfo.setValidityPeriod(expiresIn*1000);
+                        // millis expected
+                        accessTokenInfo.setValidityPeriod(expiresIn * 1000);
                         accessTokenInfo.setScope(tokenScopes);
                         accessTokenInfo.setConsumerKey(clientId);
                         accessTokenInfo.setTokenValid(true);
-
                     } else {
                         log.warn("Access Token Null");
                     }
@@ -1042,7 +1033,7 @@ public class AACKeymanager extends AbstractKeyManager {
 
                         String accessToken = json.getString(OAuth.OAUTH_ACCESS_TOKEN);
                         String tokenType = json.getString(OAuth.OAUTH_TOKEN_TYPE);
-                        int expiresIn = json.getInt(OAuth.OAUTH_EXPIRES_IN);
+                        long expiresIn = json.getLong(OAuth.OAUTH_EXPIRES_IN);
                         String[] tokenScopes = json.getString(OAuth.OAUTH_SCOPE).split(" ");
 
                         if (!ClientConstants.BEARER.equals(tokenType)) {
@@ -1052,8 +1043,8 @@ public class AACKeymanager extends AbstractKeyManager {
 
                         accessTokenInfo = new AccessTokenInfo();
                         accessTokenInfo.setAccessToken(accessToken);
-                        // don't really know what apim expects here, seconds or millis
-                        accessTokenInfo.setValidityPeriod(expiresIn*1000);
+                        // millis expected
+                        accessTokenInfo.setValidityPeriod(expiresIn * 1000);
                         accessTokenInfo.setScope(tokenScopes);
                         accessTokenInfo.setConsumerKey(clientId);
                         accessTokenInfo.setTokenValid(true);
@@ -1079,6 +1070,8 @@ public class AACKeymanager extends AbstractKeyManager {
 
     }
 
+    
+    
     /**
      * common method to throw exceptions.
      *

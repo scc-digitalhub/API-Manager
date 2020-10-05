@@ -15,7 +15,7 @@ prop_uncomment() {
 #edit .xml config file
 xml_uncomment() {
   target_file=${2}
-  echo "Uncommenting ${target_file}"
+  echo "Uncommenting $1 on ${target_file}"
   sed -i -e "s|<!--$1>|<$1>|" ${target_file}
   sed -i -e "s|</$1-->|</$1>|" ${target_file}
 }

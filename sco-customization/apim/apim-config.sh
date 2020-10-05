@@ -49,7 +49,7 @@ if [ ! -z ${AAC_HOSTNAME} ]; then
   xml_add 'TokenEndpoint' "${AAC_HOSTNAME}/oauth/token" '/APIManager/APIKeyManager/Configuration' "${conf_path}/${conf_file}"
   xml_add 'RevokeEndpoint' "${AAC_HOSTNAME}/oauth/revoke" '/APIManager/APIKeyManager/Configuration' "${conf_path}/${conf_file}"
   xml_add 'IntrospectionEndpoint' "${AAC_HOSTNAME}/oauth/introspect" '/APIManager/APIKeyManager/Configuration' "${conf_path}/${conf_file}"
-  xml_replace 'ServerURL' "https://$APIM_HOSTNAME:9443/services" '/APIManager/APIKeyManager/Configuration' "${conf_path}/${conf_file}"
+  # xml_replace 'ServerURL' "https://localhost:${mgt.transport.https.port}${carbon.context}services/" '/APIManager/APIKeyManager/Configuration' "${conf_path}/${conf_file}"
   xml_replace 'Username' ${APIM_USER} '/APIManager/APIKeyManager/Configuration' "${conf_path}/${conf_file}"
   xml_replace 'Password' ${APIM_PASS} '/APIManager/APIKeyManager/Configuration' "${conf_path}/${conf_file}"
   xml_comment 'TokenURL' "${conf_path}/${conf_file}"

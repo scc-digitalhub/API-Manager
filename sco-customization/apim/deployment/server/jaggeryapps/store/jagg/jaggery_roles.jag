@@ -3,10 +3,6 @@
 var site = require("/site/conf/site.json");
 var jagg_roles = jagg_roles || (function () {
      
-    var access_token;
-    var id_token;
-    var userName;
-    var rolesList = [];
     var String = 				Packages.java.lang.String;
     var Base64 = 				Packages.com.nimbusds.jose.util.Base64;
     var InputStreamReader = 	Packages.java.io.InputStreamReader;
@@ -48,26 +44,8 @@ var getClientConfiguration = function() {
 
 };
 
-var getRolesFromEP = function(authenticationToken){
-    	
-		var url = site.oidcConfiguration.rolesEndpointURI;
-        var headers = {"Authorization":"Bearer " + authenticationToken,"Accept":"application/json"};
-        var response = get(url,null,headers,"json");
-
-        return response.data;
-};
-
-var getUserInfoFromRP = function (token) {
-
-        var url = site.oidcConfiguration.userInfoURI;
-        var headers = {"Authorization":"Bearer " + token,"Accept":"application/json"};
-        var response = get(url,null,headers,"json");
-
-        return response.data;
-};
-
 var getTokenFromTokenEP = function(code) {
-
+        var access_token;
         // Client details
         var clientId = site.oidcConfiguration.clientConfiguration.clientId;
         var clientSecret = site.oidcConfiguration.clientConfiguration.clientSecret;
@@ -76,66 +54,53 @@ var getTokenFromTokenEP = function(code) {
 
         var url = site.oidcConfiguration.tokenEndpointURI;
         var data = {"grant_type":authorizationType,"code":code,"redirect_uri":redirectURI};
-        log.info(data);
         var headers = {"Authorization":"Basic " + Base64.encode(clientId+":"+clientSecret),"Content-Type":"application/x-www-form-urlencoded"};
         var response = post(url,data,headers,"json");
         if(response.data.error == null){
         	access_token = response.data.access_token;
         } else{
-        	log.info("Error when retrieving access_token: "+response.data.error);
+        	log.error("Error when retrieving access_token: "+response.data.error);
         }
-        if(response.data.id_token != null){
-        	id_token = response.data.id_token;
-        }
-        log.info("Response from Token Endpoint : " + access_token);
+        log.debug("Response from Token Endpoint : " + access_token);
 
-        return access_token;
+        return response.data;
 };
 
-var getUserName = function(token) {
-
-        var userInfoJson = getUserInfoFromRP(token);
-        
-        if (userInfoJson.preferred_username != null) {
-            userName = userInfoJson.preferred_username;
-            log.info("User name taken from user info endpoint : " + userName);
-        } else {
-           log.info("User Info JSON did not return an preferred_username");
-        }
-        return userName;
+var getLoggedInUser = function(claims) {
+    return claims.get('preferred_username') || claims.get('username');
 };
 
-var getLoggedInUser = function(){
-	return userName;
-};
 
-var getRolesList = function () {
+var getRoles = function (claims) {
     	  	
-    	var rolesResponse = getRolesFromEP(access_token);
-    	if (rolesResponse== null) {
+    	var rolesResponse = claims.get('roles');
+
+        var roleList = [];
+    	if (rolesResponse == null) {
             throw new Exception("Roles Endpoint did not return a valid JSON object: " + rolesResponse);
         } else {      	
-			var roleName,context,space,definedContext;
+			var roleName,context,space,definedContext,tempRole = [];
 			definedContext = site.oidcConfiguration.clientConfiguration.context;
-			var length = Math.round(rolesResponse.length);
-			for(var i = 0;i<length;i++) {
-				var entityRow = rolesResponse[i];
-				log.info(entityRow.context);
-				log.info(entityRow.space);
-				log.info(entityRow.role);
+            definedRole = site.oidcConfiguration.clientConfiguration.publisherRole || 'ROLE_PUBLISHER';
+			for(var i = 0;i<rolesResponse.size();i++) {
+				var entityRowStr = rolesResponse.get(i);
+                var entityRow = {
+                    role: entityRowStr.substring(entityRowStr.lastIndexOf(':')+1),
+                    context: entityRowStr.substring(0,entityRowStr.lastIndexOf('/')),
+                    space: entityRowStr.substring(entityRowStr.lastIndexOf('/')+1, entityRowStr.lastIndexOf(':'))
+                };
 				if(entityRow.context != null && entityRow.space != null && entityRow.role != null) {
 					roleName = entityRow.role;
 					context = entityRow.context;
 					space = entityRow.space;
-					log.info("currentRoleName: "+roleName+ " currentContext: "+context+" currentSpace: "+space+" definedContext: "+definedContext);
-					if (context.equals(definedContext)) {
-						rolesList.push(space);
+					if (context.equalsIgnoreCase(definedContext)) {
+						roleList.push(space);
 					}
 				}
 			} 
         }
-        log.info(rolesList);
-    	return rolesList;
+        log.debug(roleList);
+    	return roleList;
 };
 
 var validateSignature = function(serverConfiguration, authClient, idToken, nonce) {
@@ -150,40 +115,44 @@ var validateSignature = function(serverConfiguration, authClient, idToken, nonce
             isSignatureValid = Util.verifySignature(signedIdToken, serverConfiguration);   
 
         } else if (idToken instanceof PlainJWT) {
-            log.info("Plain JWT not supported");
+            log.warn("Plain JWT not supported");
 
         } else {
-            log.info("JWT type not supported");
+            log.warn("JWT type not supported");
         }
 
         var isValidClaimSet = Util.validateIdClaims(serverConfiguration, authClient, idToken, nonce, idClaims);  
-        return  isSignatureValid && isValidClaimSet;
+        if (isSignatureValid && isValidClaimSet) return idClaims.getClaims();
+        return null;
 };
 
 var validateOIDCSignature = function(authorizationCode, storedNonce, sessionId) {
 
-        log.info("Validating OIDC signature");
+        log.debug("Validating OIDC signature");
         var isSignatureValid;
         
-        var oidcAuthenticationToken = getTokenFromTokenEP(authorizationCode);
+        var data = getTokenFromTokenEP(authorizationCode);
         var serverConfiguration = getServerConfiguration();
         var authClient = getClientConfiguration();
 
-        userName = getUserName(oidcAuthenticationToken);
-        log.info("userName: " + userName);
+        var idClaims = validateSignature(serverConfiguration, authClient, data.id_token, storedNonce);      
+        if (!idClaims) return null;
+
+        
+        var userName = getLoggedInUser(idClaims);
 
         if (userName == null || userName.equals("")) {
-            log.info("Authentication Request is rejected. " + "User Name is Null");
+            log.error("Authentication Request is rejected. " + "User Name is Null");
             return false;
         }
-        isSignatureValid = validateSignature(serverConfiguration, authClient, id_token, storedNonce);      
 
-        return isSignatureValid;
+        return idClaims;
 };
 
 
+
 return {
-        getRolesList:getRolesList,
+        getRoles:getRoles,
 		getLoggedInUser:getLoggedInUser,
         validateOIDCSignature:validateOIDCSignature
     };

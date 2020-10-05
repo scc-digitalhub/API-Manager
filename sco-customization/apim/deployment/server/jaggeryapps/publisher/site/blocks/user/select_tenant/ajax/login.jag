@@ -21,7 +21,6 @@ include("/jagg/jagg.jag");
     }
     var username, oidc_username,tenantDomain = request.getParameter("tenant"),
             action = request.getParameter("action"),
-            isRoleProvider = request.getParameter("isRoleProvider"),
             site = require("/site/conf/site.json"),
             msg = require("/site/conf/ui-messages.jag"),
             obj = {}, failed= false;
@@ -115,11 +114,7 @@ include("/jagg/jagg.jag");
         			coreUserStoreManager.addRole("Internal/subscriber",[],[permissionsLogin,permissionsSubscribe],false);
         		}
         		log.info("Assigning roles to the new user");
-        		coreUserStoreManager.updateRoleListOfUser(user,["admin","Internal/creator"],["Internal/publisher","Internal/subscriber"]);
-        		if(isRoleProvider=="true")
-        			coreUserStoreManager.updateRoleListOfUser(user,[],["admin","Internal/creator"]);
-
-        		log.info("is Role Provider?"); log.info(isRoleProvider);
+        		coreUserStoreManager.updateRoleListOfUser(user, [],["admin","Internal/creator","Internal/publisher","Internal/subscriber"]);
         		jagg.setUser({username: username, cookie: null});
         		session.put("LOGGED_IN_USER", username);
         		
@@ -144,19 +139,14 @@ include("/jagg/jagg.jag");
         		coreUserRealm = coreRealmService.getTenantUserRealm(tenantId);
         		coreUserStoreManager = coreUserRealm.getUserStoreManager();
         		var userExist = coreUserStoreManager.isExistingUser(user);
-        		log.info(tenantId + "Tenant exists. Does the user exist? ");
+        		log.info(tenantId + " Tenant exists. Does the user exist? ");
         		log.info(userExist);
-        		log.info("is Role Provider when tenant exists?"); log.info(isRoleProvider);
         		if(!userExist) {
         			coreUserStoreManager.addUser(user,password,[], {},"another");
         			log.info("assigning roles to the new user");
-        			coreUserStoreManager.updateRoleListOfUser(user,["admin","Internal/creator"],["Internal/publisher","Internal/subscriber"]);
-        			if(isRoleProvider=="true")
-        				coreUserStoreManager.updateRoleListOfUser(user,[],["admin","Internal/creator"]);
+        			coreUserStoreManager.updateRoleListOfUser(user, [],["admin","Internal/creator","Internal/publisher","Internal/subscriber"]);
         		} else{
-        			coreUserStoreManager.updateRoleListOfUser(user,["admin","Internal/creator"],["Internal/publisher","Internal/subscriber"]);
-        			if(isRoleProvider=="true")
-        				coreUserStoreManager.updateRoleListOfUser(user,[],["admin","Internal/creator"]);
+        			coreUserStoreManager.updateRoleListOfUser(user, [], ["admin","Internal/creator","Internal/publisher","Internal/subscriber"]);
         		}
         		jagg.setUser({username: username, cookie: null});
         		session.put("LOGGED_IN_USER", username);

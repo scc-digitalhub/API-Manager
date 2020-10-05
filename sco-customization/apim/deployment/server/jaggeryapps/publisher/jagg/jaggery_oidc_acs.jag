@@ -44,28 +44,29 @@
     }
 
     // Check OIDC signature valid and set session as a authenticated if success
-    var isSignatureValid = jagg_roles.validateOIDCSignature(authorizationCode,session.get("NONCE"), sessionId);
-    var rolesList = jagg_roles.getRolesList();
-    var rolesCount = Object.keys(rolesList).length;//Math.round(rolesList.length);
-    var username = user = jagg_roles.getLoggedInUser(),isRoleProvider;
+    var claims = jagg_roles.validateOIDCSignature(authorizationCode,session.get("NONCE"), sessionId);
+	    if (!claims) { 
+        log.error("OIDC signature verification is failed.");
+        response.sendRedirect("../site/pages/error-pages/401.html");
+        return;
+    }
+
+    var roles = jagg_roles.getRoles(claims);
+    var rolesCount = Object.keys(roles).length;
+    var username = user = jagg_roles.getLoggedInUser(claims);
     if(rolesCount == 1){
-	    tenantDomain= Object.keys(rolesList);//rolesList[0];
-	    isRoleProvider = rolesList[tenantDomain].indexOf("ROLE_PROVIDER") != -1;
-	    log.info("is PRovider?");log.info(isRoleProvider);
+	    tenantDomain = Object.keys(roles)[0];
 	    username = user + "@" + tenantDomain;
     }
-	session.put("rolesList", rolesList);
+	session.put("rolesList", roles);
 	session.put("LOGGED_IN_USER", username);
 	log.info("username: " + username);
-	log.info("rolesCount: " + rolesCount);
-	log.info("rolesCount > 1 ");
-	log.info(rolesCount > 1);
 	if(rolesCount > 1){
 	    log.info("rolesCount > 1 ");
 	    response.sendRedirect(jagg.getAbsoluteUrl("/site/pages/select_tenant.jag"));
 	    return;
 	}
-    if (!Boolean(isSignatureValid) || rolesCount == 0) { 
+    if (rolesCount == 0) { 
         log.error("OIDC signature is verification failed.");
         response.sendRedirect("../site/pages/error-pages/401.html");
         return;
@@ -155,10 +156,8 @@
             		}
             		log.info("Assigning roles to the new user");
             		coreUserStoreManager.updateRoleListOfUser(user,["admin","Internal/creator"],["Internal/publisher","Internal/subscriber"]);
-            		if(isRoleProvider)
-            			coreUserStoreManager.updateRoleListOfUser(user,[],["admin","Internal/creator"]);
+					coreUserStoreManager.updateRoleListOfUser(user,[],["admin","Internal/creator"]);
     
-            		log.info("is Role Provider?"); log.info(isRoleProvider);
             		jagg.setUser({username: username, cookie: null});
             		session.put("LOGGED_IN_USER", username);
             		var isCreatePermitted = api.hasCreatePermission();
@@ -179,21 +178,12 @@
             		coreUserRealm = coreRealmService.getTenantUserRealm(tenantId);
             		coreUserStoreManager = coreUserRealm.getUserStoreManager();
             		var userExist = coreUserStoreManager.isExistingUser(user);
-            		log.info(tenantId + "Tenant exists. Does the user exists? ");
-            		log.info(userExist);
-            		log.info("is Role Provider when user exists?"); log.info(isRoleProvider);
             		if(!userExist) {
             			coreUserStoreManager.addUser(user,password,[], {},"another");
             			log.info("assigning roles to the new user");
-            			coreUserStoreManager.updateRoleListOfUser(user,["admin","Internal/creator"],["Internal/publisher","Internal/subscriber"]);
-            			if(isRoleProvider)
-            				coreUserStoreManager.updateRoleListOfUser(user,[],["admin","Internal/creator"]);
+            			coreUserStoreManager.updateRoleListOfUser(user,[],["admin","Internal/creator","Internal/publisher","Internal/subscriber"]);
             		} else{
-            			coreUserStoreManager.updateRoleListOfUser(user,["admin","Internal/creator"],["Internal/publisher","Internal/subscriber"]);
-            			if(isRoleProvider){
-            				log.info("since it is provider : adding creator , admin roles");
-            				coreUserStoreManager.updateRoleListOfUser(user,[],["admin","Internal/creator"]);
-            			}
+            			coreUserStoreManager.updateRoleListOfUser(user,[], ["admin","Internal/creator","Internal/publisher","Internal/subscriber"]);
             		}
             		jagg.setUser({username: username, cookie: null});
             		session.put("LOGGED_IN_USER", username);

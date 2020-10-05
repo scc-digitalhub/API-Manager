@@ -42,7 +42,7 @@ if(request.isSecure()){
 			                                            		<input type="radio" id="<%=role%>::<%=rolesList[role]%>" name="role" value="<%=role%>::<%=rolesList[role]%>">
 			                                            		<label for="<%=role%>::<%=rolesList[role]%>"><%=role%></label>
 			                                            	</td>
-			                                            	<td>[<%=rolesList[role]%>]</td>
+			                                            	<td></td>
 			                                            </tr>
 		                                            </table>
 		                                            

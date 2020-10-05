@@ -71,6 +71,18 @@ var getLoggedInUser = function(claims) {
 };
 
 
+/**
+* expect roles be in format <context>/<space>:<role>. Otherwise ignore
+**/
+var convertRole = function(entityRowStr) {
+    if (!entityRowStr || entityRowStr.indexOf('/') < 0 || entityRowStr.indexOf(':') < 0) return null;
+    return {
+                    role: entityRowStr.substring(entityRowStr.lastIndexOf(':')+1),
+                    context: entityRowStr.substring(0,entityRowStr.lastIndexOf('/')),
+                    space: entityRowStr.substring(entityRowStr.lastIndexOf('/')+1, entityRowStr.lastIndexOf(':'))
+                }
+}
+
 var getRoles = function (claims) {
     	  	
     	var rolesResponse = claims.get('roles');
@@ -84,11 +96,7 @@ var getRoles = function (claims) {
             definedRole = site.oidcConfiguration.clientConfiguration.publisherRole || 'ROLE_PUBLISHER';
 			for(var i = 0;i<rolesResponse.size();i++) {
 				var entityRowStr = rolesResponse.get(i);
-                var entityRow = {
-                    role: entityRowStr.substring(entityRowStr.lastIndexOf(':')+1),
-                    context: entityRowStr.substring(0,entityRowStr.lastIndexOf('/')),
-                    space: entityRowStr.substring(entityRowStr.lastIndexOf('/')+1, entityRowStr.lastIndexOf(':'))
-                };
+                var entityRow = convertRole(entityRowStr);
 				if(entityRow.context != null && entityRow.space != null && entityRow.role != null) {
 					roleName = entityRow.role;
 					context = entityRow.context;

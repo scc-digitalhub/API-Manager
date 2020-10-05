@@ -46,7 +46,8 @@
         "redirectURI" : "https://localhost:9443/store/jagg/jaggery_oidc_acs.jag",
         "postLogoutRedirectURI" : "https://localhost:9443/store/",
 	"clientAlgorithm" : "RS256",
-	"context":"apimanager"
+	"context":"components/apimanager",
+	"publisherRole": "ROLE_PUBLISHER"
       }
     },
     "mutualAuthConfiguration" : {

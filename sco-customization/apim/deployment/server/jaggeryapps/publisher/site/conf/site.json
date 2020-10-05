@@ -44,7 +44,8 @@
         "redirectURI" : "https://localhost:9443/publisher/jagg/jaggery_oidc_acs.jag",
         "postLogoutRedirectURI" : "https://localhost:9443/publisher/",
 	"clientAlgorithm" : "RS256",
-	"context":"apimanager"
+	"context": "components/apimanager",
+	"publisherRole": "ROLE_PUBLISHER"
       }
     },
 

@@ -97,7 +97,7 @@ var getRoles = function (claims) {
 			for(var i = 0;i<rolesResponse.size();i++) {
 				var entityRowStr = rolesResponse.get(i);
                 var entityRow = convertRole(entityRowStr);
-				if(entityRow.context != null && entityRow.space != null && entityRow.role != null) {
+				if(entityRow != null && entityRow.context != null && entityRow.space != null && entityRow.role != null) {
 					roleName = entityRow.role;
 					context = entityRow.context;
 					space = entityRow.space;

@@ -182,6 +182,7 @@ if [ ! -z ${AAC_HOSTNAME} ]; then
   xml_replace '_:GrantTypeValidatorImplClass' 'it.smartcommunitylab.wso2aac.grants.NativeGrantValidator' '//_:Server/_:OAuth/_:SupportedGrantTypes/_:SupportedGrantType[_:GrantTypeName="native"]' "${conf_path}/${conf_file}"
   xml_replace '_:GrantTypeHandlerImplClass' 'it.smartcommunitylab.wso2aac.grants.NativeGrantType' '//_:Server/_:OAuth/_:SupportedGrantTypes/_:SupportedGrantType[_:GrantTypeName="native"]' "${conf_path}/${conf_file}"
   xml_replace '@class' 'it.smartcommunitylab.wso2aac.keymanager.CustomJDBCScopeValidator' '//_:Server/_:OAuth/_:OAuthScopeValidator' "${conf_path}/${conf_file}"
+  xml_replace '@class' 'it.smartcommunitylab.wso2aac.keymanager.AACTokenIssuer' '//_:Server/_:OAuth/_:IdentityOAuthTokenGenerator' "${conf_path}/${conf_file}"
 fi
 if [ ! -z ${APIM_KEYSTORE_FILENAME} ]; then
   xml_replace '_:Location' "\${carbon.home}/repository/resources/security/${APIM_KEYSTORE_FILENAME}" '//_:Server/_:EntitlementSettings/_:ThirftBasedEntitlementConfig/_:KeyStore' "${conf_path}/${conf_file}"

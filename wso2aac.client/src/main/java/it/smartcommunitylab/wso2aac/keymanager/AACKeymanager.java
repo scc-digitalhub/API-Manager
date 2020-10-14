@@ -1,6 +1,7 @@
 package it.smartcommunitylab.wso2aac.keymanager;
 
 import java.io.IOException;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -39,10 +40,17 @@ import org.wso2.carbon.apimgt.api.model.ApplicationConstants;
 import org.wso2.carbon.apimgt.api.model.KeyManagerConfiguration;
 import org.wso2.carbon.apimgt.api.model.OAuthAppRequest;
 import org.wso2.carbon.apimgt.api.model.OAuthApplicationInfo;
+import org.wso2.carbon.apimgt.api.model.Scope;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.AbstractKeyManager;
 import org.wso2.carbon.apimgt.impl.dao.ApiMgtDAO;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
+import org.wso2.carbon.identity.application.authentication.framework.model.AuthenticatedUser;
+import org.wso2.carbon.identity.oauth.IdentityOAuthAdminException;
+import org.wso2.carbon.identity.oauth.common.exception.InvalidOAuthClientException;
+import org.wso2.carbon.identity.oauth.dao.OAuthAppDAO;
+import org.wso2.carbon.identity.oauth.dao.OAuthAppDO;
+import org.wso2.carbon.identity.oauth2.IdentityOAuth2Exception;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -151,7 +159,8 @@ public class AACKeymanager extends AbstractKeyManager {
                     applicationInfo = convertApp(app);
                     log.debug("received app from provider");
 
-                    // no persistence for apps
+                    // persist app
+                    storeOAuthApplication(applicationInfo);
 
                 } else {
                     log.warn("application null or invalid");
@@ -164,6 +173,10 @@ public class AACKeymanager extends AbstractKeyManager {
             log.error("parsing exception ", e);
         } catch (IOException e) {
             log.error("io exception ", e);
+        } catch (IdentityOAuth2Exception e) {
+            log.error("error with oauth store for app", e);
+        } catch (IdentityOAuthAdminException e) {
+            log.error("error with oauth store for app", e);
         }
 
         return applicationInfo;
@@ -187,9 +200,10 @@ public class AACKeymanager extends AbstractKeyManager {
                 "update application for " + username + ": " + applicationName + " key " + String.valueOf(consumerKey));
 
         // we call create to update if existing or create as new
+        // will persist if needed
         OAuthApplicationInfo res = createApplication(appInfoDTO);
-        
-    	return res;
+
+        return res;
 
     }
 
@@ -218,7 +232,8 @@ public class AACKeymanager extends AbstractKeyManager {
 
         // may be larger then max int - convert
         int intVal = (int) validitySeconds;
-        if (intVal < 0) intVal = Integer.MAX_VALUE;
+        if (intVal < 0)
+            intVal = Integer.MAX_VALUE;
         String path = "/wso2/client/" + clientId + "/validity/" + String.valueOf(intVal);
 
         HttpClient client = APIUtil.getHttpClient(endpointPort, endpointProtocol);
@@ -291,9 +306,9 @@ public class AACKeymanager extends AbstractKeyManager {
         List<NameValuePair> params = new ArrayList<NameValuePair>();
         Set<Object> scopeSet = new HashSet<>();
         for (String s : scopes) {
-        	if (s != null) {
-        		scopeSet.add(s.trim());
-        	}
+            if (s != null) {
+                scopeSet.add(s.trim());
+            }
         }
         params.add(new BasicNameValuePair("scope", StringUtils.join(scopeSet, APIMClient.SEPARATOR)));
 
@@ -365,12 +380,15 @@ public class AACKeymanager extends AbstractKeyManager {
 
             if (statusCode == HttpStatus.SC_OK) {
                 log.debug("app deleted");
-
+                // local cleanup
+                deleteOAuthApplication(clientId);
             } else {
                 log.debug("token or response invalid");
             }
         } catch (IOException e) {
             log.error("io exception ", e);
+        } catch (IdentityOAuthAdminException e) {
+            log.error("error with oauth store for app", e);
         }
 
     }
@@ -441,6 +459,55 @@ public class AACKeymanager extends AbstractKeyManager {
         }
 
         return applicationInfo;
+    }
+
+    private OAuthAppDO storeOAuthApplication(OAuthApplicationInfo oauthApplicationInfo)
+            throws IdentityOAuth2Exception, IdentityOAuthAdminException {
+        String clientId = oauthApplicationInfo.getClientId();
+
+        OAuthAppDO app = new OAuthAppDO();
+        app.setApplicationName(oauthApplicationInfo.getClientName());
+        app.setCallbackUrl(oauthApplicationInfo.getCallBackURL());
+        app.setGrantTypes((String) oauthApplicationInfo.getParameter("grant_types"));
+        app.setOauthConsumerKey(oauthApplicationInfo.getClientId());
+        app.setOauthConsumerSecret(oauthApplicationInfo.getClientSecret());
+        // hard-code config
+        app.setPkceMandatory(false);
+        app.setPkceSupportPlain(false);
+        app.setOauthVersion("OAuth-2.0");
+
+        AuthenticatedUser user = AuthenticatedUser.createLocalAuthenticatedUserFromSubjectIdentifier(
+                (String) oauthApplicationInfo.getParameter("username"));
+        app.setUser(user);
+
+        // persist via DAO to support components reading directly from DB..
+        OAuthAppDAO dao = new OAuthAppDAO();
+        boolean exists = false;
+        try {
+            if (dao.getAppInformation(clientId) != null) {
+                exists = true;
+            }
+        } catch (InvalidOAuthClientException ix) {
+            // not existing client
+            exists = false;
+        }
+        if (!exists) {
+            // add as new, throws error if duplicated
+            dao.addOAuthApplication(app);
+        } else {
+            // update
+            dao.updateConsumerApplication(app);
+        }
+
+        return app;
+    }
+
+    private void deleteOAuthApplication(String clientId) throws IdentityOAuthAdminException {
+        OAuthAppDAO dao = new OAuthAppDAO();
+        // lookup by id = consumerKey
+        // will throw exception if not existing, maybe swallow?
+        dao.removeConsumerApplication(clientId);
+
     }
 
     private OAuthApplicationInfo convertApp(APIMClient app) {
@@ -526,8 +593,8 @@ public class AACKeymanager extends AbstractKeyManager {
             return null;
         }
 
-        // CURRENTLY DISABLED: DO NOT UPDATE VALIDITY OF AN APP. 
-        
+        // CURRENTLY DISABLED: DO NOT UPDATE VALIDITY OF AN APP.
+
         // expect this to be in millis?
 //        long validityPeriod = tokenRequest.getValidityPeriod();
 //        log.debug("requested token validity " + String.valueOf(validityPeriod));
@@ -546,7 +613,8 @@ public class AACKeymanager extends AbstractKeyManager {
 //
 //        }
 
-        // input is incorrect: scope array is a singleton with space-separated scopes string: ["s1 s2"]
+        // input is incorrect: scope array is a singleton with space-separated scopes
+        // string: ["s1 s2"]
         String[] scopes = String.join(" ", tokenRequest.getScope()).split(" ");
         log.debug("requested token scopes " + Arrays.toString(scopes));
 
@@ -590,7 +658,7 @@ public class AACKeymanager extends AbstractKeyManager {
         // TODO persist token into store via custom methods
         // optional, useful for gui to show existing tokens on reload
         token.addParameter("validityPeriod", applicationInfo.getParameter("validityPeriod"));
-        
+
         return token;
 
     }
@@ -603,7 +671,7 @@ public class AACKeymanager extends AbstractKeyManager {
      */
     public AccessTokenInfo getTokenMetaData(String accessToken) throws APIManagementException {
 
-    	log.error("GET TOCKEN META START: " + accessToken);
+        log.error("GET TOCKEN META START: " + accessToken);
 
         AccessTokenInfo tokenInfo = new AccessTokenInfo();
         tokenInfo.setTokenValid(false);
@@ -727,6 +795,8 @@ public class AACKeymanager extends AbstractKeyManager {
      */
     public OAuthApplicationInfo buildFromJSON(OAuthApplicationInfo authApplicationInfo, String jsonInput)
             throws APIManagementException {
+        log.trace("build applicationInfo from: " + jsonInput);
+
         return super.buildFromJSON(authApplicationInfo, jsonInput);
 
     }
@@ -746,6 +816,7 @@ public class AACKeymanager extends AbstractKeyManager {
      */
     public AccessTokenRequest buildAccessTokenRequestFromJSON(String jsonInput, AccessTokenRequest tokenRequest)
             throws APIManagementException {
+        log.trace("build accessTokenRequest from: " + jsonInput);
         return super.buildAccessTokenRequestFromJSON(jsonInput, tokenRequest);
 
     }
@@ -777,7 +848,7 @@ public class AACKeymanager extends AbstractKeyManager {
     public AccessTokenRequest buildAccessTokenRequestFromOAuthApp(OAuthApplicationInfo oAuthApplication,
             AccessTokenRequest tokenRequest) throws APIManagementException {
 
-    	if (oAuthApplication == null) {
+        if (oAuthApplication == null) {
             return tokenRequest;
         }
         if (tokenRequest == null) {
@@ -809,6 +880,23 @@ public class AACKeymanager extends AbstractKeyManager {
 
     public void loadConfiguration(KeyManagerConfiguration configuration) throws APIManagementException {
         this.configuration = configuration;
+        // trace config
+        log.debug("Loaded APIKeyManager conf");
+        String[] keys = {
+                ClientConstants.CONFIG_AAC_ENDPOINT,
+                ClientConstants.CONFIG_OAUTH_INTROSPECTION_ENDPOINT,
+                ClientConstants.CONFIG_OAUTH_REVOKE_ENDPOINT,
+                ClientConstants.CONFIG_OAUTH_TOKEN_ENDPOINT,
+                ClientConstants.CONFIG_CLIENT_ID,
+                ClientConstants.CONFIG_CLIENT_SECRET,
+                "Username",
+                "Password",
+                "ServerURL"
+        };
+        for (String key : keys) {
+            String value = this.configuration.getParameter(key);
+            log.trace("Loaded APIKeyManager conf " + key + ": " + String.valueOf(value));
+        }
     }
 
     /**
@@ -891,18 +979,47 @@ public class AACKeymanager extends AbstractKeyManager {
         return mapper;
     }
 
+    private AbstractMap.SimpleEntry<String, Long> _adminToken;
+
     private String getAdminToken() throws APIManagementException {
         // TODO add cache with expire check + sync
-        String adminClientId = configuration.getParameter(ClientConstants.CONFIG_CLIENT_ID);
-        String adminClientSecret = configuration.getParameter(ClientConstants.CONFIG_CLIENT_SECRET);
+        // sync generation and write to cache
+        // ugly ;)
+        synchronized (this) {
+            if (_adminToken != null) {
+                // check if expired
+                int delta = 60 * 1000;
+                if (System.currentTimeMillis() < (_adminToken.getValue() - delta)) {
+                    log.trace("resolve adminToken from cache");
+                    return _adminToken.getKey();
+                } else {
+                    // cleanup
+                    _adminToken = null;
+                }
+            }
 
-        AccessTokenInfo token = getClientCredentialsToken(adminClientId, adminClientSecret, null);
+            log.trace("fetch new adminToken from AAC");
 
-        if (token == null) {
-            throw new APIManagementException("Error generating admin token");
+            String adminClientId = configuration.getParameter(ClientConstants.CONFIG_CLIENT_ID);
+            String adminClientSecret = configuration.getParameter(ClientConstants.CONFIG_CLIENT_SECRET);
+
+            AccessTokenInfo token = getClientCredentialsToken(adminClientId, adminClientSecret, null);
+
+            if (token == null) {
+                throw new APIManagementException("Error generating admin token");
+            }
+
+            String accessToken = token.getAccessToken();
+            // in millis here!
+            long iat = System.currentTimeMillis();
+            long expiresIn = token.getValidityPeriod();
+            long expires = iat + expiresIn;
+
+            log.trace("new adminToken expires at " + String.valueOf(expires));
+
+            _adminToken = new AbstractMap.SimpleEntry<>(accessToken, expires);
+            return _adminToken.getKey();
         }
-
-        return token.getAccessToken();
 
     }
 
@@ -945,7 +1062,7 @@ public class AACKeymanager extends AbstractKeyManager {
                 if (statusCode == HttpStatus.SC_OK && entity != null) {
                     // we expect a json
                     JSONObject json = new JSONObject(EntityUtils.toString(entity));
-
+                    log.trace("AAC token response: " + json.toString());
                     if (json != null && json.has(OAuth.OAUTH_ACCESS_TOKEN)) {
 
                         String accessToken = json.getString(OAuth.OAUTH_ACCESS_TOKEN);
@@ -970,6 +1087,7 @@ public class AACKeymanager extends AbstractKeyManager {
                     }
 
                 } else {
+                    log.error("Received invalid response for token request: " + String.valueOf(statusCode));
                     handleException("Something went wrong while generating the Access Token");
                 }
             } catch (IOException e) {
@@ -1070,8 +1188,6 @@ public class AACKeymanager extends AbstractKeyManager {
 
     }
 
-    
-    
     /**
      * common method to throw exceptions.
      *
@@ -1079,7 +1195,7 @@ public class AACKeymanager extends AbstractKeyManager {
      * @param e   Exception object.
      * @throws org.wso2.carbon.apimgt.api.APIManagementException
      */
-    private void handleException(String msg, Exception e) throws APIManagementException {
+    protected void handleException(String msg, Exception e) throws APIManagementException {
         log.error(msg, e);
         throw new APIManagementException(msg, e);
     }
@@ -1154,6 +1270,18 @@ public class AACKeymanager extends AbstractKeyManager {
      */
     public void deleteMappedApplication(String consumerKey) throws APIManagementException {
 
+    }
+
+    @Override
+    public String getNewApplicationConsumerSecret(AccessTokenRequest tokenRequest) throws APIManagementException {
+        log.trace("called getNewApplicationconsumerSecret for " + tokenRequest.toString());
+        return null;
+    }
+
+    @Override
+    public Map<String, Set<Scope>> getScopesForAPIS(String arg0) throws APIManagementException {
+        log.trace("called getScopesForAPIS for " + arg0);
+        return null;
     }
 
 }

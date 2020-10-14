@@ -43,7 +43,7 @@ API Manager tools and themes
 			mysql -u regadmin -p -Dregdb < dbscripts/mysql.sql
 			mysql -u regadmin -p -Dregdb < dbscripts/apimgt/mysql.sql
 
-### 2. WSO2 Configuration - KeyManager only
+### 2. WSO2 Configuration - KeyManager + TokenIssuer
 
 **2.1. WSO2-AAC connector**
 
@@ -51,9 +51,11 @@ API Manager tools and themes
 
 - copy *wso2aac.client-1.0.jar* from the project *API-Manager/wso2aac.client* to the WSO2 directory *repository/components/lib*
 
+note that carbon caches jar inside *repository/components/dropins/* so clean/flush when updating the jar.
+
 **2.2. WSO2 configurations**
 
-- in *repository/conf/api-manager.xml*, change APIKeyManager and set **ConsumerSecret** with the value found in AAC for the client with clientId API_MGT_CLIENT_ID
+- in *repository/conf/api-manager.xml*, change APIKeyManager and set **ClientSecret** with the value found in AAC for the client with clientId API_MGT_CLIENT_ID
 
 
 Sample config
@@ -74,9 +76,20 @@ Sample config
     </Configuration>
   </APIKeyManager>
 ```
+- in *repository/conf/api-manager.xml*, uncomment **RemoveOAuthHeadersFromOutMessage** and set it to false
+
+  `<RemoveOAuthHeadersFromOutMessage>false</RemoveOAuthHeadersFromOutMessage>`
 
 
-### 2. WSO2 Configuration - complete
+- in *repository/conf/identity/identity.xml* change
+
+```
+<OAuth>
+  <IdentityOAuthTokenGenerator>it.smartcommunitylab.wso2aac.keymanager.AACTokenIssuer</IdentityOAuthTokenGenerator>
+
+```
+
+### 2. WSO2 Configuration - legacy
 
 Clone API Manager project
 

@@ -1260,4 +1260,16 @@ public class AACOAuthClient extends AbstractKeyManager {
 //        return httpClient;
 //    }
 //    
+
+    @Override
+    public String getNewApplicationConsumerSecret(AccessTokenRequest tokenRequest) throws APIManagementException {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Map<String, Set<Scope>> getScopesForAPIS(String apiIdsString) throws APIManagementException {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

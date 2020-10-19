@@ -137,8 +137,10 @@ if [ ! -z ${APIM_KEYSTORE_FILENAME} ]; then
   xml_replace 'KeyPassword' "${APIM_KEYSTORE_PASS}" '/axisconfig/transportSender[@name="https"]/parameter[@name="keystore"]/KeyStore' "${conf_path}/${conf_file}"
   xml_replace 'Location' "repository/resources/security/${APIM_TRUSTSTORE_FILENAME}" '/axisconfig/transportSender[@name="https"]/parameter[@name="truststore"]/TrustStore' "${conf_path}/${conf_file}"
   xml_replace 'Password' "${APIM_TRUSTSTORE_PASS}" '/axisconfig/transportSender[@name="https"]/parameter[@name="truststore"]/TrustStore' "${conf_path}/${conf_file}"
+  xml_replace 'parameter[@name="HostnameVerifier"]' 'AllowAll' '/axisconfig/transportSender[@name="https"]' "${conf_path}/${conf_file}"
   xml_replace 'ws.trust.store.location' "repository/resources/security/${APIM_TRUSTSTORE_FILENAME}" '/axisconfig/transportSender[@name="wss"]/parameter[@name="ws.trust.store"]' "${conf_path}/${conf_file}"
   xml_replace 'ws.trust.store.Password' "${APIM_TRUSTSTORE_PASS}" '/axisconfig/transportSender[@name="wss"]/parameter[@name="ws.trust.store"]' "${conf_path}/${conf_file}"
+
 fi
 
 ### Directory ${WSO2_SERVER_HOME}/repository/conf/data-bridge

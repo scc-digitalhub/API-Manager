@@ -179,7 +179,7 @@
             		coreUserStoreManager = coreUserRealm.getUserStoreManager();
             		var userExist = coreUserStoreManager.isExistingUser(user);
             		if(!userExist) {
-            			try{ coreUserStoreManager.addUser(user,password,[], {},“another”); } catch(e) { log.error(e); }
+            			try{ coreUserStoreManager.addUser(user,password,[], {},"another"); } catch(e) { log.error(e); throw e; }
             			log.info("assigning roles to the new user");
             			coreUserStoreManager.updateRoleListOfUser(user,[],["admin","Internal/creator","Internal/publisher","Internal/subscriber"]);
             		} else{

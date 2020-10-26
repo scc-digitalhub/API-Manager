@@ -111,7 +111,7 @@ echo ${conf_file}
 xml_replace 'Password' "${APIM_PASS}" '/UserManager/Realm/Configuration/AdminUser' "${conf_path}/${conf_file}"
 xml_replace 'Property[@name="dataSource"]' "jdbc/WSO2UM_DB" '/UserManager/Realm/Configuration' "${conf_path}/${conf_file}"
 # xml_add function with attribute
-xml_append_elem 'Property' '^[\S]{3,30}$' '/UserManager/Realm/UserStoreManager/Property[@name="UserNameUniqueAcrossTenants"]' "${conf_path}/${conf_file}" 'name=UsernameWithEmailJavaScriptRegEx'
+xml_append_elem 'Property' '^[\S]{3,50}$' '/UserManager/Realm/UserStoreManager/Property[@name="UserNameUniqueAcrossTenants"]' "${conf_path}/${conf_file}" 'name=UsernameWithEmailJavaScriptRegEx'
 
 ### Directory ${WSO2_SERVER_HOME}/repository/conf/axis2
 conf_path="${WSO2_SERVER_HOME}/repository/conf/axis2"

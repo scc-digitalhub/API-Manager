@@ -109,6 +109,7 @@ ADD --chown=wso2carbon:wso2 https://repo1.maven.org/maven2/dnsjava/dnsjava/2.1.8
 ADD --chown=wso2carbon:wso2 https://repo1.maven.org/maven2/org/wso2/carbon/kubernetes/artifacts/kubernetes-membership-scheme/1.0.5/kubernetes-membership-scheme-1.0.5.jar ${WSO2_SERVER_HOME}/repository/components/dropins/
 # copy scl customization
 COPY --chown=wso2carbon:wso2 ${SCO_CUSTOMIZATION}/ ${WSO2_SERVER_HOME}/repository/
+COPY --chown=wso2carbon:wso2 ${SCO_CUSTOMIZATION}/conf ${USER_HOME}/wso2-config-volume/repository/conf
 COPY --chown=wso2carbon:wso2 ${SCO_CUSTOMIZATION}/deployment/server/ ${USER_HOME}/wso2-tmp/server/
 # copy original h2 database (wso2 h2 database autogeneration is not working properly)
 COPY --chown=wso2carbon:wso2 ${FILES}/${WSO2_SERVER_PACK}/repository/database/ ${USER_HOME}/wso2-tmp/database/

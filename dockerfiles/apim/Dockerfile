@@ -100,7 +100,7 @@ COPY --chown=wso2carbon:wso2 ${SCO_CUSTOMIZATION_GLOBAL}/common.sh ${USER_HOME}/
 # copy mysql connector jar to the server as a third party library
 COPY --chown=wso2carbon:wso2 ${FILES}/mysql-connector-java-*.jar ${WSO2_SERVER_HOME}/repository/components/lib/
 # copy smartcommunitylab customization to the server as a thids party library
-COPY --chown=wso2carbon:wso2 ${FILES}/lets-encrypt-x3-cross-signed.pem ${USER_HOME}/
+COPY --chown=wso2carbon:wso2 ${FILES}/ca ${USER_HOME}/ca
 COPY --chown=wso2carbon:wso2 --from=build-aac-client /tmp/target/wso2aac.client*.jar ${WSO2_SERVER_HOME}/repository/components/lib/
 COPY --chown=wso2carbon:wso2 --from=build-usermgmt /tmp/apim.custom.user.store.stub/target/apim.custom.user.store.stub-*.jar ${WSO2_SERVER_HOME}/repository/components/dropins/
 COPY --chown=wso2carbon:wso2 --from=build-usermgmt /tmp/apim.custom.user.store/target/apim.custom.user.store-*.jar ${WSO2_SERVER_HOME}/repository/components/dropins/

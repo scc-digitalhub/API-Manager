@@ -35,7 +35,7 @@
       "userInfoURI" : "http://localhost:8080/openid-connect-server-webapp/userinfo",
       "jwksURI" : "http://localhost:8080/openid-connect-server-webapp/jwk",
       "logoutEndpointURI" : "http://localhost:8080/aac/endsession",
-      "authHttpMethod": "POST",
+      "authHttpMethod": "GET",
       "rolesEndpointURI" : "http://localhost:8080/aac/userroles/me",
       "clientConfiguration" : {
         "clientId" : "client_am_publisher",

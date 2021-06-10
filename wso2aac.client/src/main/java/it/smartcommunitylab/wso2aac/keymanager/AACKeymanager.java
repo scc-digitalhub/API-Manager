@@ -8,6 +8,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.apache.axiom.om.util.Base64;
 import org.apache.axis2.util.URL;
@@ -615,8 +617,16 @@ public class AACKeymanager extends AbstractKeyManager {
 
         // input is incorrect: scope array is a singleton with space-separated scopes
         // string: ["s1 s2"]
-        String[] scopes = String.join(" ", tokenRequest.getScope()).split(" ");
-        log.debug("requested token scopes " + Arrays.toString(scopes));
+        String[] reqScopes = String.join(" ", tokenRequest.getScope()).split(" ");
+        log.debug("requested token scopes " + Arrays.toString(reqScopes));
+
+        // cleanup bogus scopes for device
+        String[] scopes = Arrays.stream(reqScopes).filter(new Predicate<String>() {
+            @Override
+            public boolean test(String s) {
+                return !s.startsWith("device_");
+            }
+        }).collect(Collectors.toList()).toArray(new String[0]);
 
         // check if current config supports all these scopes
         if (applicationInfo.getParameter("tokenScope") != null) {
@@ -1068,9 +1078,9 @@ public class AACKeymanager extends AbstractKeyManager {
                         String accessToken = json.getString(OAuth.OAUTH_ACCESS_TOKEN);
                         String tokenType = json.getString(OAuth.OAUTH_TOKEN_TYPE);
                         long expiresIn = json.getLong(OAuth.OAUTH_EXPIRES_IN);
-                        String[] tokenScopes = json.getString(OAuth.OAUTH_SCOPE).split(" ");
+                        String[] tokenScopes = json.has(OAuth.OAUTH_SCOPE) ? json.getString(OAuth.OAUTH_SCOPE).split(" ") : new String[0];
 
-                        if (!ClientConstants.BEARER.equals(tokenType)) {
+                        if (!ClientConstants.BEARER.toLowerCase().equals(tokenType.toLowerCase())) {
                             throw new APIManagementException(
                                     "Invalid token type received: " + String.valueOf(tokenType));
                         }

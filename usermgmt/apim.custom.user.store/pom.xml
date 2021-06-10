@@ -5,7 +5,7 @@
   <packaging>bundle</packaging>
   <name>WSO2 APIM Custom User Store Manager</name>
   <description>WSO2 APIM Custom User Store Manager</description>
-  
+
   <parent>
   		<groupId>it.smartcommunitylab.orgmanager</groupId>
 	  	<artifactId>orgmanager-wso2connector</artifactId>
@@ -23,7 +23,7 @@
 		    <version>${carbon.identity.user}</version>
 		</dependency>
   </dependencies>
-  
+
   <build>
 		<plugins>
 			<plugin>
@@ -58,23 +58,23 @@
             </plugin>
            </plugins>
     </build>
-    
+
   	<distributionManagement>
 		<repository>
 			<id>SmartCommunityLab-releases</id>
-			<url>http://repository.smartcommunitylab.it/content/repositories/releases</url>
+			<url>https://repository.smartcommunitylab.it/content/repositories/releases</url>
 		</repository>
 		<snapshotRepository>
 			<id>SmartCommunityLab-snapshots</id>
-			<url>http://repository.smartcommunitylab.it/content/repositories/snapshots</url>
+			<url>https://repository.smartcommunitylab.it/content/repositories/snapshots</url>
 		</snapshotRepository>
 	</distributionManagement>
-	
+
 	 <repositories>
         <repository>
             <id>wso2-nexus</id>
             <name>WSO2 internal Repository</name>
-            <url>http://maven.wso2.org/nexus/content/groups/wso2-public/</url>
+            <url>https://maven.wso2.org/nexus/content/groups/wso2-public/</url>
             <releases>
                 <enabled>true</enabled>
                 <updatePolicy>daily</updatePolicy>
@@ -85,7 +85,7 @@
         <repository>
             <id>wso2.releases</id>
             <name>WSO2 internal Repository</name>
-            <url>http://maven.wso2.org/nexus/content/repositories/releases/</url>
+            <url>https://maven.wso2.org/nexus/content/repositories/releases/</url>
             <releases>
                 <enabled>true</enabled>
                 <updatePolicy>daily</updatePolicy>
@@ -96,7 +96,7 @@
         <repository>
             <id>wso2.snapshots</id>
             <name>Apache Snapshot Repository</name>
-            <url>http://maven.wso2.org/nexus/content/repositories/snapshots/</url>
+            <url>https://maven.wso2.org/nexus/content/repositories/snapshots/</url>
             <snapshots>
                 <enabled>true</enabled>
                 <updatePolicy>daily</updatePolicy>
@@ -106,7 +106,7 @@
             </releases>
         </repository>
     </repositories>
-    
+
    	<properties>
        	<carbon.kernel.version>4.4.24</carbon.kernel.version>
        	<carbon.identity.user>5.1.12-SNAPSHOT</carbon.identity.user>
